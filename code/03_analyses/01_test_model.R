@@ -38,18 +38,15 @@ data <- readRDS(here("data_outputs",
 
 # Parameters to save ------------------------------------------------------
 
-params <- c("a1.Vis",
-            "sd.vis",
+params <- c(#species-level parameters
             "eta",
-            "tau.eta",
-            "rho",
-            "lpsi",
-            "gamma",
-            "mu.vis",
-            "sd.vis",
-            "mu.gamma",
-            "sigmagamma"
-            )
+            "a1.Vis",
+            #community-level parameters
+            'tau.eta',
+            'sd.vis',
+            'sd.lpsi',
+            'sd.lp',
+            "rho")
 
 
 # JAGS model --------------------------------------------------------------
@@ -57,7 +54,7 @@ params <- c("a1.Vis",
 model <- here("code", 
               "03_analyses",
               "models",
-              "test_dynamic_model.R")
+              "test_model.R")
 
 Sys.time()
 

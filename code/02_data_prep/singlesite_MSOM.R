@@ -143,7 +143,6 @@ data <- list(y = y,
              n.years = n.years,
              n.reps = n.reps,
              vis = vis,
-             n.zeros = 200,
              z = z)
 
 saveRDS(data, file = here("data_outputs",

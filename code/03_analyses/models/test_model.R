@@ -5,7 +5,7 @@ model{
       # Ecological model
       z[i, k] ~ dbern(psi[k])
       # Observation model
-      logit(p[i,k]) <- eta[k]*a1.Vis[k]*vis[i]
+      logit(p[i,k]) <- eta[k] + a1.Vis[k]*vis[i]
       y[i, k] ~ dbin(p[i,k] * z[i, k], n.reps)
     }
     
