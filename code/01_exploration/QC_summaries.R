@@ -66,3 +66,6 @@ benthic1 %>%
 # how to get to species level, or how should we split things up - based 
 ## on what you ahve done before?
 # things with multiple scientific names? are these synonyms?
+# is there a dataset of the average individual body size for these species?
+## just trying to brainstorm how to use the percent cover type data as a 
+## covariate for detection probability
