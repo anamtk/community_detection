@@ -69,6 +69,11 @@ benthic2 <- benthic1 %>%
 benthic_test <- benthic2 %>%
   filter(SITE_TRANSECT == "AQUE_1") 
 
+write.csv(benthic_test, 
+          here("data_outputs",
+               "raw_community",
+               "single_site_MSOM_long.csv"))
+
 # #a function that makes the site, year, occupancy data
 # # into a matrix of species by year
 # #filled with occupacy for that species for that year
@@ -113,6 +118,11 @@ y <- benthic_test %>%
   mutate(across(everything(), as.integer)) %>%
   column_to_rownames(var = "YEAR") %>%
   as.matrix()
+
+write.csv(y, 
+          here("data_outputs",
+               "raw_community",
+               "single_site_MSOM_matrix.csv"))
 
 z <- (y>0)*1
 z[z == 0] <- NA
