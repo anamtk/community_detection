@@ -13,10 +13,7 @@
 package.list <- c("here", "tidyverse")
 
 ## Installing them if they aren't already on the computer
-new.packages <- package.list[!(package.list %in% 
-                                 17
-                               
-                               installed.packages()[,"Package"])]
+new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
 
 if(length(new.packages)) install.packages(new.packages)
 
@@ -31,7 +28,8 @@ summary_df <- readRDS(here("data_outputs",
                            "benthic_MSOM_1_20_summary.RDS"))
 
 species_ID <- read.csv(here("data_outputs",
-                            "single_site_MSOM_community_matrix.csv"))
+                            "raw_community",
+                            "single_site_MSOM_matrix.csv"))
 
 # Look at distributions of posteriors -------------------------------------
 
@@ -43,12 +41,11 @@ rownames_to_column(var = "parameter")
 #get species ID for the names of the variables
 
 species <- colnames(species_ID)
-41
+
 
 species <- species[2:length(species)]
 
 df_vis <- df_sum %>%
-
 filter(str_detect(parameter, "a1.Vis")) %>%
 cbind(species)
 
