@@ -6,11 +6,15 @@ model{
       z[k,i] ~ dbern(psi[k])
       # Observation model
       for(j in 1:n.reps){
-      logit(p[k,i,j]) <- eta[k] + a1.Vis[k]*vis[i,j] + a2.Size[k]*size[k]
-      y[i, k, j] ~ dbin(p[k,i,j] * z[k,i], n.reps)
+      logit(p[k,i,j]) <- eta[k] + 
+                        a1.Vis[k]*vis[i,j] + 
+                        a2.Size[k]*size[k]
+      
+      y[k,i, j] ~ dbin(p[k,i,j] * z[k,i], n.reps)
       
       #missing data in the visibility column
-      vis[i,j] ~ dnorm(0, 1E-2)
+      vis[i,j] ~ dnorm(mu.missingvis, tau.missingvis)
+      
       } #replicate visits
     } #years
     
@@ -54,4 +58,10 @@ model{
   
   rho ~ dunif(-1, 1)
   tau.eta <- tau.lp/(1 - rho^2)
+  
+  #PRIORS FOR IMPUTING MISSING DATA
+  #Priors for mean and tau of missing covariates in the model
+  mu.missingvis ~ dunif(-10, 10)
+  sig.missingvis ~ dunif(0, 20)
+  tau.missingvis <- pow(sig.missingvis, -2)
 }
