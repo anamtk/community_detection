@@ -66,7 +66,8 @@ jags <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 40,
+                         n.iter = 60000,
+                         n.burnin = 1000,
                          DIC = TRUE)
 
 Sys.time()
@@ -130,20 +131,55 @@ burn %>%
 #792
 
 
-# Plot visibility by species effect ---------------------------------------
+# Long run outputs --------------------------------------------------------
 
-df <- as.data.frame(cbind(
-vis.50 = jags$q50$a1.Vis,
-vis.lower = jags$q2.5$a1.Vis,
-vis.upper = jags$q97.5$a1.Vis,
-species = 1:length(jags$q50$a1.Vis)))
+#did they converge? only tau.eta looks funky here
+Rhat <- jags$Rhat
 
-df %>%
-  filter(species %in% c(1:122)) %>%
-ggplot(aes(x = species, y = vis.50)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = vis.lower, ymax = vis.upper)) +
-  coord_flip()
+#get a summary of all the output parameters that we tracked
+summary <- jags$summary
+
+#update converged model to get z-matrix values
+z_matrix <- update(jags,
+                   parameters.to.save = c("z"),
+                   n.iter = 500)
+
+#get summary stats for that
+z_50 <- z_matrix$q50$z
+z_2.5 <- z_matrix$q2.5$z
+z_97.5 <- z_matrix$q97.5$z
+
+#update converged model to get psi values
+psi <- update(jags,
+              parameters.to.save = c("psi"),
+              n.iter = 5000)
+
+#summary of psi run
+psi_sum <- psi$summary
+
+community_params <- update(jags,
+                           parameters.to.save = c("mu.vis",
+                                                  'sd.vis',
+                                                  'mu.size',
+                                                  'sd.size'),
+                           n.iter = 5000)
+
+community_sum <- community_params$summary
 
 
+output_summaries <- list(Rhat = Rhat,
+                         summary = summary,
+                         psi_sum = psi_sum,
+                         community_sum = community_sum)
 
+z_matrices <- list(z_50 = z_50,
+                   z_2.5 = z_2.5,
+                   z_97.5 = z_97.5)
+
+saveRDS(output_summaries, here("data_outputs",
+                               "monsoon_outputs",
+                               "fish_MSOM_1_26_stats.RDS"))
+
+saveRDS(z_matrices, here("data_outputs",
+                         "monsoon_outputs",
+                         "fish_MSOM_1_26_matrices.RDS"))

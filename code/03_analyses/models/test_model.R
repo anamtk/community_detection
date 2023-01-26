@@ -12,9 +12,7 @@ model{
       
       y[k,i, j] ~ dbin(p[k,i,j] * z[k,i], n.reps)
       
-      #missing data in the visibility column
-      vis[i,j] ~ dnorm(mu.missingvis, tau.missingvis)
-      
+
       } #replicate visits
     } #years
     
@@ -33,6 +31,13 @@ model{
     a1.Vis[k] ~ dnorm(mu.vis, tau.vis)
     a2.Size[k] ~ dnorm(mu.size, tau.size)
   }
+  
+  for(i in 1:n.years){
+    for(j in 1:n.reps){
+  #missing data in the visibility column
+  vis[i,j] ~ dnorm(mu.missingvis, tau.missingvis)
+    }
+    }
   
   # Hyperpriors (community level)
   psi.mean ~ dbeta(1, 1)
