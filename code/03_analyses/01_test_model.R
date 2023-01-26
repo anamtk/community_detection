@@ -34,16 +34,18 @@ if (Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("RSTUDIO_TERM")) &&
 
 data <- readRDS(here("data_outputs",
                      "model_inputs",
-                     "data_singlesite_MSOM.RDS"))
+                     "fish_data_singlesite.RDS"))
 
 # Parameters to save ------------------------------------------------------
 
 params <- c(#species-level parameters
             "eta",
             "a1.Vis",
+            'a2.Size',
             #community-level parameters
             'tau.eta',
             'sd.vis',
+            'sd.size',
             'sd.lpsi',
             'sd.lp',
             "rho")
@@ -64,7 +66,7 @@ jags <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 4000,
+                         n.iter = 40,
                          DIC = TRUE)
 
 Sys.time()

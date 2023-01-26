@@ -76,10 +76,11 @@ groups <- fish1 %>%
   complete(YEAR, MONTH) %>%
   group_by(YEAR) %>%
   arrange(MONTH) %>%
-  mutate(REP = 1:n())
+  mutate(REP = 1:n()) %>%
+  ungroup() 
 
-fish2 <- fish1 %>%
-  full_join(groups, by = c('YEAR', 'MONTH')) %>%
+fish2 <- groups %>%
+  full_join(fish1, by = c('YEAR', 'MONTH')) %>%
   #make numreic variables for year and species
   mutate(specID = as.numeric(as.factor(SP_CODE)),
          yrID = as.numeric(as.factor(YEAR))) %>%
@@ -87,40 +88,41 @@ fish2 <- fish1 %>%
   mutate(OCC = case_when(COUNT > 0~ 1,
                          COUNT == 0 ~ 0,
                          TRUE ~ NA_real_)) %>%
-  dplyr::select(-YEAR, -SP_CODE, -SITE, -TRANSECT,
-                -VIS, -COUNT, -MONTH) 
+  dplyr::select(-SITE, -TRANSECT, -COUNT) 
 
 t <- fish2 %>%
-  dplyr::select(yrID, specID, REP) %>%
-  filter(!is.na(specID)) %>%
-  complete(yrID, specID, REP)
+  dplyr::select(YEAR, yrID, specID, REP) %>%
+  group_by(YEAR, yrID) %>%
+  complete(specID, REP)
 
-fish3 <- fish2 %>%
-  full_join(t, by = c("yrID", "specID", "REP")) %>%
-  filter(!is.na(specID))
+fish3 <- t %>%
+  full_join(fish2, by = c("yrID", "specID", "REP", "YEAR")) %>%
+  filter(!is.na(specID)) %>%
+  group_by(specID) %>%
+  fill(SP_CODE, .direction = "updown") %>%
+  ungroup() %>%
+  mutate(MONTH = replace_na(MONTH, 7))
 
 #LOTS O ZEROS YO 
 #4182-268 #= 3914 0's' - 94%!!
-
 
 # Get covariates in order -------------------------------------------------
 #Visibility covariate - by year-month
 
 #408 observations have NA values for vis
-vis <- fish2 %>%
-  distinct(YEAR, MONTH, VIS) %>%
-  dplyr::select(VIS) %>%
+vis <- fish3 %>%
+  distinct(YEAR, REP, VIS) %>%
   mutate(VIS = scale(VIS)) %>%
-  as_vector()
+  pivot_wider(names_from = "REP",
+              values_from = "VIS") %>%
+  column_to_rownames(var = "YEAR") %>%
+  as.matrix()
 
 hist(vis)
 
 vis[which(is.na(vis))] # 8/82 months have NA for visibility
 
-#408/4402 #NA for visibility
-
-
-species <- unique(fish2$SP_CODE)
+species <- unique(fish3$SP_CODE)
 
 #Average sizes - by species
 sizesa <- bs %>%
@@ -150,6 +152,7 @@ nreps <- 4
 #need to convert these to numeric in the dataframe
 yr <- fish3$yrID
 spec <- fish3$specID
+rep <- fish3$REP
 
 #make a blank array
 y <- array(NA, dim = c(nspecs, nyrs, nreps))
@@ -159,24 +162,43 @@ y <- array(NA, dim = c(nspecs, nyrs, nreps))
 # sure which one - but i'm closer!
 
 for(i in 1:dim(fish3)[1]){
-  y[spec[i], yr[i], 1:4] <- as.numeric(fish3[i,4])
+  y[spec[i], yr[i], rep[i]] <- as.numeric(fish3[i,7])
 }
 
-fish2 %>%
-  filter(REP == 4) %>%
-  group_by(YEAR, REP) %>%
-  summarise(total = sum(OCC))
 
 write.csv(y, 
           here("data_outputs",
                "raw_community",
                "single_site_MSOM_matrix.csv"))
 
-z <- (y>0)*1
+
+#z matrix is year and species summed over all reps
+z <- fish3 %>% 
+  group_by(yrID, specID) %>%
+  summarise(tot_occ = sum(OCC, na.rm = T)) %>%
+  mutate(tot_occ = case_when(tot_occ > 0 ~ 1,
+                             tot_occ == 0 ~ 0,
+                             TRUE ~ NA_real_)) %>%
+  pivot_wider(names_from = 'yrID',
+              values_from = "tot_occ") %>%
+  column_to_rownames(var = "specID") %>%
+  as.matrix()
+
 z[z == 0] <- NA
 # Get covariates and list elements ----------------------------------------
 
-n.species <- ncol(y)
-n.years <- nrow(y)
+n.species <- nrow(y)
+n.years <- ncol(y)
 n.reps <- 4
 
+data <- list(y = y,
+             z = z,
+             vis = vis,
+             size = sizes,
+             n.species = n.species,
+             n.years = n.years,
+             n.reps = n.reps)
+
+saveRDS(data, here("data_outputs",
+                   "model_inputs",
+                   "fish_data_singlesite.RDS"))
