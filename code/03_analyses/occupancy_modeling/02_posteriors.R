@@ -75,9 +75,3 @@ ggplot(df_psi, aes(x = reorder(parameter, `50%`), y = `50%`)) +
   labs(y = "median occupancy probability",
        x = "species")
 
-
-# Get z matrices out ------------------------------------------------------
-
-zs <- as.data.frame(summary_list$z_sum) %>%
-  rownames_to_column(var = "parameter") %>%
-  filter(parameter != "deviance")
