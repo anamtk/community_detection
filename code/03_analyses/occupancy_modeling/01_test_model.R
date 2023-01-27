@@ -58,6 +58,8 @@ model <- here("code",
               "models",
               "test_model.R")
 
+#this model ran in 15 minutes on my desktop,
+#but will likely take longer when we add more sites
 Sys.time()
 
 jags <- jagsUI::jags(data = data,
@@ -139,16 +141,6 @@ Rhat <- jags$Rhat
 #get a summary of all the output parameters that we tracked
 summary <- jags$summary
 
-#update converged model to get z-matrix values
-z_matrix <- update(jags,
-                   parameters.to.save = c("z"),
-                   n.iter = 500)
-
-#get summary stats for that
-z_50 <- z_matrix$q50$z
-z_2.5 <- z_matrix$q2.5$z
-z_97.5 <- z_matrix$q97.5$z
-
 #update converged model to get psi values
 psi <- update(jags,
               parameters.to.save = c("psi"),
@@ -172,13 +164,28 @@ output_summaries <- list(Rhat = Rhat,
                          psi_sum = psi_sum,
                          community_sum = community_sum)
 
-z_matrices <- list(z_50 = z_50,
-                   z_2.5 = z_2.5,
-                   z_97.5 = z_97.5)
+
 
 saveRDS(output_summaries, here("data_outputs",
                                "monsoon_outputs",
                                "fish_MSOM_1_26_stats.RDS"))
+
+
+# Export the corrected 1-0 matrices ---------------------------------------
+
+#update converged model to get z-matrix values
+z_matrix <- update(jags,
+                   parameters.to.save = c("z"),
+                   n.iter = 500)
+
+#get summary stats for that
+z_50 <- z_matrix$q50$z
+z_2.5 <- z_matrix$q2.5$z
+z_97.5 <- z_matrix$q97.5$z
+
+z_matrices <- list(z_50 = z_50,
+                   z_2.5 = z_2.5,
+                   z_97.5 = z_97.5)
 
 saveRDS(z_matrices, here("data_outputs",
                          "monsoon_outputs",
