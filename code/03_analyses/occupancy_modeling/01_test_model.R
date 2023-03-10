@@ -55,6 +55,7 @@ params <- c(#species-level parameters
 
 model <- here("code", 
               "03_analyses",
+              'occupancy_modeling',
               "models",
               "test_model.R")
 
@@ -178,15 +179,19 @@ z_matrix <- update(jags,
                    parameters.to.save = c("z"),
                    n.iter = 500)
 
+saveRDS(z_matrix$samples, here("data_outputs",
+                       "community_matrices",
+                       "fish_MSOM_community_matrices.RDS"))
+
 #get summary stats for that
-z_50 <- z_matrix$q50$z
-z_2.5 <- z_matrix$q2.5$z
-z_97.5 <- z_matrix$q97.5$z
-
-z_matrices <- list(z_50 = z_50,
-                   z_2.5 = z_2.5,
-                   z_97.5 = z_97.5)
-
-saveRDS(z_matrices, here("data_outputs",
-                         "monsoon_outputs",
-                         "fish_MSOM_1_26_matrices.RDS"))
+# z_50 <- z_matrix$q50$z
+# z_2.5 <- z_matrix$q2.5$z
+# z_97.5 <- z_matrix$q97.5$z
+# 
+# z_matrices <- list(z_50 = z_50,
+#                    z_2.5 = z_2.5,
+#                    z_97.5 = z_97.5)
+# 
+# saveRDS(z_matrices, here("data_outputs",
+#                          "monsoon_outputs",
+#                          "fish_MSOM_1_26_matrices.RDS"))

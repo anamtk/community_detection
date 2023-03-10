@@ -50,7 +50,7 @@ all_z <- list(z.med = z.med,
 
 saveRDS(all_z, file = "/scratch/atm234/sbc_benthic/outputs/benthic_MSOM_1_20_zmatrix.RDS")
 
-
+saveRDS(z.model$samples, "/scratch/atm234/sbc_benthic/outputs/benthic_MSOM_1_20_zmatrices.RDS")
 # Export parameters of interest -------------------------------------------
 
 vis_posterior <- jags$sims.list$a1.Vis

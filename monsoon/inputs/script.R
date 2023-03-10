@@ -20,7 +20,7 @@ for(i in package.list){library(i, character.only = T)}
 
 
 data_list <- readRDS("/scratch/atm234/sbc_benthic/inputs/input_data.RDS")
-
+data <- readRDS(here('monsoon', 'inputs', 'input_data.RDS'))
 data <- list(y = data_list$y,
              n.species = data_list$n.species,
              n.years = data_list$n.years,
