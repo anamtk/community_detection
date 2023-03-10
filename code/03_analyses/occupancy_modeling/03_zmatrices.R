@@ -101,6 +101,6 @@ z_all4 <- z_all3 %>%
 
 # Export z matrices with metadata -----------------------------------------
 
-saveRDS(z_all4, here("data_outputs",
+write.csv(z_all4, here("data_outputs",
                 "community_matrices",
-                "fish_AQUE1_z_matrices.RDS"))
+                "fish_AQUE1_z_matrices.csv"))
