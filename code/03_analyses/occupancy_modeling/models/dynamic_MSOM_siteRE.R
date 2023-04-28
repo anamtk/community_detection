@@ -46,10 +46,13 @@ model{
 
     # Zero-centered hierarchical prior for random effects, just
     # as used in the original model (do not monitor or report these):
-    eps.b0[i] ~ dnorm(0,tau.eps.b0)
+    eps.b0[i,k] ~ dnorm(0,tau.eps.b0)
     # Compute identifiable random effects (monitor and report these,
     # if desired):
-    eps.b0.star[i] <- eps.b0[i] - mean.eps
+    eps.b0.star[i,k] <- eps.b0[i] - mean.eps
+    
+    #NEED TO UPDATE:
+    #Do zero-centered hierarchical prior for random effects on c0 and d0
   
     } #transects likelihood loop
     
