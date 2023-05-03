@@ -4,7 +4,7 @@ model{
       #year 1 true occupancy
       #year one occupancy probability is
       #based on a site-level random effects intercept
-      logit(psi1[k,i]) <- b0[k,i]#site-level random effects intercept
+      logit(psi1[k,i]) <- b0[k,SiteID[i]]#site-level random effects intercept
       
       #true occupancy is bernoulli around first-year
       #occupancy probability
@@ -16,8 +16,8 @@ model{
         # and colonization, gamma
         #persistence only applies if previous year z = 1
         # colonization only applies if previous year z = 0
-        logit(phi[k,i]) <- c0[k,i] #site-level random effects intercept
-        logit(gamma[k,i]) <- d0[k,i] #site-level random effects intercept
+        logit(phi[k,i]) <- c0[k,SiteID[i]] #site-level random effects intercept
+        logit(gamma[k,i]) <- d0[k,SiteID[i]] #site-level random effects intercept
         
         z[k,i,t] ~ dbern(z[k,i, t-1]*phi[k,i] +
                            (1- z[k,i, t-1])*gamma[k,i])
@@ -38,22 +38,32 @@ model{
       } #years detection model loop
       
       #occupancy intercept
-      b0[k,i] ~ dnorm(mu.b0, tau.b0)
+      b0[k,SiteID[i]] ~ dnorm(mu.b0, tau.b0)
       #persistence intercept
-      c0[k,i] ~ dnorm(mu.c0, tau.c0)
+      c0[k,SiteID[i]] ~ dnorm(mu.c0, tau.c0)
       #colonization intercept
-      d0[k,i] ~ dnorm(mu.d0, tau.d0)
+      d0[k,SiteID[i]] ~ dnorm(mu.d0, tau.d0)
 
     # Zero-centered hierarchical prior for random effects, just
     # as used in the original model (do not monitor or report these):
-    eps.b0[i,k] ~ dnorm(0,tau.eps.b0)
+    #initial occupancy
+    eps.b0[k, SiteID[i]] ~ dnorm(0,tau.eps.b0)
     # Compute identifiable random effects (monitor and report these,
     # if desired):
-    eps.b0.star[i,k] <- eps.b0[i] - mean.eps
+    eps.b0.star[k, SiteID[i]] <- eps.b0[k, SiteID[i]] - mean.eps.b0
+
+    #persistence
+    eps.c0[k, SiteID[i]] ~ dnorm(0,tau.eps.c0)
+    # Compute identifiable random effects (monitor and report these,
+    # if desired):
+    eps.c0.star[k, SiteID[i]] <- eps.c0[k, SiteID[i]] - mean.eps.c0
     
-    #NEED TO UPDATE:
-    #Do zero-centered hierarchical prior for random effects on c0 and d0
-  
+    #colonization
+    eps.d0[k, SiteID[i]] ~ dnorm(0,tau.eps.d0)
+    # Compute identifiable random effects (monitor and report these,
+    # if desired):
+    eps.d0.star[k, SiteID[i]] <- eps.d0[k, SiteID[i]] - mean.eps.d0
+    
     } #transects likelihood loop
     
     
@@ -75,13 +85,29 @@ model{
   #Community-level hyperpriors
   
   # Prior for non-identifiable intercept (don't monitor or report)
+  #initial occupancy
   mu.b0 ~ dnorm(0,1E-6)
   # Compute identifiable intercept (monitor and report this):
   b0.star <- mu.b0 + mean.eps.b0
   # Mean of non-identifiable random effects (required)
   mean.eps.b0 <- mean(eps.b0[])
   
+  #persistence
+  mu.c0 ~ dnorm(0,1E-6)
+  # Compute identifiable intercept (monitor and report this):
+  c0.star <- mu.c0 + mean.eps.c0
+  # Mean of non-identifiable random effects (required)
+  mean.eps.c0 <- mean(eps.c0[])
+  
+  #colonization
+  mu.d0 ~ dnorm(0,1E-6)
+  # Compute identifiable intercept (monitor and report this):
+  d0.star <- mu.d0 + mean.eps.d0
+  # Mean of non-identifiable random effects (required)
+  mean.eps.d0 <- mean(eps.d0[])
+  
 
+  #Detection intercept and slope community priors
   a0.mean ~ dbeta(1,1)
   mu.a0 <- logit(a0.mean)
   tau.a0 <- pow(sig.a0, -2)
