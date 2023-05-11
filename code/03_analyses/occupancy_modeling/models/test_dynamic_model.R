@@ -1,60 +1,72 @@
 model{
-  for(k in 1:n.species){  # Loop through species
-    #initial occupancy
-    z0[k] ~ dbern(gamma0[k])
-    logit(psi[1,k]) <- lpsi[k] + gamma[k]*z0[k]
-    z[1,k] ~ dbern(psi[1,k])
-    # Likelihood
-    for(i in 2:n.years) {
-      # Ecological model
-      logit(psi[i,k]) <- lpsi[k]+ gamma[k]*z[i-1,k]
-      z[i, k] ~ dbern(psi[i,k])
-      # Observation model
-      logit(p[i,k]) <- eta[k] + a1.Vis[k]*vis[i]
-      y[i, k] ~ dbin(p[i,k] * z[i, k], n.reps)
-    }
+  for(k in 1:n.species){
+    for(i in 1:n.transects){
+      #BIOLOGICAL MODEL
+      z[k,i,1] ~ dbern(psi1[k])
+      
+      #year 2+ true occupancy
+      for(t in 2:n.years){
+        z[k,i,t] ~ dbern(z[k,i, t-1]*phi[k] +
+                           (1- z[k,i, t-1])*gamma[k])
+      }#Year 2+ loop
+      
+      #OBSERVATION MODEL
+      
+      for(t in 1:n.years){
+        for(r in 1:n.rep[i,t]){
+          y[k,i,t,r] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
+          
+        } #reps detection loop
+      } #years detection model loop
+    }#transects likelihood loop
     
-
-    # Priors (species level)
-    # for(t in 1:n.years){
-    # psi[t,k] <- ilogit(lpsi[k])
-    # }
-    #links detection and occupancy probabilities to each other
-    #(more abundant = more observed)
+    #Species-level PRIORS
+    # Species level priors for occupancy, persistence, colonization,
+    # and detection are centered around community-level priors for each
+    # of these variables
     
-    lpsi[k] ~ dnorm(mu.lpsi, tau.lpsi)
-    mu.eta[k] <- mu.lp + rho * sd.lp/sd.lpsi * 
-      (lpsi[k] - mu.lpsi)
+    #occupancy
     
-    eta[k] ~ dnorm(mu.eta[k], tau.eta)
-    a1.Vis[k] ~ dnorm(mu.vis, tau.vis)
+    lpsi[k] ~ dnorm(mu.lpsi, tau.lpsi) 
+    psi1[k] <- ilogit(lpsi[k])
     
-    # species specific random effects
-    gamma0[k] ~ dbeta(1, 1)
-    gamma[k] ~ dnorm(mugamma, taugamma)
-
-  }
+    #persistence
+    lphi[k] ~ dnorm(mu.lphi, tau.lphi)
+    phi[k] <- ilogit(lphi[k])
+      
+    lgamma[k] ~ dnorm(mu.lgamma, tau.lgamma)
+    gamma[k] <- ilogit(lgamma[k])
+    
+    lp[k] ~ dnorm(mu.lp, tau.lp)
+    p[k] <- ilogit(lp[k])
+    
+  } #species loop
   
-  # Hyperpriors (community level)
-  psi.mean ~ dbeta(1, 1)
+  #Community-level hyperpriors
+  #All species-level priors are centered around hyperpriors for 
+  # the community for that variaable
+  
+  #initial occupancy
+  psi.mean ~ dbeta(1,1)
   mu.lpsi <- logit(psi.mean)
-  sd.lpsi ~ dunif(0, 5)
-  tau.lpsi <- 1/sd.lpsi^2
+  sd.lpsi ~ dunif(0, 10)
+  tau.lpsi <- pow(sd.lpsi, -2)
   
-  p.mean ~ dbeta(1, 1)
+  #persistence
+  phi.mean ~ dbeta(1,1)
+  mu.lphi <- logit(phi.mean)
+  sd.lphi ~ dunif(0, 10)
+  tau.lphi <- pow(sd.lphi, -2)
+  
+  #colonization
+  gamma.mean ~ dbeta(1,1)
+  mu.lgamma <- logit(gamma.mean)
+  sd.lgamma ~ dunif(0, 10)
+  tau.lgamma <- pow(sd.lgamma, -2)
+  
+  p.mean ~ dbeta(1,1)
   mu.lp <- logit(p.mean)
-  sd.lp ~ dunif(0, 5)
-  tau.lp <- 1/sd.lp^2
+  sd.lp ~ dunif(0, 10)
+  tau.lp <- pow(sd.lp, -2)
   
-  mu.vis ~ dunif(-5,5)
-  sd.vis ~ dunif(0,5)
-  tau.vis <- pow(sd.vis, -2)
-  
-  rho ~ dunif(-1, 1)
-  tau.eta <- tau.lp/(1 - rho^2)
-  
-  p_gamma ~ dbeta(1, 1)
-  mugamma <- log(p_gamma / (1 - p_gamma))
-  sigmagamma~dunif(0,10)
-  taugamma<-1/(sigmagamma*sigmagamma)
-}
+} 

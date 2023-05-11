@@ -20,35 +20,27 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-# Fix parallels -----------------------------------------------------------
-
-#hopefully the parallels issue gets fixed, but for now this if statement works
-# to set system preferences for jags to run with parallel
-if (Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("RSTUDIO_TERM")) && 
-    Sys.info()["sysname"] == "Darwin" && getRversion() >= "4.0.0") {
-  parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
-}
-
 
 # Load Data ---------------------------------------------------------------
 
 data <- readRDS(here("data_outputs",
                      "model_inputs",
-                     "fish_data_singlesite.RDS"))
+                     "fish_data_dynmultisite.RDS"))
 
 # Parameters to save ------------------------------------------------------
 
-params <- c(#species-level parameters
-            "eta",
-            "a1.Vis",
+params <- c(
+            #COMMUNITY parameters
+            'a1.Vis',
             'a2.Size',
-            #community-level parameters
-            'tau.eta',
-            'sd.vis',
-            'sd.size',
+            'psi.mean',
             'sd.lpsi',
-            'sd.lp',
-            "rho")
+            'phi.mean',
+            'sd.lphi',
+            'gamma.mean',
+            'sd.lgamma',
+            'a0.mean',
+            'sig.a0')
 
 
 # JAGS model --------------------------------------------------------------
@@ -57,19 +49,16 @@ model <- here("code",
               "03_analyses",
               'occupancy_modeling',
               "models",
-              "test_model.R")
+              "dynamic_MSOM_multisite.R")
 
-#this model ran in 15 minutes on my desktop,
-#but will likely take longer when we add more sites
 Sys.time()
-
-jags <- jagsUI::jags(data = data,
+mod <- jagsUI::jags(data = data,
                          inits = NULL,
                          model.file = model,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 60000,
+                         n.iter = 10000,
                          n.burnin = 1000,
                          DIC = TRUE)
 
@@ -77,12 +66,13 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
-mcmcplot(jags$samples)
+mcmcplot(mod$samples)
 
+gelman.diag(mod$samples, multivariate = F)
 
 # Raftery -----------------------------------------------------------------
 
-raf <- raftery.diag(jags$samples)
+raf <- raftery.diag(mod$samples)
 
 names <- rownames(raf[[1]]$resmatrix)
 ch1 <- raf[[1]]$resmatrix[,2]
@@ -134,64 +124,136 @@ burn %>%
 #792
 
 
-# Long run outputs --------------------------------------------------------
+# Update model to track turnover components -------------------------------
 
-#did they converge? only tau.eta looks funky here
-Rhat <- jags$Rhat
+theme_set(theme_bw())
 
-#get a summary of all the output parameters that we tracked
-summary <- jags$summary
+parms2 <- c("tot_turnover",
+            "gain",
+            "loss",
+            "jaccard")
 
-#update converged model to get psi values
-psi <- update(jags,
-              parameters.to.save = c("psi"),
-              n.iter = 5000)
+mod2 <- update(mod,
+               n.iter = 1500,
+               parameters.to.save = parms2)
 
-#summary of psi run
-psi_sum <- psi$summary
+community_fun <- function(mod, variable){
+  
+  q50 <- mod$q50
+  q2.5 <- mod$q2.5
+  q97.5 <- mod$q97.5
+  
+  med <- as.data.frame(get(variable, q50))  %>%
+    rownames_to_column(var = "site") %>%
+    pivot_longer(2:22,
+                 names_to = "year",
+                 values_to = "median")
 
-community_params <- update(jags,
-                           parameters.to.save = c("mu.vis",
-                                                  'sd.vis',
-                                                  'mu.size',
-                                                  'sd.size'),
-                           n.iter = 5000)
+  low <- as.data.frame(get(variable, q2.5))  %>%
+    rownames_to_column(var = "site") %>%
+    pivot_longer(2:22,
+                 names_to = "year",
+                 values_to = "lci")
 
-community_sum <- community_params$summary
+  high <- as.data.frame(get(variable, q97.5))  %>%
+    rownames_to_column(var = "site") %>%
+    pivot_longer(2:22,
+                 names_to = "year",
+                 values_to = "uci")
+
+  df <- med %>%
+    left_join(low, by = c("site", "year")) %>%
+    left_join(high, by = c("site", "year")) %>%
+    mutate(year = str_sub(year, start = 2, end = length(year))) %>%
+    mutate(year = as.numeric(year))
+
+  plot <- ggplot(df, aes(x = year, y = median, color = site)) +
+    geom_point() +
+    geom_line() +
+    geom_errorbar(aes(ymin = lci, ymax = uci))
+  
+  return(plot)
+  
+}
+
+turnp <- community_fun(mod = mod2, variable = 'tot_turnover')
+turnp <- turnp + 
+  labs(x = "Year",
+       y = "Total turnover")
+
+gainp <- community_fun(mod = mod2, variable = "gain")
+gainp <- gainp + 
+  labs(x = "Year",
+       y = "Gains")
+  
+lossp <- community_fun(mod = mod2, variable = "loss")
+lossp <- lossp + 
+  labs(x = "Year",
+       y = "Losses")
+
+jaccp <- community_fun(mod = mod2, variable = "jaccard")
+jaccp <- jaccp+ 
+  labs(x = "Year",
+       y = "Beta diversity")
+
+library(patchwork)
+
+turnp | (gainp / lossp) 
+
+turnp + jaccp
 
 
-output_summaries <- list(Rhat = Rhat,
-                         summary = summary,
-                         psi_sum = psi_sum,
-                         community_sum = community_sum)
+turnover_samps <- mod2$sims.list$tot_turnover
+gain_samps <- mod2$sims.list$gain
+loss_samps <- mod2$sims.list$loss
+beta_samps <- mod2$sims.list$jaccard
 
+n.iter <- dim(turnover_samps)[1]
+n.year <- dim(turnover_samps)[3]
 
+iterations <- as.data.frame(1:n.iter) %>%
+  rename("iteration" = "1:n.iter")
+years <- as.data.frame(1:n.year) %>%
+  rename('year' = '1:n.year')
 
-saveRDS(output_summaries, here("data_outputs",
-                               "monsoon_outputs",
-                               "fish_MSOM_1_26_stats.RDS"))
+sites <- as.data.frame(1:2) %>%
+  rename(site = '1:2')
 
+df <- iterations %>%
+  cross_join(years) %>%
+  cross_join(sites)
 
-# Export the corrected 1-0 matrices ---------------------------------------
+iter <- df$iteration
+yr <- df$year
+st <- df$site
 
-#update converged model to get z-matrix values
-z_matrix <- update(jags,
-                   parameters.to.save = c("z"),
-                   n.iter = 500)
+df$turnover <- rep(NA, nrow(df))
 
-saveRDS(z_matrix$samples, here("data_outputs",
-                       "community_matrices",
-                       "fish_MSOM_community_matrices.RDS"))
+for(i in 1:nrow(df)){
+  df$turnover[i] <- turnover_samps[iter[i], st[i], yr[i]]
+}
 
-#get summary stats for that
-# z_50 <- z_matrix$q50$z
-# z_2.5 <- z_matrix$q2.5$z
-# z_97.5 <- z_matrix$q97.5$z
-# 
-# z_matrices <- list(z_50 = z_50,
-#                    z_2.5 = z_2.5,
-#                    z_97.5 = z_97.5)
-# 
-# saveRDS(z_matrices, here("data_outputs",
-#                          "monsoon_outputs",
-#                          "fish_MSOM_1_26_matrices.RDS"))
+df$gain <- rep(NA, nrow(df))
+
+for(i in 1:nrow(df)){
+  df$gain[i] <- gain_samps[iter[i], st[i], yr[i]]
+}
+
+df$loss <- rep(NA, nrow(df))
+
+for(i in 1:nrow(df)){
+  df$loss[i] <- loss_samps[iter[i], st[i], yr[i]]
+}
+
+df$jaccard <- rep(NA, nrow(df))
+
+for(i in 1:nrow(df)){
+  df$jaccard[i] <- beta_samps[iter[i], st[i], yr[i]]
+}
+
+df %>%
+  mutate(year = as.factor(year),
+         site = as.factor(site)) %>%
+  ggplot(aes(x = year, y= turnover, fill = site)) +
+  geom_violin() +
+  facet_wrap(~site)
