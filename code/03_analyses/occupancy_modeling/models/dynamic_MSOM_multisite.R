@@ -166,19 +166,19 @@ model{
        #total number of species shared
        C[i,t] <- sum(c[,i,t])
 
-       #total turnover is (A+B)/(A+B+C)
-       tot_turnover[i,t] <- (A[i, t] + B[i, t])/
-         (A[i, t] + B[i, t] + C[i, t])
-       #gain is B/(A+B+C)
-       gain[i,t] <- (B[i, t])/
-         (A[i, t] + B[i, t] + C[i, t])
-       #loss is A/(A+B+C)
-       loss[i,t] <- (A[i, t])/
-         (A[i, t] + B[i, t] + C[i, t])
-
-       #Jaccard beta diversity is shared/total, so C/A+B+C
-       jaccard[i,t] <- (C[i, t])/
-         (A[i, t] + B[i, t] + C[i, t])
+       # #total turnover is (A+B)/(A+B+C)
+       # tot_turnover[i,t] <- (A[i, t] + B[i, t])/
+       #   (A[i, t] + B[i, t] + C[i, t])
+       # #gain is B/(A+B+C)
+       # gain[i,t] <- (B[i, t])/
+       #   (A[i, t] + B[i, t] + C[i, t])
+       # #loss is A/(A+B+C)
+       # loss[i,t] <- (A[i, t])/
+       #   (A[i, t] + B[i, t] + C[i, t])
+       # 
+       # #Jaccard beta diversity is shared/total, so C/A+B+C
+       # jaccard[i,t] <- (C[i, t])/
+       #   (A[i, t] + B[i, t] + C[i, t])
     }
   }
 

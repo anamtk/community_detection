@@ -28,10 +28,15 @@ fish <- read.csv(here("data_raw",
 bs <- read.csv(here("data_raw",
                     "Annual_fish_comb_20220809.csv"))
 
+
+
 # Explore fish ------------------------------------------------------------
 
 colnames(fish)
 
+colnames(bs)
+
+#ABUR, AQUE, MOHK
 
 #important variables
 # YEAR, MONTH, SITE, TRANSECT, VIS, SP_CODE,
@@ -42,7 +47,6 @@ unique(fish$AREA) #YES
 
 unique(fish$SP_CODE)
 
-
 # Clean dataset -----------------------------------------------------------
 
 #get months of resurvey to match yearly all-site survey months
@@ -51,19 +55,17 @@ unique(fish$SP_CODE)
 fish1 <- fish %>%
   #get months from yearly surveys only
   filter(MONTH %in% c(7, 8, 9, 10)) %>%
-  #select our initial test site
-  filter(SITE %in% c("MOHK", "AQUE") )%>%
   #make NA values for visibility
   mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
                          TRUE ~ VIS)) %>%
-  group_by(YEAR, SITE, MONTH, TRANSECT) %>%
+  group_by(YEAR, SITE,MONTH, TRANSECT) %>%
   #fill missing VIS values for all species on a transect-year-month
   fill(VIS, .direction = "updown") %>%
   ungroup() %>%
   #set rid of NA counts
   mutate(COUNT = case_when(COUNT == -99999 ~ NA_integer_,
                            TRUE ~ COUNT)) %>%
-  group_by(YEAR, SITE, MONTH, TRANSECT, VIS, SP_CODE) %>%
+  group_by(YEAR, SITE,  MONTH, TRANSECT, VIS, SP_CODE) %>%
   #get total count per species for all year-months
   summarise(COUNT = sum(COUNT, na.rm = T)) %>%
   #ungroup that dataset
@@ -72,7 +74,13 @@ fish1 <- fish %>%
         c("SITE", "TRANSECT"),
         sep = "_",
         remove = F)
-  
+
+fish1 %>%
+  distinct(SITE_TRANS, YEAR, VIS) %>%
+  #filter(is.na(VIS)) %>%
+  tally()
+#22 out of 243 have missing vis (9%)
+
 #there are two years with missing months from the survey
 #that we want to populate with NA values for the model
 # we also want to give repeat months 1:4 IDs so we can
@@ -292,11 +300,15 @@ n.transects <- length(unique(fish3$SITE_TRANS))
 #site x year matrix
 n.rep <- fish3 %>%
   distinct(siteID, yrID, REP) %>%
-  filter(REP == max(REP)) %>%
+  filter(REP == max(REP, na.rm = T)) %>%
+  mutate(REP = case_when(is.na(REP) ~ 1,
+                         TRUE ~ REP)) %>%
   pivot_wider(names_from = yrID,
               values_from =REP) %>%
   column_to_rownames(var = 'siteID') %>%
   as.matrix()
+
+n.rep[which(is.na(n.rep))] <- 1
 
 #make the data list
 data <- list(y = y,
@@ -332,8 +344,9 @@ matrix <- fish3 %>%
 
 #Export that matrix to a central location for all matrices
 saveRDS(matrix, here("data_outputs",
-                       "community_matrices",
-                       "fish_AQUE1_raw_matrix.RDS"))
+                     "community_matrices",
+                     "fish_AQUE1_raw_matrix.RDS"))
+
 
 
 
