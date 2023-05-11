@@ -28,8 +28,6 @@ fish <- read.csv(here("data_raw",
 bs <- read.csv(here("data_raw",
                     "Annual_fish_comb_20220809.csv"))
 
-
-
 # Explore fish ------------------------------------------------------------
 
 colnames(fish)
