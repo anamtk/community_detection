@@ -31,10 +31,18 @@ data <- readRDS(here("data_outputs",
 
 params <- c(
             #COMMUNITY parameters
-            "z",
-            'a',
-            'b',
-            'c')
+            "a1.Vis",
+            "a2.Size",
+            "psi.mean",
+            "sd.lpsi",
+            "phi.mean",
+            "sd.phi",
+            'gamma.mean',
+            'sd.lgamma',
+            'a0.mean',
+            'sd.a0')
+
+#params <- c("A", "B", "C")
 
 
 # JAGS model --------------------------------------------------------------
@@ -52,7 +60,7 @@ mod <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 400,
+                         n.iter = 1,
                          DIC = TRUE)
 
 Sys.time()
@@ -127,7 +135,7 @@ parms2 <- c("tot_turnover",
             "jaccard")
 
 mod2 <- update(mod,
-               n.iter = 1500,
+               n.iter = 335,
                parameters.to.save = parms2)
 
 community_fun <- function(mod, variable){
@@ -209,8 +217,8 @@ iterations <- as.data.frame(1:n.iter) %>%
 years <- as.data.frame(1:n.year) %>%
   rename('year' = '1:n.year')
 
-sites <- as.data.frame(1:2) %>%
-  rename(site = '1:2')
+sites <- as.data.frame(1:5) %>%
+  rename(site = '1:5')
 
 df <- iterations %>%
   cross_join(years) %>%
