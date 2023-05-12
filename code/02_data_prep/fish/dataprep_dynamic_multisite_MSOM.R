@@ -95,11 +95,10 @@ fish1 %>%
   distinct(SITE_TRANS, YEAR, VIS) %>%
   filter(is.na(VIS)) %>%
   tally()
-<<<<<<< HEAD
+
 #29 out of 1135 have missing vis (9%)
-=======
+
 #33 out of 1145 have missing vis (9%)
->>>>>>> fe98e8300ec61054a64f1589794891c25f553ad0
 
 #there are two years with missing months from the survey
 #that we want to populate with NA values for the model
@@ -194,14 +193,8 @@ fish4 <- fish3 %>%
   fill(VIS) %>%
   ungroup() %>%
   mutate(OCC = case_when(is.na(OCC) ~ 0,
-<<<<<<< HEAD
                          TRUE ~ OCC)) 
 
-=======
-                         TRUE ~ OCC))
-
-  
->>>>>>> fe98e8300ec61054a64f1589794891c25f553ad0
 
 # Get covariates in order -------------------------------------------------
 
@@ -385,11 +378,7 @@ n.rep <- fish4 %>%
                 "6", '7', '8', '9', '10',
                 '11','12','13','14','15',
                 '16','17','18','19','20',
-<<<<<<< HEAD
                 '21','22', '23') %>%
-=======
-                '21','22','23') %>%
->>>>>>> fe98e8300ec61054a64f1589794891c25f553ad0
   as.matrix()
 
 

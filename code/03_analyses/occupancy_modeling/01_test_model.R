@@ -42,11 +42,7 @@ params <- c(
             'a0.mean',
             'sd.a0')
 
-<<<<<<< HEAD
 #params <- c("A", "B", "C")
-=======
-params <- c("A", "B", "C")
->>>>>>> fe98e8300ec61054a64f1589794891c25f553ad0
 
 
 # JAGS model --------------------------------------------------------------
@@ -64,11 +60,8 @@ mod <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-<<<<<<< HEAD
                          n.iter = 1,
-=======
                          n.iter = 2,
->>>>>>> fe98e8300ec61054a64f1589794891c25f553ad0
                          DIC = TRUE)
 
 Sys.time()
