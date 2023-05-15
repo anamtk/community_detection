@@ -402,7 +402,21 @@ saveRDS(data, here("data_outputs",
                    "fish_data_dynmultisite.RDS"))
 
 
+
+# Export metadata for post summaries --------------------------------------
+
+fish5 <- fish4 %>%
+  ungroup() %>%
+  distinct(SITE_TRANS, YEAR, siteID, yrID)
+
+write.csv(fish5, here("data_outputs",
+                      "metadata",
+                      "site_year_IDs.csv"),
+          row.names = F)
+
 # Raw community matrix ----------------------------------------------------
+
+
 
 #for downstream analyses, we also want the 1-0 matrix for 
 # occupancy of speciesxyear - which we can generate and export
