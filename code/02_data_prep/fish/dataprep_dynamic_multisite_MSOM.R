@@ -348,6 +348,7 @@ n.species <- nrow(y)
 n.years <- length(unique(fish4$yrID))
 n.transects <- length(unique(fish4$SITE_TRANS))
 
+
 n.start <- fish4 %>%
   distinct(siteID, yrID) %>%
   group_by(siteID) %>%
@@ -356,6 +357,8 @@ n.start <- fish4 %>%
   ungroup() %>%
   dplyr::select(yrID) %>%
   as_vector()
+
+
 
 n.end <- fish4 %>%
   distinct(siteID, yrID) %>%
