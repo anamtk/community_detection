@@ -417,6 +417,15 @@ write.csv(fish5, here("data_outputs",
                       "site_year_IDs.csv"),
           row.names = F)
 
+fish6 <- fish4 %>%
+  ungroup() %>%
+  distinct(SP_CODE, specID)
+
+write.csv(fish6, here("data_outputs",
+                      "metadata",
+                      "species_IDs.csv"),
+          row.names = F)
+
 # Raw community matrix ----------------------------------------------------
 
 

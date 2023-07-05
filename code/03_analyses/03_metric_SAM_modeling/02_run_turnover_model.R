@@ -6,7 +6,8 @@ package.list <- c("here", "tidyverse",
                   "jagsUI",
                   'rjags',
                   'mcmcplots',
-                  "coda") #mcmc output
+                  "coda",
+                  'patchwork') #mcmc output
 
 
 ## Installing them if they aren't already on the computer
@@ -33,15 +34,19 @@ params <- c("b0",
             'wA',
             'wB')
 
+
+# Loss --------------------------------------------------------------------
+
+
 # JAGS model --------------------------------------------------------------
 
 model <- here("code", 
               "03_analyses",
               '03_metric_SAM_modeling',
               "jags",
-              "turnover_SAM.R")
+              "loss_SAM.R")
 
-Sys.time()
+Sys.time() #~2 minutes??
 mod <- jagsUI::jags(data = data_list,
                     inits = NULL,
                     model.file = model,
@@ -69,47 +74,52 @@ med <- as.data.frame(sum$quantiles) %>%
   dplyr::select(parameter, `2.5%`, `50%`, `97.5%`) %>%
   filter(parameter != "deviance")
 
-theme_set(theme_bw())
-med %>%
-  filter(parameter %in% c("b[1]", "b[2]", "b[3]")) %>%
-  mutate(beta = case_when(parameter == "b[1]" ~ "Year",
-                          parameter == "b[2]" ~ "Kelp Biomass",
-                          parameter == "b[3]" ~ "Temperature")) %>%
-  ggplot(aes(x = beta, y = `50%`)) +
-  geom_point() + 
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-  labs(x = "Variable", y = "Median and 95% BCI") +
-  geom_hline(yintercept = 0, linetype = 2) +
-  coord_flip()
+write.csv(med, here("data_outputs",
+                    "SAM_outputs",
+                    "loss_SAM_summary.csv"))
 
-#higher turnover with increased kelp biomass; 
-#higher turnover with higher bottom temperatures
+# Gain model --------------------------------------------------------------
 
-med %>%
-  filter(str_detect(parameter, "wA")) %>%
-  mutate(lag = str_sub(parameter, start = -2, end = -2)) %>%
-  mutate(lag = as.numeric(lag)) %>%
-  mutate(lag = lag - 1) %>%
-  ggplot(aes(x = lag, y = `50%`)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-  geom_hline(yintercept = 1/6, linetype = 2) +
-  labs(x = "Years in past", y = "Importance weight \n (median and 95% BCI)",
-       title = "Kelp biomass lags")
+# JAGS model --------------------------------------------------------------
 
-med %>%
-  filter(str_detect(parameter, "wB")) %>%
-  mutate(lag = str_sub(parameter, start = 4, end = (nchar(parameter)-1))) %>%
-  mutate(lag = as.numeric(lag)) %>%
-  mutate(lag = lag - 1) %>%
-  mutate(lag = as.factor(lag)) %>%
-  ggplot(aes(x = lag, y = `50%`)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-  geom_hline(yintercept = 1/13, linetype = 2) +
-  labs(x = "Month", 
-       y = "Importance weight \n (median and 95% BCI)",
-       title = "Temperature lags") 
+model <- here("code", 
+              "03_analyses",
+              '03_metric_SAM_modeling',
+              "jags",
+              "gain_SAM.R")
 
-1/6
-1/13
+Sys.time()
+modg <- jagsUI::jags(data = data_list,
+                    inits = NULL,
+                    model.file = model,
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    n.iter = 4000,
+                    DIC = TRUE)
+
+Sys.time()
+
+# Check convergence -------------------------------------------------------
+
+mcmcplot(modg$samples)
+
+gelman.diag(modg$samples, multivariate = F)
+
+
+# Look at some plots ------------------------------------------------------
+
+sumg <- summary(modg$samples)
+
+medg <- as.data.frame(sumg$quantiles) %>%
+  rownames_to_column(var = "parameter") %>%
+  dplyr::select(parameter, `2.5%`, `50%`, `97.5%`) %>%
+  filter(parameter != "deviance")
+
+write.csv(medg, here("data_outputs",
+                    "SAM_outputs",
+                    "gain_SAM_summary.csv"))
+
+
+
+

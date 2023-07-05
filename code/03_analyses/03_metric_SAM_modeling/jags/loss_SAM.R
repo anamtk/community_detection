@@ -6,7 +6,7 @@ model{
     # Likelihood ###
     #-------------------------------------##
     
-      turn[i] ~ dbeta(alpha[i], beta[i])
+      loss[i] ~ dbeta(alpha[i], beta[i])
       
       alpha[i] <- mu[i] * phi
       beta[i]  <- (1-mu[i]) * phi
@@ -49,10 +49,10 @@ model{
       #-------------------------------------##
       
       #replicated data
-      turn.rep[i] ~ dbeta(alpha[i], beta[i])
+      loss.rep[i] ~ dbeta(alpha[i], beta[i])
       
       #residuals - is this still right?
-      resid[i] <- turn[i] - mu[i]
+      resid[i] <- loss[i] - mu[i]
  
   }
   

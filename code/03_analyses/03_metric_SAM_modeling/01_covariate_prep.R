@@ -1,4 +1,3 @@
-
 #Prepping environmental data for stability SAM
 #Ana Miller-ter Kuile
 #June 26, 2023
@@ -74,13 +73,52 @@ bottemp3 <- bottemp2 %>%
   ungroup()
   
 ggplot(bottemp3, aes(x = MONTH, y = TEMP_C)) +
-  geom_point()
+  geom_point(position = position_jitter(width = 0.25))
 
+#standardize:
+#whatever months have + are one season, whatever months
+#have - values are the other season
+
+bottemp3 %>%
+  mutate(TEMP_C = scale(TEMP_C)) %>%
+  group_by(MONTH) %>%
+  summarise(mean = mean(TEMP_C))
+  
 bottemp3 %>%
   group_by(MONTH) %>%
   summarise(mean = mean(TEMP_C))
+
+write.csv(bottemp3, here("data_outputs",
+                         "community_stability",
+                         "monthly_bottom_temps.csv"))
+
+
 #looks like splitting up months <15C on average
 #and >=15C might be a good call?
+
+bottemp4 <- bottemp2 %>%
+  mutate(SEASON = case_when(MONTH %in% c("12", "01", "02",
+                                         "03", "04", "05") ~ "COLD",
+                            MONTH %in% c("06", "07", "08", "09",
+                                         "10", "11") ~ "WARM")) %>%
+  group_by(SITE, YEAR, SEASON) %>%
+  summarise(sd_TEMP = sd(TEMP_C, na.rm = T),
+            TEMP_C = mean(TEMP_C, na.rm = T)) %>%
+  ungroup()
+
+ggplot(bottemp4, aes(x = SEASON, y = TEMP_C)) +
+  geom_point(position = position_jitter(width = 0.25))
+
+bottemp5 <- bottemp2 %>%
+  group_by(SITE, YEAR) %>%
+  summarise(sd_TEMP = sd(TEMP_C, na.rm = T),
+            TEMP_C = mean(TEMP_C, na.rm = T)) %>%
+  ungroup()
+
+ggplot(bottemp5, aes(x = YEAR, y = TEMP_C, color = SITE)) +
+  geom_point() +
+  geom_line(aes(group = SITE))
+
 # Get site and transect IDs -----------------------------------------------
 
 sites <- stability %>%
@@ -95,12 +133,16 @@ sitetrans <- sites$SITE_TRANS
 
 # Filter environmental to sites and transects in dataset ------------------
 
-bottemp4 <- bottemp3 %>%
+bottemp6 <- bottemp4 %>%
   filter(SITE %in% site)
 
-bottemp4 %>%
-  group_by(MONTH) %>%
+bottemp6 %>%
+  group_by(SEASON) %>%
   summarise(mean = mean(TEMP_C))
+
+write.csv(bottemp6, here("data_outputs",
+                         "community_stability",
+                         "seasonal_bottom_temps.csv"))
 
 biomass2 <- biomass %>%
   unite(c(SITE, TRANSECT),
@@ -129,35 +171,25 @@ bio_lags <- biomass2 %>%
   dplyr::select(YEAR, SITE_TRANS, SITE,
                 TRANSECT, DRY_GM2:DRY_GM2_l5)
 
-#temperatuer lags - monthly
-#going back 12 months right now
-#site, year, month, lags
+#temperatuer lags - seasonally - going back 
+#how many seasons now??? HMMM....
 
-temp_lags <- bottemp4 %>%
+temp_lags <- bottemp6 %>%
   group_by(SITE) %>%
-  arrange(SITE, YEAR, MONTH) %>%
+  arrange(SITE, YEAR, SEASON) %>%
   #this creates a column for a lag 1:12 months ago
-  do(data.frame(., setNames(shift(.$TEMP_C, 1:18), c("TEMP_C_l1",
+  do(data.frame(., setNames(shift(.$TEMP_C, 1:5), c("TEMP_C_l1",
                                                      "TEMP_C_l2", "TEMP_C_l3",
-                                                     "TEMP_C_l4", "TEMP_C_l5",
-                                                     "TEMP_C_l6", "TEMP_C_l7",
-                                                     "TEMP_C_l8", "TEMP_C_l9",
-                                                     "TEMP_C_l10", "TEMP_C_l11",
-                                                     "TEMP_C_l12", "TEMP_C_l13",
-                                                     "TEMP_C_l14", "TEMP_C_l15",
-                                                     "TEMP_C_l16", "TEMP_C_l17",
-                                                     "TEMP_C_l18")))) %>%
+                                                     "TEMP_C_l4", "TEMP_C_l5")))) %>%
   ungroup() %>%
-  dplyr::select(SITE, YEAR, MONTH,
-                TEMP_C:TEMP_C_l18)
+  dplyr::select(SITE, YEAR, SEASON,
+                TEMP_C:TEMP_C_l5)
 
-#set first month of temp lags to be 07 - since
-#this is the most common first month of survey
-#for all the sites - and to make it consistent
-#might make these more "seasonal" at some point
+#set first season of temp lags to be 
+#"WARM" since this is when all the surveys took place
 temp_lags2 <- temp_lags %>%
-  filter(MONTH == '07') %>%
-  dplyr::select(-MONTH) %>%
+  filter(SEASON == "WARM") %>%
+  dplyr::select(-SEASON) %>%
   mutate(YEAR = as.integer(YEAR))
 
 # Combine all data --------------------------------------------------------
@@ -167,86 +199,6 @@ all_data <- stability %>%
                              "SITE_TRANS")) %>%
   left_join(temp_lags2, by = c("SITE", "YEAR"))
   
-
-# Prep data for jags ------------------------------------------------------
-
-n.data <- nrow(all_data)
-
-turn <- as.vector(all_data$tot_turnover)
-
-n.transects <- length(unique(all_data$SITE_TRANS))
-
-Transect.ID <- all_data$siteID
-
-n.years <- length(unique(all_data$YEAR))
-
-Year.ID <- all_data$yearID
-
-n.sites <- length(unique(all_data$SITE))
-
-Site.ID <- all_data %>%
-  distinct(siteID, SITE) %>%
-  arrange(siteID) %>%
-  mutate(SITE = as.numeric(as.factor(SITE))) %>%
-  dplyr::select(SITE) %>%
-  as_vector()
-
-n.kelplag <- all_data %>%
-  dplyr::select(DRY_GM2:DRY_GM2_l5) %>%
-  ncol()
-
-Kelp <- all_data %>%
-  dplyr::select(SITE_TRANS, YEAR, DRY_GM2:DRY_GM2_l5) %>%
-  pivot_longer(DRY_GM2:DRY_GM2_l5,
-               names_to = 'lag',
-               values_to = 'kelp') %>%
-  mutate(kelp = scale(kelp)) %>%
-  pivot_wider(names_from = 'lag',
-              values_from = "kelp") %>%
-  dplyr::select(DRY_GM2:DRY_GM2_l5) %>%
-  as.matrix()
-
-sum(is.na(Kelp))
-sum(!is.na(Kelp))
-
-#~10% missing data
-
-n.templag <- all_data %>%
-  dplyr::select(TEMP_C:TEMP_C_l18) %>%
-  ncol()
-
-Temp <- all_data %>%
-  dplyr::select(SITE_TRANS, YEAR, TEMP_C:TEMP_C_l18) %>%
-  pivot_longer(TEMP_C:TEMP_C_l18,
-               names_to = 'lag',
-               values_to = 'temp') %>%
-  mutate(temp = scale(temp)) %>%
-  pivot_wider(names_from = 'lag',
-              values_from = "temp") %>%
-  dplyr::select(TEMP_C:TEMP_C_l18) %>%
-  as.matrix()
-
-sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
-#~12% missing data
-
-data <- list(n.data = n.data,
-             n.transects = n.transects,
-             n.sites = n.sites,
-             n.years = n.years,
-             Transect.ID = Transect.ID,
-             Year.ID = Year.ID,
-             Site.ID = Site.ID,
-             turn = turn,
-             n.kelplag = n.kelplag,
-             Kelp = Kelp,
-             n.templag = n.templag,
-             Temp = Temp)
-
-saveRDS(data, here("data_outputs",
-                   "model_inputs",
-                   "turnover_SAM",
-                   "turnover_SAM_input_data.RDS"))
-
 
 write.csv(all_data, here("data_outputs",
                         "community_stability",
