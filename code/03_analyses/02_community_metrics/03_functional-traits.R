@@ -42,6 +42,8 @@ sbc_spp_traits <- fb_tbl("species") %>%
   mutate(sci_name = paste(Genus, Species)) %>%
   filter(sci_name %in% sbc_spp)
 
+# write_rds(x = sbc_spp_traits, file = here("data_outputs", "traits", "sbc_spp_traits.RDS"))
+
 # trophic level
 sbc_spp_diet <- diet(species_list = sbc_spp)
 
