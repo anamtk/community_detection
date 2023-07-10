@@ -47,6 +47,11 @@ sbc_spp_traits <- fb_tbl("species") %>%
 # trophic level
 sbc_spp_diet <- diet(species_list = sbc_spp)
 
+# diet items
+sbc_spp_fooditems <- fooditems(species_list = sbc_spp)
+
+sbc_spp_predators <- predators(species_list = sbc_spp)
+
 # offspring information
 sbc_spp_fecundity <- fecundity(species_list = sbc_spp)
 
@@ -59,3 +64,7 @@ sbc_spp_ecology <- ecology(species_list = sbc_spp)
 # descriptions of swimming movements
 sbc_spp_swimming <- swimming(species_list = sbc_spp)
 
+# stocks: temperature data is in here
+sbc_spp_stocks <- stocks(species_list = sbc_spp)
+
+# write_rds(x = sbc_spp_stocks, file = here("data_outputs", "traits", "sbc_spp_stocks.RDS"))
