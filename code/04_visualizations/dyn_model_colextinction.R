@@ -24,6 +24,7 @@ for(i in package.list){library(i, character.only = T)}
 
 
 summaries <- readRDS(here("monsoon",
+                          "MSOM",
                           "outputs",
                           "fish_specieslevel_colext_summaries.RDS"))
 

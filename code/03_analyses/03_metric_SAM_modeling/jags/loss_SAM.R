@@ -15,7 +15,8 @@ model{
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         #b0.year[Year.ID[i]] +
         b[1]*AntKelp[i] +
-        b[2]*AntTemp[i]
+        b[2]*AntTemp[i] +
+        b[3]*AntChla[i]
       
 
       
@@ -25,8 +26,8 @@ model{
       
       #summing the antecedent values
       AntKelp[i] <- sum(KelpTemp[i,]) #summing across the total number of antecedent years
-      AntTemp[i] <- sum(TempTemp[i,]) #summing across the total num of antecedent months
-      
+      AntTemp[i] <- sum(TempTemp[i,]) #summing across the total num of antecedent seasons
+      AntChla[i] <- sum(TempChla[i,]) #summing across seasons
       
       #Generating each year's weight to sum above
       for(t in 1:n.kelplag){ #number of time steps we're going back in the past
@@ -39,9 +40,10 @@ model{
       #generating each month's weight to sum above
       for(t in 1:n.templag){ #number of time steps we're going back in the past
         TempTemp[i,t] <- Temp[i,t]*wB[t] 
-        
+        TempChla[i,t] <- Chla[i,t]*wC[t]
         #missing data
         Temp[i,t] ~ dnorm(mu.temp, tau.temp)
+        Chla[i,t] ~ dnorm(mu.chla, tau.chla)
       }
       
       #-------------------------------------## 
@@ -75,14 +77,19 @@ model{
   
   #Sum of the weights for temp lag
   sumB <- sum(deltaB[]) #all the temp weights
+  #sum of weights for the chla lag
+  sumC <- sum(deltaC[])
   #Employing "delta trick" to give vector of weights dirichlet priors
   #this is doing the dirichlet in two steps 
   #see Ogle et al. 2015 SAM model paper in Ecology Letters
   for(t in 1:n.templag){ #for the total number of lags
-    #the weights for kelp - getting the weights to sum to 1
+    #the weights for temp - getting the weights to sum to 1
     wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
     deltaB[t] ~ dgamma(1,1)
+    #the weights for chla
+    wC[t] <- deltaC[t]/sumC
+    deltaC[t] ~ dgamma(1,1)
   }
   
   #BETA PRIORS
@@ -122,7 +129,7 @@ model{
   tau.site <- 1/pow(sig.site,2)
   #tau.year <- 1/pow(sig.year, 2)
   
-  for(i in 1:2){
+  for(i in 1:3){
     b[i] ~ dnorm(0, 1E-2)
   }
   
@@ -136,5 +143,8 @@ model{
   mu.temp ~ dunif(-10, 10)
   sig.temp ~ dunif(0, 20)
   tau.temp <- pow(sig.temp, -2)
+  mu.chla ~ dunif(-10, 10)
+  sig.chla ~ dunif(0, 20)
+  tau.chla <- pow(sig.chla, -2)
   
 }

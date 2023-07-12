@@ -38,6 +38,10 @@ bottemp <- read.csv(here("data_raw",
                          "environmental",
                          "Bottom_temp_all_years_20220729.csv"))
 
+chl_a <- read.csv(here("data_outputs",
+                       "community_stability",
+                       "monthly_chla.csv"))
+
 #to get the sites and transects we need for the other 
 #two datasets
 stability <- read.csv(here("data_outputs",
@@ -115,9 +119,24 @@ bottemp5 <- bottemp2 %>%
             TEMP_C = mean(TEMP_C, na.rm = T)) %>%
   ungroup()
 
-ggplot(bottemp5, aes(x = YEAR, y = TEMP_C, color = SITE)) +
-  geom_point() +
-  geom_line(aes(group = SITE))
+ggplot(bottemp5, aes(x = YEAR, y = TEMP_C)) +
+  geom_point()
+
+
+# Get seasonal Chlorophyl_a -----------------------------------------------
+
+chl_a2 <- chl_a %>%
+  mutate(SEASON = case_when(MONTH %in% c(12, 1, 2,
+                                         3, 4, 5) ~ "COLD",
+                            MONTH %in% c(6, 7, 8, 9,
+                                         10, 11) ~ "WARM")) %>%
+  group_by(site, YEAR, SEASON) %>%
+  summarise(sd_chla = sd(chla, na.rm = T),
+            chla = mean(chla, na.rm = T)) %>%
+  ungroup()
+  
+ggplot(chl_a2, aes(x = SEASON, y = chla)) +
+  geom_point(position = position_jitter(width = 0.25))
 
 # Get site and transect IDs -----------------------------------------------
 
@@ -152,6 +171,9 @@ biomass2 <- biomass %>%
   filter(SITE_TRANS %in% sitetrans) %>%
   mutate(DRY_GM2 = case_when(DRY_GM2 == -99999 ~ NA_real_,
                              TRUE ~ DRY_GM2))
+
+chl_a2 <- chl_a2 %>%
+  filter(site %in% site)
   
 # Make Lags ---------------------------------------------------------------
 
@@ -192,12 +214,27 @@ temp_lags2 <- temp_lags %>%
   dplyr::select(-SEASON) %>%
   mutate(YEAR = as.integer(YEAR))
 
+chla_lags <- chl_a2 %>%
+  group_by(site) %>%
+  arrange(site, YEAR, SEASON) %>%
+  #this creates a column for a lag 1:12 months ago
+  do(data.frame(., setNames(shift(.$chla, 1:5), c("chla_l1",
+                                                    "chla_l2", "chla_l3",
+                                                    "chla_l4", "chla_l5")))) %>%
+  ungroup() %>%
+  dplyr::select(site, YEAR, SEASON,
+                chla:chla_l5)
+
+chla_lags2 <- chla_lags %>%
+  filter(SEASON == "WARM") %>%
+  dplyr::select(-SEASON) 
 # Combine all data --------------------------------------------------------
 
 all_data <- stability %>%
   left_join(bio_lags, by = c("YEAR",
                              "SITE_TRANS")) %>%
-  left_join(temp_lags2, by = c("SITE", "YEAR"))
+  left_join(temp_lags2, by = c("SITE", "YEAR")) %>%
+  left_join(chla_lags2, by = c("SITE" = "site", "YEAR"))
   
 
 write.csv(all_data, here("data_outputs",

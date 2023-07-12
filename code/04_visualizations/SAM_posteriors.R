@@ -35,12 +35,13 @@ medg <- read.csv(here("data_outputs",
 
 theme_set(theme_bw())
 al <- med %>%
-  filter(parameter %in% c("b[1]", "b[2]")) %>%
+  filter(parameter %in% c("b[1]", "b[2]", 'b[3]')) %>%
   mutate(beta = case_when(parameter == "b[1]" ~ "Kelp Biomass",
-                          parameter == "b[2]" ~ "Temperature")) %>%
-  ggplot(aes(x = beta, y = `50%`)) +
+                          parameter == "b[2]" ~ "Temperature",
+                          parameter == 'b[3]' ~ "Chlorophyll-A")) %>%
+  ggplot(aes(x = beta, y = X50.)) +
   geom_point() + 
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.2) +
   labs(x = "Variable", y = "Median and 95% BCI",
        title = "A. Variable coefficients") +
   geom_hline(yintercept = 0, linetype = 2) +
@@ -55,9 +56,9 @@ bl <- med %>%
   mutate(lag = as.numeric(lag)) %>%
   mutate(lag = lag - 1) %>%
   mutate(lag = as.factor(lag)) %>%
-  ggplot(aes(x = lag, y = `50%`)) +
+  ggplot(aes(x = lag, y = X50.)) +
   geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.2) +
   geom_hline(yintercept = 1/13, linetype = 2) +
   scale_x_discrete(labels = lagID) +
   labs(x = "Season", 
@@ -65,7 +66,23 @@ bl <- med %>%
        title = "B. Temperature lags")+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-al + bl +
+cl <- med %>%
+  filter(str_detect(parameter, "wC")) %>%
+  mutate(lag = str_sub(parameter, start = 4, end = (nchar(parameter)-1))) %>%
+  mutate(lag = as.numeric(lag)) %>%
+  mutate(lag = lag - 1) %>%
+  mutate(lag = as.factor(lag)) %>%
+  ggplot(aes(x = lag, y = X50.)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.2) +
+  geom_hline(yintercept = 1/13, linetype = 2) +
+  scale_x_discrete(labels = lagID) +
+  labs(x = "Season", 
+       y = "Importance weight \n (median and 95% BCI)",
+       title = "B. Chlorophyll-A lags")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+al / (bl + cl) +
   plot_annotation('Loss model')
 
 

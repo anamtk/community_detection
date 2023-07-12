@@ -29,11 +29,6 @@ data <- read.csv(here("data_outputs",
                          "community_stability",
                          "stability_metrics_with_covariates.csv"))
 
-
-clim <- read.csv(here("data_outputs",
-                      "community_stability",
-                      "stability_metrics_with_covariates.csv"))
-
 # Explore -----------------------------------------------------------------
 
 get_density <- function(x, y, ...) {
@@ -82,7 +77,18 @@ c <- ggplot(data, aes(x = YEAR, y = TEMP_C)) +
   geom_vline(xintercept = 2013.5, linetype = 2, alpha = 0.4) +
   geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4)
 
-timeseries <- a / c / b
+(timeseries1 <- a / c / b)
+
+d <- ggplot(data, aes(x = YEAR, y = chla)) +
+  geom_hline(yintercept = 16.30706, linetype = 2) +
+  geom_point() +
+  scale_x_continuous(breaks = c(2001:2023)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  +
+  geom_vline(xintercept = 2013.5, linetype = 2, alpha = 0.4) +
+  geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4)
+
+(timeseries2 <- a / d / b)
+
 
 ggplot(data, aes(x = YEAR, y = DRY_GM2)) +
   geom_hline(yintercept = 324.0753, linetype = 2) +

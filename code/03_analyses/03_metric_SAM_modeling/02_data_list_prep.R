@@ -100,6 +100,20 @@ Temp <- all_data %>%
 sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
 #~7% missing data
 
+Chla <- all_data %>%
+  dplyr::select(SITE_TRANS, YEAR, chla:chla_l5) %>%
+  pivot_longer(chla:chla_l5,
+               names_to = 'lag',
+               values_to = 'chla') %>%
+  mutate(chla = scale(chla)) %>%
+  pivot_wider(names_from = 'lag',
+              values_from = "chla") %>%
+  dplyr::select(chla:chla_l5) %>%
+  as.matrix()
+
+sum(is.na(Chla))/(sum(is.na(Chla)) + sum(!is.na(Chla)))
+#~5% missing data
+
 data <- list(n.data = n.data,
              n.transects = n.transects,
              n.sites = n.sites,
@@ -113,7 +127,8 @@ data <- list(n.data = n.data,
              n.kelplag = n.kelplag,
              Kelp = Kelp,
              n.templag = n.templag,
-             Temp = Temp)
+             Temp = Temp,
+             Chla = Chla)
 
 saveRDS(data, here("data_outputs",
                    "model_inputs",
