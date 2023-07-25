@@ -48,7 +48,8 @@ data %>%
   summarise(gain = mean(gain),
             loss = mean(loss),
             Temp = mean(TEMP_C, na.rm = T),
-            kelp = mean(DRY_GM2))
+            kelp = mean(DRY_GM2),
+            chla = mean(chla, na.rm = T))
 
 (a <- ggplot(data, aes(x = YEAR, y = gain, color = gain_d)) +
   geom_hline(yintercept = 0.153466, linetype = 2) +
@@ -69,26 +70,27 @@ b <- ggplot(data, aes(x = YEAR, y = loss, color = loss_d)) +
   geom_vline(xintercept = 2013.5, linetype = 2, alpha = 0.4) +
   geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4)
 
-c <- ggplot(data, aes(x = YEAR, y = TEMP_C)) +
+(c <- ggplot(data, aes(x = YEAR, y = TEMP_C)) +
   geom_hline(yintercept = 16.30706, linetype = 2) +
   geom_point() +
   scale_x_continuous(breaks = c(2001:2023)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  +
   geom_vline(xintercept = 2013.5, linetype = 2, alpha = 0.4) +
-  geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4)
+  geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4))
 
 (timeseries1 <- a / c / b)
 
-d <- ggplot(data, aes(x = YEAR, y = chla)) +
-  geom_hline(yintercept = 16.30706, linetype = 2) +
+(d <- ggplot(data, aes(x = YEAR, y = chla)) +
+  geom_hline(yintercept = 2.674463, linetype = 2) +
   geom_point() +
   scale_x_continuous(breaks = c(2001:2023)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  +
   geom_vline(xintercept = 2013.5, linetype = 2, alpha = 0.4) +
-  geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4)
+  geom_vline(xintercept = 2016.5, linetype = 2, alpha = 0.4))
 
 (timeseries2 <- a / d / b)
 
+c /d
 
 ggplot(data, aes(x = YEAR, y = DRY_GM2)) +
   geom_hline(yintercept = 324.0753, linetype = 2) +

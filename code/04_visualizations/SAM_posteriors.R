@@ -82,7 +82,7 @@ cl <- med %>%
        title = "B. Chlorophyll-A lags")+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-al / (bl + cl) +
+al / (bl) +
   plot_annotation('Loss model')
 
 
@@ -92,9 +92,9 @@ ag <- medg %>%
   filter(parameter %in% c("b[1]", "b[2]")) %>%
   mutate(beta = case_when(parameter == "b[1]" ~ "Kelp Biomass",
                           parameter == "b[2]" ~ "Temperature")) %>%
-  ggplot(aes(x = beta, y = `50%`)) +
+  ggplot(aes(x = beta, y = X50.)) +
   geom_point() + 
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.2) +
   labs(x = "Variable", y = "Median and 95% BCI",
        title = "A. Variable coefficients") +
   geom_hline(yintercept = 0, linetype = 2) +
@@ -107,9 +107,9 @@ bg <- medg %>%
   mutate(lag = str_sub(parameter, start = -2, end = -2)) %>%
   mutate(lag = as.numeric(lag)) %>%
   mutate(lag = lag - 1) %>%
-  ggplot(aes(x = lag, y = `50%`)) +
+  ggplot(aes(x = lag, y = X50.)) +
   geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.2) +
   geom_hline(yintercept = 1/6, linetype = 2) +
   labs(x = "Years in past", y = "Importance weight \n (median and 95% BCI)",
        title = "B. Kelp biomass lags")
@@ -120,9 +120,9 @@ cg <- medg %>%
   mutate(lag = as.numeric(lag)) %>%
   mutate(lag = lag - 1) %>%
   mutate(lag = as.factor(lag)) %>%
-  ggplot(aes(x = lag, y = `50%`)) +
+  ggplot(aes(x = lag, y = X50.)) +
   geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.2) +
   geom_hline(yintercept = 1/13, linetype = 2) +
   scale_x_discrete(labels = lagID) +
   labs(x = "Season", 
@@ -132,3 +132,5 @@ cg <- medg %>%
 
 ag / (bg + cg) +
   plot_annotation('Gain model')
+
+#maybe do 3 years of kelp
