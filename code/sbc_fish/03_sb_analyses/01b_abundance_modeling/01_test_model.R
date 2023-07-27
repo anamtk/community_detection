@@ -31,8 +31,10 @@ data <- readRDS(here("data_outputs",
 
 params <- c(
             #COMMUNITY parameters
-            "a1.Vis",
-            "a2.Size",
+            'a1.Vis',
+            'a2.Size',
+            'lambda.mean',
+            'sig.lambda',
             'a0.mean',
             'sig.a0')
 
@@ -55,7 +57,7 @@ mod <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 4000,
+                         n.iter = 1,
                          DIC = TRUE)
 
 Sys.time()
