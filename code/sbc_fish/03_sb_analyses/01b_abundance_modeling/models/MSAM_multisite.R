@@ -87,11 +87,14 @@ model{
       }
       #for all years 2 onward:
       #total number of shared individuals across time periods
-      A[i,t] <- sum(a[,i,t])
+      #makign if else so it's never quite 0 and we can do division below
+      A[i,t] <- ifelse(sum(a[,i,t]) == 0, 0.00001, sum(a[,i,t]))
       #total number of individuals in only first time period
-      B[i,t] <- sum(b[,i,t])
+      #makign if else so it's never quite 0 and we can do division below
+      B[i,t] <- ifelse(sum(b[,i,t]) == 0, 0.00001, sum(b[,i,t]))
       #total number of individuals in only second time period
-      C[i,t] <- sum(c[,i,t])
+      #makign if else so it's never quite 0 and we can do division below
+      C[i,t] <- ifelse(sum(c[,i,t]) == 0, 0.00001, sum(c[,i,t]))
       
       #total bray-curtis (B+C)/(2A+B+C)
       #0 means the two sites have the same composition 
@@ -104,16 +107,16 @@ model{
       # #how much is dissimilarity shaped by
       # # individuals of one species being replaced by individuals
       # #of another species?
-      min[i,t] <- min(B[i,t], C[i,t])
-      denom[i,t] <- A[i,t] + min[i,t]
-      bray_b[i,t] <- min[i,t]/denom[i,t]
+      # min[i,t] <- min(B[i,t], C[i,t])
+      # denom[i,t] <- A[i,t] + min[i,t]
+      # bray_b[i,t] <- min[i,t]/denom[i,t]
       #bray_balanced[i,t] <- min[i,t]/(A[i,t] + min[i,t])
-      #bray_balanced[i,t] <- min(B[i,t],C[i,t])/(A[i,t] + min(B[i,t],C[i,t]))
+      bray_balanced[i,t] <- min(B[i,t],C[i,t])/(A[i,t] + min(B[i,t],C[i,t]))
       # 
       # abundance gradient:
       # #how much is dissimilarity shaped by
       # # individuals that are lost without substitution?
-      # bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
+      bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
     }
   }
   

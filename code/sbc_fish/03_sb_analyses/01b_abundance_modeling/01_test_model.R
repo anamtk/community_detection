@@ -24,6 +24,7 @@ for(i in package.list){library(i, character.only = T)}
 # Load Data ---------------------------------------------------------------
 
 data <- readRDS(here("data_outputs",
+                     "sbc_fish",
                      "model_inputs",
                      "fish_msam_dynmultisite.RDS"))
 
@@ -36,7 +37,9 @@ params <- c(
             'lambda.mean',
             'sig.lambda',
             'a0.mean',
-            'sig.a0')
+            'sig.a0',
+            'bray',
+            'bray_balanced')
 
 
 #we found ymax to set initials, since otherwise the model will hate us
@@ -45,7 +48,8 @@ inits <- function() list(N = data$ymax)
 # JAGS model --------------------------------------------------------------
 
 model <- here("code", 
-              "03_analyses",
+              "sbc_fish",
+              "03_sb_analyses",
               '01b_abundance_modeling',
               "models",
               "MSAM_multisite.R")
