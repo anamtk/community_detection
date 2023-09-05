@@ -91,6 +91,16 @@ fish1 <- fish %>%
 #NOT WORKING: CARP, AHND
 # 
 
+#some fish are never observed on transects, which in a standard
+#MSAM, I would decide to keep them in. However, with the correlation
+#structure in the model, this breaks things 
+fish1 <- fish1 %>%
+  group_by(SP_CODE) %>%
+  mutate(max = max(COUNT, na.rm =T)) %>%
+  filter(max != 0) %>%
+  ungroup()
+
+
 fish1 %>%
   distinct(SITE_TRANS, YEAR, VIS) %>%
   filter(is.na(VIS)) %>%
@@ -384,6 +394,46 @@ n.rep <- fish4 %>%
 
 n.rep[which(is.na(n.rep))] <- 1
 
+
+# Make R covariance matrix ------------------------------------------------
+
+#n.species x n.species matrix of covariance between species abundances
+#for the omega parameter prior in the multivariate normal distribution
+# this omega will be somewhat of the covariance matrix similar to a
+# JSDM 
+
+#R needs to be positive definite, so i think > 0
+
+#will take an average of abundances across all sites and years and 
+#then get the covariance matrix from that
+
+
+# t <- fish4 %>%
+#   group_by(yrID, siteID, specID) %>%
+#   summarise(COUNT = mean(COUNT, na.rm = T)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "siteID"),
+#         sep = "_") %>%
+#   dplyr::select(specID, COUNT, site_year) %>%
+#   pivot_wider(names_from = specID, 
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# 
+# R <- cor(t)
+# 
+# library(ggcorrplot)
+# 
+# ggcorrplot(cor(t), type = "lower",
+#            lab = FALSE)
+
+#trying shelby's code
+R<-diag(x=0.1, n.species, n.species)
+
+# Make data list to export ------------------------------------------------
+
+
 #make the data list
 data <- list(y = y,
              vis = vis,
@@ -395,10 +445,12 @@ data <- list(y = y,
              n.transects = n.transects,
              n.rep = n.rep,
              #for initials
-             ymax = ymax)
+             ymax = ymax,
+             R = R)
 
 #export that for using with the model
 saveRDS(data, here("data_outputs",
+                   'sbc_fish',
                    "model_inputs",
                    "fish_msam_dynmultisite.RDS"))
 
@@ -411,6 +463,7 @@ fish5 <- fish4 %>%
   distinct(SITE_TRANS, YEAR, siteID, yrID)
 
 write.csv(fish5, here("data_outputs",
+                      'sbc_fish',
                       "metadata",
                       "site_year_IDs.csv"),
           row.names = F)
@@ -420,32 +473,33 @@ fish6 <- fish4 %>%
   distinct(SP_CODE, specID)
 
 write.csv(fish6, here("data_outputs",
+                      'sbc_fish',
                       "metadata",
                       "species_IDs.csv"),
           row.names = F)
 
 # Raw community matrix ----------------------------------------------------
-
-
-
-#for downstream analyses, we also want the 1-0 matrix for 
-# occupancy of speciesxyear - which we can generate and export
-matrix <- fish4 %>%
-  group_by(YEAR, SP_CODE) %>%
-  summarise(OCC = sum(OCC, na.rm = T)) %>%
-  ungroup() %>%
-  mutate(OCC = case_when(OCC > 0 ~ 1,
-                         OCC ==0 ~ 0,
-                         TRUE ~ NA_real_)) %>%
-  pivot_wider(names_from = "YEAR",
-              values_from = "OCC") %>%
-  column_to_rownames(var = 'SP_CODE') %>%
-  as.matrix()
-
-#Export that matrix to a central location for all matrices
-saveRDS(matrix, here("data_outputs",
-                     "community_matrices",
-                     "fish_AQUE1_raw_matrix.RDS"))
+# 
+# 
+# 
+# #for downstream analyses, we also want the 1-0 matrix for 
+# # occupancy of speciesxyear - which we can generate and export
+# matrix <- fish4 %>%
+#   group_by(YEAR, SP_CODE) %>%
+#   summarise(OCC = sum(OCC, na.rm = T)) %>%
+#   ungroup() %>%
+#   mutate(OCC = case_when(OCC > 0 ~ 1,
+#                          OCC ==0 ~ 0,
+#                          TRUE ~ NA_real_)) %>%
+#   pivot_wider(names_from = "YEAR",
+#               values_from = "OCC") %>%
+#   column_to_rownames(var = 'SP_CODE') %>%
+#   as.matrix()
+# 
+# #Export that matrix to a central location for all matrices
+# saveRDS(matrix, here("data_outputs",
+#                      "community_matrices",
+#                      "fish_AQUE1_raw_matrix.RDS"))
 
 
 

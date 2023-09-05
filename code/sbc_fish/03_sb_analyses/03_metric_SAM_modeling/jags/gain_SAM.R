@@ -8,7 +8,7 @@ model{
     
     gain[i] ~ dbeta(alpha[i], beta[i])
       
-    #ASK KIONA: is var.process dependent on i??
+    #var.process is scalar but could be made dependent on site/other variables
     phi[i] <- (((1-mu[i])*mu[i])/(var.estimate[i] + var.process)-1)
     
     alpha[i] <- mu[i] * phi[i]
@@ -125,6 +125,10 @@ model{
   for(i in 1:4){
     b[i] ~ dnorm(0, 1E-2)
   }
+  
+  #PRior for overall process error
+  sig.process ~ dunif(0, 10)
+  var.process <- pow(sig.process, 2)
 
   #MISSING DATA PRIORS
   mu.kelp ~ dunif(-10, 10)

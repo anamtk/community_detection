@@ -38,8 +38,7 @@ params <- c(
             'sig.lambda',
             'a0.mean',
             'sig.a0',
-            'bray',
-            'bray_balanced')
+            'bray')
 
 
 #we found ymax to set initials, since otherwise the model will hate us
@@ -52,7 +51,7 @@ model <- here("code",
               "03_sb_analyses",
               '01b_abundance_modeling',
               "models",
-              "MSAM_multisite.R")
+              "dyn_MSAM_multisite_cov.R")
 
 Sys.time()
 mod <- jagsUI::jags(data = data,
@@ -61,7 +60,7 @@ mod <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 1,
+                         n.iter = 10,
                          DIC = TRUE)
 
 Sys.time()

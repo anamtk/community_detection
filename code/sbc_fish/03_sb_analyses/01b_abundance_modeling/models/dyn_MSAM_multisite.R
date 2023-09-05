@@ -58,7 +58,12 @@ model{
     sp.llambda[k] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
     sp.lambda[k] <- ilogit(sp.llambda[k])
     
+    lambda[k,1] ~ dnorm(sp.lambda[k], 1E-2)
     
+    #years 2+ lambda for each species
+    for(t in 2:n.years){
+      lambda[k,t] ~ dnorm(lambda[k, t-1], 1E-2)
+    }
   } #species
   
   #Species-year level priors
@@ -68,12 +73,7 @@ model{
   
   #DOUBLE CHECK WITH KIONA - THAT these should be on lambda (ilogit) scale, not the llambda scale
   #year 1 lambda for each species
-  lambda[1:n.species,1] ~ dmnorm(sp.lambda[1:n.species],omega[1:n.species,1:n.species])
 
-  #years 2+ lambda for each species
-  for(t in 2:n.years){
-    lambda[1:n.species,t] ~ dmnorm(lambda[1:n.species, t-1],omega[1:n.species,1:n.species])
-  }
   
   # lambda[1:n.species,1] ~ dmnorm.vcov(sp.lambda[1:n.species],sigma[1:n.species,1:n.species])
   # 
