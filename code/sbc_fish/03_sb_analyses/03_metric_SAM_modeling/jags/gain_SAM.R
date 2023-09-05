@@ -6,20 +6,20 @@ model{
     # Likelihood ###
     #-------------------------------------##
     
-      gain[i] ~ dbeta(alpha[i], beta[i])
+    gain[i] ~ dbeta(alpha[i], beta[i])
       
-      alpha[i] <- mu[i] * phi
-      beta[i]  <- (1-mu[i]) * phi
-    #add in: transect within site crossed with yearly
-    #random effects
+    #ASK KIONA: is var.process dependent on i??
+    phi[i] <- (((1-mu[i])*mu[i])/(var.estimate[i] + var.process)-1)
+    
+    alpha[i] <- mu[i] * phi[i]
+    beta[i] <- (1 - mu[i]) * phi[i]
+
+    #add in: transect within site 
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
-        #b0.year[Year.ID[i]] +
         b[1]*AntKelp[i] +
         b[2]*AntTemp[i] +
         b[3]*AntChla[i] +
         b[4]*AntTemp[i]*AntChla[i]
-      
-
       
       #-------------------------------------## 
       # SAM summing ###
@@ -112,15 +112,6 @@ model{
   
   b0 ~ dnorm(0, 1E-2)
   
-  #SUM TO ZERO for years
-  #for every year but the last one:
-  # for(y in 2:(n.years)){
-  #   b0.year[y] ~ dnorm( 0, tau.year)
-  # }
-  #set the last year to be the -sum of all other years so the 
-  # overall fo all year levels == 0
-  #b0.year[n.years+1] <- -sum(b0.year[2:(n.years)])
-  
   #for low # of levels, from Gellman paper - define sigma
   # as uniform and then precision in relation to this sigma
   sig.transect ~ dunif(0, 10)
@@ -134,10 +125,7 @@ model{
   for(i in 1:4){
     b[i] ~ dnorm(0, 1E-2)
   }
-  
-  #overall phi value
-  phi ~ dgamma(.1,.1)
-  
+
   #MISSING DATA PRIORS
   mu.kelp ~ dunif(-10, 10)
   sig.kelp ~ dunif(0, 20)
