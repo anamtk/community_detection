@@ -8,7 +8,8 @@
 # Load packages -----------------------------------------------------------
 
 
-package.list <- c("here", "tidyverse")
+package.list <- c("here", "tidyverse",
+                  'ggcorrplot')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -91,14 +92,13 @@ fish1 <- fish %>%
 #NOT WORKING: CARP, AHND
 # 
 
-#some fish are never observed on transects, which in a standard
-#MSAM, I would decide to keep them in. However, with the correlation
-#structure in the model, this breaks things 
-fish1 <- fish1 %>%
-  group_by(SP_CODE) %>%
-  mutate(max = max(COUNT, na.rm =T)) %>%
-  filter(max != 0) %>%
-  ungroup()
+#some fish are never observed on transects, but going to try
+#and keep them for the "possible" species in MSAM framework
+# fish1 <- fish1 %>%
+#   group_by(SP_CODE) %>%
+#   mutate(max = max(COUNT, na.rm =T)) %>%
+#   filter(max != 0) %>%
+#   ungroup()
 
 
 fish1 %>%
@@ -402,35 +402,36 @@ n.rep[which(is.na(n.rep))] <- 1
 # this omega will be somewhat of the covariance matrix similar to a
 # JSDM 
 
-#R needs to be positive definite, so i think > 0
+#R needs to be positive definite,
 
-#will take an average of abundances across all sites and years and 
-#then get the covariance matrix from that
-
-
-# t <- fish4 %>%
-#   group_by(yrID, siteID, specID) %>%
-#   summarise(COUNT = mean(COUNT, na.rm = T)) %>%
-#   ungroup() %>%
-#   unite("site_year", c("yrID", "siteID"),
-#         sep = "_") %>%
-#   dplyr::select(specID, COUNT, site_year) %>%
-#   pivot_wider(names_from = specID, 
-#               values_from = COUNT,
-#               values_fill = 0) %>%
-#   column_to_rownames(var = "site_year") %>%
-#   mutate(across(everything(), ~replace_na(.x, 0)))
-# 
-# R <- cor(t)
-# 
-# library(ggcorrplot)
-# 
-# ggcorrplot(cor(t), type = "lower",
-#            lab = FALSE)
-
-#trying shelby's code
+#trying shelby's code from Kiona/Jessica - need to ask what this means
 R<-diag(x=0.1, n.species, n.species)
 
+#omega also needs priors, which I'm going to attempt to define using
+#covariance among species abundances, we'll see how it goes
+
+t <- fish4 %>%
+  group_by(yrID, siteID, specID) %>%
+  summarise(COUNT = mean(COUNT, na.rm = T)) %>%
+  ungroup() %>%
+  unite("site_year", c("yrID", "siteID"),
+        sep = "_") %>%
+  dplyr::select(specID, COUNT, site_year) %>%
+  pivot_wider(names_from = specID,
+              values_from = COUNT,
+              values_fill = 0) %>%
+  column_to_rownames(var = "site_year") %>%
+  mutate(across(everything(), ~replace_na(.x, 0)))
+# 
+
+ggcorrplot(cor(t), type = "lower",
+           lab = FALSE)
+
+#set omega init to this - not sure if it will work with the NA values
+#or if i will need to define those as a value?? we can try it...
+omega.init <- cor(t)
+mean(omega.init, na.rm = T)
+omega.init[which(is.na(omega.init))] <- 0.04
 # Make data list to export ------------------------------------------------
 
 
@@ -446,6 +447,8 @@ data <- list(y = y,
              n.rep = n.rep,
              #for initials
              ymax = ymax,
+             omega.init = omega.init,
+             #for omega prior
              R = R)
 
 #export that for using with the model
