@@ -15,7 +15,11 @@ if(length(new.packages)) install.packages(new.packages)
 
 for(i in package.list){library(i, character.only = T)}
 
-source(here("code", "03_analyses", "community_metrics", "01_generating-list-cols.R"))
+source(here("code", 
+            'sbc_fish',
+            "03_sb_analyses",
+            "02_community_metrics",
+            "01_generating-list-cols.R"))
 
 # calculate species turnover ----------------------------------------------
 

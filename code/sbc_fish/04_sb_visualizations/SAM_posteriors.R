@@ -23,10 +23,12 @@ for(i in package.list){library(i, character.only = T)}
 # Load data ---------------------------------------------------------------
 
 med <- read.csv(here("data_outputs",
+                     'sbc_fish',
                     "SAM_outputs",
                     "loss_SAM_summary.csv"))
 
 medg <- read.csv(here("data_outputs",
+                      'sbc_fish',
                      "SAM_outputs",
                      "gain_SAM_summary.csv"))
 

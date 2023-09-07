@@ -20,6 +20,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # raw presence absence
 raw_wide <- readRDS(here("data_outputs",
+                         'sbc_fish',
                   "community_matrices",
                   "fish_AQUE1_raw_matrix.RDS")) %>% 
   t() %>% 
@@ -62,6 +63,7 @@ metadata <- raw_long %>%
 
 # z-matrix
 z <- readRDS(here("data_outputs",
+                  'sbc_fish',
                     "community_matrices",
                     "fish_AQUE1_z_matrices.RDS")) %>% 
   mutate(year = as.numeric(year))
