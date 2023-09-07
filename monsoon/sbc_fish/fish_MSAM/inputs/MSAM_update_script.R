@@ -1,8 +1,9 @@
-#Monsoon script - fish MSAM
-# Ana Miller-ter Kuile
-# July 27, 2023
+#fish MSAM update
+#Ana Miller-ter Kuile
+#September 7, 2023
 
-#this script runs the fish MSOM
+#this script updates the MSAM based on raftery of initial run
+
 
 # Load packages ---------------------------------------------------------------
 Sys.time()
@@ -23,27 +24,15 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-# Load Data ---------------------------------------------------------------
+# Load Model ---------------------------------------------------------------
 
-#load the formatted data for the JAGS model
-data <- readRDS("/scratch/atm234/sbc_fish/inputs/fish_msam_dynmultisite.RDS")
+#load the model
+mod <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model.RDS")
 
-# Compile data ------------------------------------------------------------
-data_list <- list(y = data$y,
-             vis = data$vis,
-             size = data$size,
-             n.species = data$n.species,
-             n.years = data$n.years,
-             n.start = data$n.start,
-             n.end = data$n.end,
-             n.transects = data$n.transects,
-             n.rep = data$n.rep,
-             #for initials
-             ymax = data$ymax,
-             #for covariance prior
-             R = data$R)
+
 
 # Parameters to save ------------------------------------------------------
+
 
 params <- c(
   #COMMUNITY parameters
@@ -55,30 +44,17 @@ params <- c(
   'sig.a0',
   'omega')
 
-# INits -------------------------------------------------------------------
+# Update model ------------------------------------------------------------
+#31590
 
-#we found ymax to set initials, since otherwise the model will hate us
-#also Kiona suggested setting initials for omega based on covariance, since
-#the model will struggle with this
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
-
-# JAGS model --------------------------------------------------------------
-
-mod <- jagsUI::jags(data = data_list,
-                        inits = inits,
-                        #inits = NULL,
-                        model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_cov.R',
-                        parameters.to.save = params,
-                        parallel = TRUE,
-                        n.chains = 3,
-                        n.iter = 4000,
-                        n.burnin = 100,
-                        DIC = TRUE)
+mod2 <- update(mod,
+               parameters.to.save = params,
+               n.iter = 31590,
+               parallel = T)
 
 #save as an R data object
-saveRDS(mod, 
-        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model.RDS")
+saveRDS(mod2, 
+        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_update.RDS")
 
 Sys.time()
 
@@ -86,20 +62,20 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
-mcmcplot(mod$samples,
-         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM")
+mcmcplot(mod2$samples,
+         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM/update")
 
 # Get RHat per parameter ------------------------------------------------
 
-Rhat <- mod$Rhat
+Rhat <- mod2$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat_update.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
 
 
-raf <- raftery.diag(mod$samples)
+raf <- raftery.diag(mod2$samples)
 
 names <- rownames(raf[[1]]$resmatrix)
 ch1 <- raf[[1]]$resmatrix[,2]
@@ -114,9 +90,6 @@ raf_all <- as.data.frame(cbind(names,
   pivot_longer(ch1:ch3,
                names_to = "chain",
                values_to = 'iterations') 
-
-ggplot(raf_all, aes(x = iterations/3)) +
-  geom_histogram() 
 
 raf_all %>%
   summarise(iterations_90 = quantile(iterations, 
@@ -148,6 +121,7 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 burn %>%
   summarise(max(iterations, na.rm = T))
 #792
+
 
 
 
