@@ -203,7 +203,7 @@ model{
   #     denom1[i,t] <- 2*A[i,t]+B[i,t]+C[i,t]
   #     #if all values are zero - this just keeps the eqn. from
   #     #dividing by zero
-  #     denom <- ifelse(denom1[i,t]==0,1, denom1[i,t])
+  #     denom[i,t] <- ifelse(denom1[i,t]==0,1, denom1[i,t])
   #     bray[i,t] <- num[i,t]/denom[i,t]
   #     
   #     #how much is dissimilarity shaped by
