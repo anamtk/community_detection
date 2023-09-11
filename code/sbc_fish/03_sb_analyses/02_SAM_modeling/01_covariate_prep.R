@@ -31,21 +31,27 @@ for(i in package.list){library(i, character.only = T)}
 #more biologically-relevant "seasons"?)
 
 biomass <- read.csv(here("data_raw",
+                         'sbc_fish',
                          "environmental",
                          "Annual_All_Species_Biomass_at_transect_20230201.csv"))
 
 bottemp <- read.csv(here("data_raw",
+                         'sbc_fish',
                          "environmental",
                          "Bottom_temp_all_years_20220729.csv"))
 
 chl_a <- read.csv(here("data_outputs",
-                       "community_stability",
+                       'sbc_fish',
+                       "SAM",
+                       'data_prep',
                        "monthly_chla.csv"))
 
 #to get the sites and transects we need for the other 
 #two datasets
 stability <- read.csv(here("data_outputs",
-                           "community_stability",
+                           'sbc_fish',
+                           'SAM',
+                           'data_prep',
                            "corrected_stability_metrics.csv"))
 # Biomass by Year by Site -------------------------------------------------
 
@@ -93,7 +99,9 @@ bottemp3 %>%
   summarise(mean = mean(TEMP_C))
 
 write.csv(bottemp3, here("data_outputs",
-                         "community_stability",
+                         'sbc_fish',
+                         'SAM',
+                         "data_prep",
                          "monthly_bottom_temps.csv"))
 
 
@@ -160,7 +168,9 @@ bottemp6 %>%
   summarise(mean = mean(TEMP_C))
 
 write.csv(bottemp6, here("data_outputs",
-                         "community_stability",
+                         'sbc_fish',
+                         'SAM',
+                         'data_prep',
                          "seasonal_bottom_temps.csv"))
 
 biomass2 <- biomass %>%
@@ -238,7 +248,9 @@ all_data <- stability %>%
   
 
 write.csv(all_data, here("data_outputs",
-                        "community_stability",
+                         "sbc_fish",
+                         'SAM',
+                         'data_prep',
                         "stability_metrics_with_covariates.csv"))
 
 

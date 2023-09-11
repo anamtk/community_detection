@@ -24,26 +24,17 @@ for(i in package.list){library(i, character.only = T)}
 # Load data ---------------------------------------------------------------
 
 all_data <- read.csv(here("data_outputs",
-                          "community_stability",
+                          'sbc_fish',
+                          "SAM",
+                          "data_prep",
                           "stability_metrics_with_covariates.csv"))
 
 # Prep data for jags ------------------------------------------------------
 
 n.data <- nrow(all_data)
 
-turn <- as.vector(all_data$tot_turnover)
-
-loss <- all_data %>%
-  mutate(loss = case_when(loss == 0 ~ 0.0001,
-                          TRUE ~ loss)) %>%
-  dplyr::select(loss) %>%
-  as_vector()
-
-gain <- all_data %>%
-  mutate(gain = case_when(gain == 0 ~ 0.0001,
-                          TRUE ~ gain)) %>%
-  dplyr::select(gain) %>%
-  as_vector()
+bray <- as.vector(all_data$Mean)
+var.estimate <- as.vector(all_data$SD)
 
 n.transects <- length(unique(all_data$SITE_TRANS))
 
@@ -51,7 +42,7 @@ Transect.ID <- all_data$siteID
 
 n.years <- length(unique(all_data$YEAR))
 
-Year.ID <- all_data$yearID
+Year.ID <- all_data$yrID
 
 n.sites <- length(unique(all_data$SITE))
 
@@ -121,9 +112,8 @@ data <- list(n.data = n.data,
              Transect.ID = Transect.ID,
              Year.ID = Year.ID,
              Site.ID = Site.ID,
-             turn = turn,
-             gain = gain,
-             loss = loss,
+             bray = bray,
+             var.estimate = var.estimate,
              n.kelplag = n.kelplag,
              Kelp = Kelp,
              n.templag = n.templag,
@@ -131,8 +121,9 @@ data <- list(n.data = n.data,
              Chla = Chla)
 
 saveRDS(data, here("data_outputs",
+                   'sbc_fish',
+                   'SAM',
                    "model_inputs",
-                   "turnover_SAM",
-                   "turnover_SAM_input_data.RDS"))
+                   "bray_SAM_input_data.RDS"))
 
 
