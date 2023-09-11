@@ -41,8 +41,7 @@ params <- c(
 
 
 #we found ymax to set initials, since otherwise the model will hate us
-inits <- function() list(N = data$ymax) #,
-#prior for omega shot an "invalid parent node" error - not sure why...
+inits <- function() list(N = data$ymax)#,
                          #omega = data$omega.init)
 
 # JAGS model --------------------------------------------------------------
