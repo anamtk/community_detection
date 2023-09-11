@@ -139,87 +139,87 @@ model{
   
   #BRAY-CURTIS DISSIMILARITY
   
-  for(i in 1:n.transects){
-    for(t in 1:n.start[i]+1:n.end[i]){
-      for(k in 1:n.species){
-        
-        #From the vegan package, Bray-Curtis is given as 
-        #(sumfromspeciesitoS(abs(x[i,t-1] - x[i,t])))/
-        #(sumfromspeciesitoS(x[i,t-1] + x[i,t]))
-        #where x is the number of individuals of species i in 
-        #a given timepoint (t-1 or t), the two communities we're comparing
-        
-        #species-level numerator and denominator values
-        sp.nums[k,i,t] <- abs(N[k,i,t-1] - N[k,i,t])
-        sp.denoms[k,i,t] <- N[k,i,t-1] + N[k,i,t]
-        
-      }
-      
-      #the numerator sums all of the species-level numerators
-      Num[i,t] <- sum(sp.nums[,i,t])
-      #the denominator sums all of the species-level denominators
-      Denom1[i,t] <- sum(sp.denoms[,i,t])
-      #not sure this is important anymore, but this is just 
-      #when the denominator is ==0, which would also make the 
-      #numerator equal to zero. Set it to 1 so it won't break
-      Denom[i,t] <- ifelse(Denom1[i,t] == 0, 1, Denom1[i,t])
-      
-      #then bray-curtis is just the numerator over the denominator
-      bray[i,t] <- Num[i,t]/Denom[i,t]
-      #partitioning difference:
-      #Maybe for later - but could just be good to have one 
-      #type of output per dataset as a proof of concept
-      
-      #NOTE: I double-checked this equation for bray-curtis against
-      #the frequnty used 1 - ((2C[i,j])/(S[i] + s[j])) and they
-      #get the same ansewr. The version I was using before from
-      #the partitioning paper also gives the same ansewr and could be 
-      #good if we want to partition bray into components
-     
-    }
-  }
-  
-  #IF WE WANT TO partition components of Bray:
   # for(i in 1:n.transects){
-  #   for(t in (n.start[i]+1):n.end[i]){
+  #   for(t in 1:n.start[i]+1:n.end[i]){
   #     for(k in 1:n.species){
-  #       # num individuals in both time periods per species
-  #       a[k,i,t] <- min(N[k,i,t-1], N[k,i,t])
-  #       # num individuals only in first time point
-  #       b[k,i,t] <- N[k,i,t-1] - a[k,i,t]
-  #       # num individuals only in second time point
-  #       c[k,i,t] <- N[k,i,t] - a[k,i,t]
+  #       
+  #       #From the vegan package, Bray-Curtis is given as 
+  #       #(sumfromspeciesitoS(abs(x[i,t-1] - x[i,t])))/
+  #       #(sumfromspeciesitoS(x[i,t-1] + x[i,t]))
+  #       #where x is the number of individuals of species i in 
+  #       #a given timepoint (t-1 or t), the two communities we're comparing
+  #       
+  #       #species-level numerator and denominator values
+  #       sp.nums[k,i,t] <- abs(N[k,i,t-1] - N[k,i,t])
+  #       sp.denoms[k,i,t] <- N[k,i,t-1] + N[k,i,t]
+  #       
   #     }
-  #     #for all years 2 onward:
-  #     #total number of shared individuals across time periods
-  #     A[i,t] <- sum(a[,i,t])
-  #     #total number of individuals in only first time period
-  #     B[i,t] <- sum(b[,i,t])
-  #     #total number of individuals in only second time period
-  #     C[i,t] <- sum(c[,i,t])
   #     
-  #     #total bray-curtis (B+C)/(2A+B+C)
-  #     num[i,t] <- B[i,t] + C[i,t]
-  #     denom1[i,t] <- 2*A[i,t]+B[i,t]+C[i,t]
-  #     #if all values are zero - this just keeps the eqn. from
-  #     #dividing by zero
-  #     denom[i,t] <- ifelse(denom1[i,t]==0,1, denom1[i,t])
-  #     bray[i,t] <- num[i,t]/denom[i,t]
+  #     #the numerator sums all of the species-level numerators
+  #     Num[i,t] <- sum(sp.nums[,i,t])
+  #     #the denominator sums all of the species-level denominators
+  #     Denom1[i,t] <- sum(sp.denoms[,i,t])
+  #     #not sure this is important anymore, but this is just 
+  #     #when the denominator is ==0, which would also make the 
+  #     #numerator equal to zero. Set it to 1 so it won't break
+  #     Denom[i,t] <- ifelse(Denom1[i,t] == 0, 1, Denom1[i,t])
   #     
-  #     #how much is dissimilarity shaped by
-  #     # individuals of one species being replaced by individuals
-  #     #of another species?
-  #     num.bal[i,t] <- min(B[i,t], C[i,t])
-  #     denom.bal1[i,t] <- A[i,t] + num.bal[i,t]
-  #     denom.bal[i,t] <- ifelse(denom.bal1[i,t] == 0,1, denom.bal1[i,t])
-  #     bray_balanced[i,t] <- num.bal[i,t]/denom.bal[i,t]
+  #     #then bray-curtis is just the numerator over the denominator
+  #     bray[i,t] <- Num[i,t]/Denom[i,t]
+  #     #partitioning difference:
+  #     #Maybe for later - but could just be good to have one 
+  #     #type of output per dataset as a proof of concept
   #     
-  #     #how much is dissimilarity shaped by
-  #     # individuals that are lost without substitution?
-  #     bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
+  #     #NOTE: I double-checked this equation for bray-curtis against
+  #     #the frequnty used 1 - ((2C[i,j])/(S[i] + s[j])) and they
+  #     #get the same ansewr. The version I was using before from
+  #     #the partitioning paper also gives the same ansewr and could be 
+  #     #good if we want to partition bray into components
+  #    
   #   }
   # }
-  # 
+  
+  #IF WE WANT TO partition components of Bray:
+  for(i in 1:n.transects){
+    for(t in (n.start[i]+1):n.end[i]){
+      for(k in 1:n.species){
+        # num individuals in both time periods per species
+        a[k,i,t] <- min(N[k,i,t-1], N[k,i,t])
+        # num individuals only in first time point
+        b[k,i,t] <- N[k,i,t-1] - a[k,i,t]
+        # num individuals only in second time point
+        c[k,i,t] <- N[k,i,t] - a[k,i,t]
+      }
+      #for all years 2 onward:
+      #total number of shared individuals across time periods
+      A[i,t] <- sum(a[,i,t])
+      #total number of individuals in only first time period
+      B[i,t] <- sum(b[,i,t])
+      #total number of individuals in only second time period
+      C[i,t] <- sum(c[,i,t])
+
+      #total bray-curtis (B+C)/(2A+B+C)
+      num[i,t] <- B[i,t] + C[i,t]
+      denom1[i,t] <- 2*A[i,t]+B[i,t]+C[i,t]
+      #if all values are zero - this just keeps the eqn. from
+      #dividing by zero
+      denom[i,t] <- ifelse(denom1[i,t]==0,1, denom1[i,t])
+      bray[i,t] <- num[i,t]/denom[i,t]
+
+      #how much is dissimilarity shaped by
+      # individuals of one species being replaced by individuals
+      #of another species?
+      num.bal[i,t] <- min(B[i,t], C[i,t])
+      denom.bal1[i,t] <- A[i,t] + num.bal[i,t]
+      denom.bal[i,t] <- ifelse(denom.bal1[i,t] == 0,1, denom.bal1[i,t])
+      bray_balanced[i,t] <- num.bal[i,t]/denom.bal[i,t]
+
+      #how much is dissimilarity shaped by
+      # individuals that are lost without substitution?
+      bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
+    }
+  }
+
 
   
   

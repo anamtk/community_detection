@@ -42,7 +42,8 @@ params <- c(
 
 #we found ymax to set initials, since otherwise the model will hate us
 inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
+                         omega = data$omega.init,
+                         a0.mean = 0.1)
 
 # JAGS model --------------------------------------------------------------
 
