@@ -2,7 +2,7 @@
 # Ana Miller-ter Kuile
 # July 27, 2023
 
-#this script runs the fish MSOM mcmcplots
+#this script runs the grasshopper MSAM mcmcplots
 
 # Load packages ---------------------------------------------------------------
 Sys.time()
@@ -26,12 +26,11 @@ for(i in package.list){library(i, character.only = T)}
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-model <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model.RDS")
+model <- readRDS(file ="/scratch/atm234/sev_hoppers/outputs/sev_MSAM_model.RDS")
 
 params <- c(
   #COMMUNITY parameters
-  'a1.Vis',
-  'a2.Size',
+  'a1.Rep',
   'lambda.mean',
   'sig.lambda',
   'a0.mean',
@@ -41,14 +40,14 @@ params <- c(
 # Check convergence -------------------------------------------------------
 
 mcmcplot(model$samples,
-         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM",
+         dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM",
          parms = params)
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sev_hoppers/outputs/sev_MSAM_model_Rhat.RDS")
 
 # Get Raftery diag --------------------------------------------------------
 

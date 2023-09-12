@@ -2,7 +2,7 @@
 # Ana Miller-ter Kuile
 # July 27, 2023
 
-#this script runs the fish MSOM mcmcplots
+#this script runs the bird MSAM mcmcplots
 
 # Load packages ---------------------------------------------------------------
 Sys.time()
@@ -26,11 +26,11 @@ for(i in package.list){library(i, character.only = T)}
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-model <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model.RDS")
+model <- readRDS(file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model.RDS")
 
 params <- c(
   #COMMUNITY parameters
-  'a1.Vis',
+  'a1.Effort',
   'a2.Size',
   'lambda.mean',
   'sig.lambda',
@@ -41,18 +41,18 @@ params <- c(
 # Check convergence -------------------------------------------------------
 
 mcmcplot(model$samples,
-         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM",
+         dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM",
          parms = params)
 
 # Get RHat per parameter ------------------------------------------------
 
-Rhat <- mod$Rhat
+Rhat <- model$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/konza_birds/outputs/bird_MSAM_model_Rhat.RDS")
 
 # Get Raftery diag --------------------------------------------------------
 
-raf <- raftery.diag(mod$samples)
+raf <- raftery.diag(model$samples)
 
 names <- rownames(raf[[1]]$resmatrix)
 ch1 <- raf[[1]]$resmatrix[,2]

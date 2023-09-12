@@ -32,7 +32,7 @@ model{
       for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
         # Observation model
         logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-          a1.Rep*reprod[k] #reproduction effect, not species dependent
+          a1.Rep[reprod[k]] #reproduction effect, not species dependent
         
         #abundance is binomial based on detection probability
         #and total true abundance at the site
@@ -100,8 +100,12 @@ model{
   sig.a0 ~ dunif(0, 50)
   
   #covariate means
-  a1.Rep ~ dnorm(0, 1E-2)
+  #categorical covariate of reproductive strategy:
+  for(r in 2:3){
+  a1.Rep[r] ~ dnorm(0, 1E-2)
+  }
   
+  a1.Rep[1] <- 0
   # #DERIVED PARAMETERS##
   
   #BRAY-CURTIS DISSIMILARITY
