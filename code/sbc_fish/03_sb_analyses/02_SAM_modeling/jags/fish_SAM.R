@@ -14,7 +14,7 @@ model{
     alpha[i] <- mu[i] * phi[i]
     beta[i] <- (1 - mu[i]) * phi[i]
 
-    #add in: transect within site 
+     
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         b[1]*AntKelp[i] +
         b[2]*AntTemp[i] +
