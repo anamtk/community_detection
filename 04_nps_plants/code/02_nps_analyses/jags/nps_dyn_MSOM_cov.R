@@ -14,7 +14,7 @@ model{
   
   # Right now this model has these aspects:
   ## 1. Multi-site, multi-species, multi-year
-  ## 2. Species-level presence parameter (phi) varies by year
+  ## 2. Species-level presence parameter (psi) varies by year
   ## 3. No covariates for the biological process (abundance)
   ## 4. Covariates on detection including what??? observer???
   
@@ -26,7 +26,7 @@ model{
         #Biological process model:
         #latent presence
       
-        z[k,i,t] ~ dbern(phi[k,t])
+        z[k,i,t] ~ dbern(psi[k,t])
         #presence probability is dependent on species and year
       
         #Detection model:
@@ -58,24 +58,24 @@ model{
     p[k] <- ilogit(lp[k])
     
     #to make recursive portion (below), we need to know a mean species-level
-    #phi to populate the first year of species-year phis
-    sp.lphi[k] ~ dnorm(mu.lphi, tau.lphi) #centered around community mean
-    sp.phi[k] <- ilogit(sp.lphi[k])
+    #psi to populate the first year of species-year psis
+    sp.lpsi[k] ~ dnorm(mu.lpsi, tau.lpsi) #centered around community mean
+    sp.psi[k] <- ilogit(sp.lpsi[k])
     
     
   } #species
   
   #Species-year level priors
   #Create recursive (year to year dependence) and covariance between species
-  #by centering all yearly phis by species around a mean value for each species
-  #or around the phis of the year before.
+  #by centering all yearly psis by species around a mean value for each species
+  #or around the psis of the year before.
   
-  #year 1 phi for each species
-  phi[1:n.species,1] ~ dmnorm(sp.phi[1:n.species],omega[1:n.species,1:n.species])
+  #year 1 psi for each species
+  psi[1:n.species,1] ~ dmnorm(sp.psi[1:n.species],omega[1:n.species,1:n.species])
 
   #years 2+ lambda for each species
   for(t in 2:n.years){
-    phi[1:n.species,t] ~ dmnorm(phi[1:n.species, t-1],omega[1:n.species,1:n.species])
+    psi[1:n.species,t] ~ dmnorm(psi[1:n.species, t-1],omega[1:n.species,1:n.species])
   }
   
   #Prior for covariance matrix, omega
@@ -97,10 +97,10 @@ model{
   # the community for that variaable
   
   #initial abundance
-  phi.mean ~ dbeta(1,1)
-  mu.lphi <- logit(phi.mean)
-  sig.lphi ~ dunif(0, 10)
-  tau.lphi <- pow(sig.lphi, -2)
+  psi.mean ~ dbeta(1,1)
+  mu.lpsi <- logit(psi.mean)
+  sig.lpsi ~ dunif(0, 10)
+  tau.lpsi <- pow(sig.lpsi, -2)
   
   # #Detection intercept
   # a0.mean ~ dbeta(1,1)

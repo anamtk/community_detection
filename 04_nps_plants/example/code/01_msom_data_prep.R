@@ -26,6 +26,7 @@ url <- 'http://lter.konza.ksu.edu/sites/default/files/data/CBP011.csv'
 
 dest <- here('04_nps_plants',
              'example',
+             'data_raw',
              'raw_Konza_birds.csv')
 
 download.file(url = url, destfile = dest)
@@ -33,6 +34,7 @@ download.file(url = url, destfile = dest)
 #read that data into R
 birds <- read.csv(here('04_nps_plants',
                        'example',
+                       'data_raw',
                        'Konza_birds.csv'))
 
 str(birds)
@@ -301,4 +303,6 @@ data <- list(n.species = n.species,
 
 saveRDS(data, here('04_nps_plants',
                    'example',
+                   'data_outputs',
+                   'model_inputs',
                    'JAGS_data_list.RDS'))
