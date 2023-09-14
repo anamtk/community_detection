@@ -20,8 +20,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-birds <- read.csv(here("data_raw",
-                       "konza_birds",
+birds <- read.csv(here("konza_birds",
+                       "data_raw",
                        "CBP011.csv"))
 
 str(birds)
@@ -251,8 +251,8 @@ data <- list(n.species = n.species,
 parms <- c("tot_turnover")
 
 
-model <- here("code",
-              'konza_birds',
+model <- here('konza_birds',
+              "code",
               "02_kb_analyses",
               "jags",
               "kb_dyn_MSOM.R")

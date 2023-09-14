@@ -18,12 +18,15 @@ for(i in package.list){library(i, character.only = T)}
 
 # read csv ----------------------------------------------------------------
 
-fish_species <- read_csv(here::here("data_raw", "SBCLTER_Species_List_Master_20210113.csv")) %>% 
+fish_species <- read_csv(here::here('sbc_fish',
+                                    "data_raw", 
+                                    "SBCLTER_Species_List_Master_20210113.csv")) %>% 
   clean_names() %>% 
   filter(group == "FISH")
 
 #Export that matrix to a central location for all matrices
-saveRDS(fish_species, here("data_outputs",
+saveRDS(fish_species, here('sbc_fish',
+                           "data_outputs",
                      "metadata",
                      "species_metadata.RDS"))
 

@@ -22,11 +22,13 @@ for(i in package.list){library(i, character.only = T)}
 # Load data ---------------------------------------------------------------
 
 #fish survey data
-fish <- read.csv(here("data_raw",
+fish <- read.csv(here('01_sbc_fish',
+                      "data_raw",
                       "Monthly_Fish_All_Years_20221018.csv"))
 
 #data on bdoy size distributions for species
-bs <- read.csv(here("data_raw",
+bs <- read.csv(here('01_sbc_fish',
+                    "data_raw",
                     "Annual_fish_comb_20220809.csv"))
 
 
@@ -452,8 +454,8 @@ data <- list(y = y,
              R = R)
 
 #export that for using with the model
-saveRDS(data, here("data_outputs",
-                   'sbc_fish',
+saveRDS(data, here('sbc_fish',
+                   "data_outputs",
                    "model_inputs",
                    "fish_msam_dynmultisite.RDS"))
 
@@ -465,8 +467,8 @@ fish5 <- fish4 %>%
   ungroup() %>%
   distinct(SITE_TRANS, YEAR, siteID, yrID)
 
-write.csv(fish5, here("data_outputs",
-                      'sbc_fish',
+write.csv(fish5, here('sbc_fish',
+                      "data_outputs",
                       "metadata",
                       "site_year_IDs.csv"),
           row.names = F)
@@ -475,8 +477,8 @@ fish6 <- fish4 %>%
   ungroup() %>%
   distinct(SP_CODE, specID)
 
-write.csv(fish6, here("data_outputs",
-                      'sbc_fish',
+write.csv(fish6, here('sbc_fish',
+                      "data_outputs",
                       "metadata",
                       "species_IDs.csv"),
           row.names = F)

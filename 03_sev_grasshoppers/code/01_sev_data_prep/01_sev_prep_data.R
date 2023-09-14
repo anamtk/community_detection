@@ -34,12 +34,12 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-hopper <- read.csv(here('data_raw',
-                        'sev_grasshopper',
+hopper <- read.csv(here('sev_grasshopper',
+                        'data_raw',
                         'sev106_grasshopper_counts.csv'))
 
-life <- read.csv(here('data_raw',
-                      'sev_grasshopper',
+life <- read.csv(here('sev_grasshopper',
+                      'data_raw',
                       'SEV_grasshopper_species_list2020.csv'))
 
 # Subset data -------------------------------------------------------------
@@ -271,8 +271,8 @@ data <- list(y = y,
              R = R)
 
 #export that for using with the model
-saveRDS(data, here("data_outputs",
-                   'sev_grasshopper',
+saveRDS(data, here('sev_grasshopper',
+                   "data_outputs",
                    "model_inputs",
                    "sev_msam_dynmultisite.RDS"))
 

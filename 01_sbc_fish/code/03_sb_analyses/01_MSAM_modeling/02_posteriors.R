@@ -19,7 +19,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load posterior data -----------------------------------------------------
 
-summary <- readRDS(here("monsoon",
+summary <- readRDS(here('sbc_fish',
+                        "monsoon",
                              "outputs",
                              "sum_detection_covs.RDS"))
 

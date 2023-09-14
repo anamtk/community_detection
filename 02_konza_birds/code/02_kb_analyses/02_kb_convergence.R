@@ -18,14 +18,13 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-source(here('code',
-            '00_functions',
+source(here('00_functions',
             'plot_functions.R'))
 
 # Load Data ---------------------------------------------------------------
 
-rhat <- readRDS(here('monsoon',
-                     'konza_birds',
+rhat <- readRDS(here('konza_birds',
+                     'monsoon',
                      'outputs',
                      'bird_MSAM_model_Rhat.RDS'))
 

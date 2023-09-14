@@ -23,7 +23,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-summaries <- readRDS(here("monsoon",
+summaries <- readRDS(here('sbc_fish',
+                          "monsoon",
                           "outputs",
                           "fish_community_summaries.RDS"))
 
@@ -43,8 +44,8 @@ summaries <- as.data.frame(sum$statistics) %>%
   mutate(siteID = as.numeric(siteID),
          yrID = as.numeric(yrID))
 
-ids <- read.csv(here("data_outputs",
-                     'sbc_fish',
+ids <- read.csv(here('sbc_fish',
+                     "data_outputs",
                       "metadata",
                       "site_year_IDs.csv"))
 
@@ -54,8 +55,8 @@ ids <- read.csv(here("data_outputs",
 dat2 <- summaries %>%
   left_join(ids, by = c("siteID", "yrID"))
 
-write.csv(dat2, here("data_outputs",
-                     'sbc_fish',
+write.csv(dat2, here('sbc_fish',
+                     "data_outputs",
                      'SAM',
                      "data_prep",
                      "corrected_stability_metrics.csv"))

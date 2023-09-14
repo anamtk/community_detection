@@ -25,7 +25,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load z-matrices ---------------------------------------------------------
 
-z <- readRDS(here("data_outputs",
+z <- readRDS(here('sbc_fish',
+                  "data_outputs",
                   "community_matrices",
                   "fish_MSOM_community_matrices.RDS"))
 

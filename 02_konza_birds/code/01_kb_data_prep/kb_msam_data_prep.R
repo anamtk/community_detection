@@ -21,29 +21,29 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-birds <- read.csv(here("data_raw",
-                       "konza_birds",
+birds <- read.csv(here("konza_birds",
+                       "data_raw",
                        "CBP011.csv"))
 
 str(birds)
 #for body size
 #Supplementary Data 1 here: https://figshare.com/s/b990722d72a26b5bfead
-avonet <- read.csv(here('data_raw',
-                        'konza_birds',
+avonet <- read.csv(here('konza_birds',
+                        'data_raw',
                         'AVONET_BirdLife.csv'))
 
-avonet2 <- read.csv(here('data_raw',
-                        'konza_birds',
+avonet2 <- read.csv(here('konza_birds',
+                         'data_raw',
                         'AVONET_BirdTree.csv'))
 
-avonet3 <- read.csv(here('data_raw',
-                         'konza_birds',
+avonet3 <- read.csv(here('konza_birds',
+                         'data_raw',
                          'AVONET_eBird.csv'))
 
 #to link the konza birds via codes and scientific names to the avonet data
 #from here: https://www.birdpop.org/pages/birdSpeciesCodes.php
-codes <- read.csv(here('data_raw',
-                       'konza_birds',
+codes <- read.csv(here('konza_birds',
+                       'data_raw',
                        'IBP-AOS-LIST23.csv'))
 
 # Filter out watersheds of interest ---------------------------------------
@@ -393,7 +393,7 @@ data <- list(n.species = n.species,
 
 
 #export that for using with the model
-saveRDS(data, here("data_outputs",
-                   'konza_birds',
+saveRDS(data, here('konza_birds',
+                   "data_outputs",
                    "model_inputs",
                    "bird_msam_dynmultisite.RDS"))

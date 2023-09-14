@@ -23,8 +23,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load Data ---------------------------------------------------------------
 
-data <- readRDS(here("data_outputs",
-                     'sev_grasshopper',
+data <- readRDS(here('sev_grasshopper',
+                     "data_outputs",
                      "MSAM",
                      "model_inputs",
                      "sev_msam_dynmultisite.RDS"))
@@ -46,8 +46,8 @@ inits <- function() list(N = data$ymax,
 
 # JAGS model --------------------------------------------------------------
 
-model <- here("code",
-              'sev_grasshopper',
+model <- here('sev_grasshopper',
+              "code",
               '02_sev_analyses',
               'jags',
               'sev_dyn_MSAM_cov.R')
