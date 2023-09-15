@@ -48,11 +48,10 @@ data_list <- list(y = data$y,
 
 params <- c(
             #COMMUNITY parameters
-            'a1.Rep',
+            'p.mean',
+            'sig.lp',
             'lambda.mean',
-            'sig.lambda',
-            'a0.mean',
-            'sig.a0',
+            'sig.llambda',
             'omega')
 
 # INits -------------------------------------------------------------------
@@ -88,9 +87,8 @@ Sys.time()
 
 parms <- c(
   #COMMUNITY parameters
-  'a1.Rep',
   'lambda.mean',
-  'sig.lambda',
+  'sig.llambda',
   'a0.mean',
   'sig.a0')
 

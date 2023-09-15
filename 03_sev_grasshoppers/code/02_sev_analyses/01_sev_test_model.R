@@ -23,7 +23,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load Data ---------------------------------------------------------------
 
-data <- readRDS(here('sev_grasshopper',
+data <- readRDS(here('03_sev_grasshoppers',
                      "data_outputs",
                      "MSAM",
                      "model_inputs",
@@ -33,11 +33,10 @@ data <- readRDS(here('sev_grasshopper',
 
 params <- c(
             #COMMUNITY parameters
-            'a1.Rep',
+            'p.mean',
+            'sig.lp',
             'lambda.mean',
-            'sig.lambda',
-            'a0.mean',
-            'sig.a0')
+            'sig.lambda')
 
 
 #we found ymax to set initials, since otherwise the model will hate us
@@ -46,7 +45,7 @@ inits <- function() list(N = data$ymax,
 
 # JAGS model --------------------------------------------------------------
 
-model <- here('sev_grasshopper',
+model <- here('03_sev_grasshoppers',
               "code",
               '02_sev_analyses',
               'jags',

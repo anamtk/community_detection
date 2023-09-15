@@ -138,6 +138,9 @@ hopper4 %>%
   tally()
 #SU is the highest number
 
+#for sevilleta
+#maybe consider removing categorical variable - it likely evens out given
+#that the data are collected in two seasons
 reprod <- hopper4 %>%
   mutate(LifeHistory = factor(LifeHistory, levels = c("SU", "SP", "MV"))) %>%
   mutate(LifeHistory2 = as.numeric(LifeHistory)) %>%

@@ -94,7 +94,7 @@ parms <- c(
   'a1.Effort',
   'a2.Size',
   'lambda.mean',
-  'sig.lambda',
+  'sig.llambda',
   'a0.mean',
   'sig.a0')
 

@@ -23,8 +23,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load Data ---------------------------------------------------------------
 
-data <- readRDS(here('sbc_fish',
-                     "sbc_fish",
+data <- readRDS(here('01_sbc_fish',
+                     "data_outputs",
                      'MSAM',
                      "model_inputs",
                      "fish_msam_dynmultisite.RDS"))
@@ -36,7 +36,7 @@ params <- c(
             'a1.Vis',
             'a2.Size',
             'lambda.mean',
-            'sig.lambda',
+            'sig.llambda',
             'a0.mean',
             'sig.a0')
 
@@ -44,9 +44,17 @@ params <- c(
 inits <- function() list(N = data$ymax,
                          omega = data$omega.init)
 
+inits <- function() list(N = data$ymax,
+                         omega = data$omega.init,
+                         lambda.mean = lambda.mean,
+                         a0.mean = a0.mean,
+                         sig.a0 = sig.a0,
+                         a1.Vis = a1.Vis,
+                         a2.Size = a2.Size)
+
 # JAGS model --------------------------------------------------------------
 
-model <- here("sbc_fish",
+model <- here("01_sbc_fish",
               "code", 
               "03_sb_analyses",
               '01_MSAM_modeling',
@@ -60,7 +68,7 @@ mod <- jagsUI::jags(data = data,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 1,
+                         n.iter = 2,
                          DIC = TRUE)
 
 Sys.time()

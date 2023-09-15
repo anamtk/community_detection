@@ -31,12 +31,13 @@ model{
       
       for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
         # Observation model
-        logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-          a1.Rep[reprod[k]] #reproduction effect, not species dependent
-        
-        #abundance is binomial based on detection probability
-        #and total true abundance at the site
-        y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
+        # logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
+        #   a1.Rep[reprod[k]] #reproduction effect, not species dependent
+        # 
+        # #abundance is binomial based on detection probability
+        # #and total true abundance at the site
+        # y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
+        y[k,i,t,r] ~ dbin(p[k], N[k,i,t])
       } #reps
     }# years
     }#transects
@@ -44,8 +45,10 @@ model{
     #SPECIES-LEVEL PRIORS:
 
     #Detection intercept and slopes
-    la0[k] ~ dnorm(mu.a0, tau.a0)
-    a0[k] <- ilogit(la0[k])
+    # la0[k] ~ dnorm(mu.a0, tau.a0)
+    # a0[k] <- ilogit(la0[k])
+    lp[k] ~ dnorm(mu.lp, tau.lp)
+    p[k] <- ilogit(lp[k])
     
     #to make recursive portion (below), we need to know a mean species-level
     #lambda to populate the first year of species-year lambdas
@@ -93,19 +96,24 @@ model{
   sig.llambda ~ dunif(0, 10)
   tau.llambda <- pow(sig.llambda, -2)
   
+  #Detection prior
+  p.mean ~ dbeta(1, 1)
+  mu.lp <- logit(p.mean)
+  sig.lp ~ dunif(0, 10)
+  tau.lp <- pow(sig.lp, -2)
   #Detection intercept
-  a0.mean ~ dbeta(1,1)
-  mu.a0 <- logit(a0.mean)
-  tau.a0 <- pow(sig.a0, -2)
-  sig.a0 ~ dunif(0, 50)
-  
-  #covariate means
-  #categorical covariate of reproductive strategy:
-  for(r in 2:3){
-  a1.Rep[r] ~ dnorm(0, 1E-2)
-  }
-  
-  a1.Rep[1] <- 0
+  # a0.mean ~ dbeta(1,1)
+  # mu.a0 <- logit(a0.mean)
+  # tau.a0 <- pow(sig.a0, -2)
+  # sig.a0 ~ dunif(0, 50)
+  # 
+  # #covariate means
+  # #categorical covariate of reproductive strategy:
+  # for(r in 2:3){
+  # a1.Rep[r] ~ dnorm(0, 1E-2)
+  # }
+  # 
+  # a1.Rep[1] <- 0
   # #DERIVED PARAMETERS##
   
   #BRAY-CURTIS DISSIMILARITY
