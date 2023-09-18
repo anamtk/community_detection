@@ -87,10 +87,11 @@ Sys.time()
 
 parms <- c(
   #COMMUNITY parameters
+  'p.mean',
+  'sig.lp',
   'lambda.mean',
   'sig.llambda',
-  'a0.mean',
-  'sig.a0')
+  'omega')
 
 mcmcplot(mod$samples,
          parms = parms,

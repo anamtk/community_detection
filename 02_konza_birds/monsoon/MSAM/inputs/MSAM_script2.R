@@ -15,7 +15,8 @@ Sys.time()
 package.list <- c("jagsUI", "coda",
                   'dplyr', 'stringr',
                   'magrittr', 'tidyr',
-                  'mcmcplots','ggplot2') 
+                  'mcmcplots','ggplot2',
+                  'tibble') 
 
 
 ## Installing them if they aren't already on the computer
@@ -130,6 +131,7 @@ mod2 <- jagsUI::jags(data = data_list,
                     n.chains = 3,
                     n.iter = 50000,
                     n.burnin = 1000,
+                    n.thin = 10,
                     DIC = TRUE)
 
 #save as an R data object
@@ -142,7 +144,17 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
+parms <- c(
+  #COMMUNITY parameters
+  'a1.Effort',
+  'a2.Size',
+  'lambda.mean',
+  'sig.lambda',
+  'a0.mean',
+  'sig.a0')
+
 mcmcplot(mod2$samples,
+         parms = parms,
          dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM2")
 
 # Get RHat per parameter ------------------------------------------------

@@ -15,7 +15,8 @@ Sys.time()
 package.list <- c("jagsUI", "coda",
                   'dplyr', 'stringr',
                   'magrittr', 'tidyr',
-                  'mcmcplots','ggplot2') 
+                  'mcmcplots','ggplot2',
+                  'tibble') 
 
 
 ## Installing them if they aren't already on the computer
@@ -135,6 +136,13 @@ Sys.time()
 
 
 # Check convergence -------------------------------------------------------
+
+parms <- c(
+  #COMMUNITY parameters
+  'p.mean',
+  'sig.lp',
+  'lambda.mean',
+  'sig.llambda')
 
 mcmcplot(mod2$samples,
          dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM2")
