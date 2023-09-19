@@ -142,9 +142,11 @@ parms <- c(
   'p.mean',
   'sig.lp',
   'lambda.mean',
-  'sig.llambda')
+  'sig.llambda',
+  'deviance')
 
 mcmcplot(mod2$samples,
+         parms = parms,
          dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM2")
 
 # Get RHat per parameter ------------------------------------------------

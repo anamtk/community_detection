@@ -30,7 +30,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS(file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model.RDS")
+mod <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model2.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -64,42 +64,40 @@ samp_df2 <- samp_df %>%
   dplyr::select(-chain, -iteration,
                 -deviance, -mean_dev) 
 
-#for bird model root nodes:
+#for fish model root nodes:
 #omega
 lambda.mean <- as.vector(samp_df2$lambda.mean)
 sig.llambda <- as.vector(samp_df2$sig.llambda)
 a0.mean <- as.vector(samp_df2$a0.mean)
 sig.a0 <- as.vector(samp_df2$sig.a0)
-a1.Effort <- as.vector(samp_df2$a1.Effort)
+a1.Vis <- as.vector(samp_df2$a1.Vis)
 a2.Size <- as.vector(samp_df2$a2.Size)
 
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-data <- readRDS("/scratch/atm234/konza_birds/inputs/bird_msam_dynmultisite.RDS")
+data <- readRDS("/scratch/atm234/sbc_fish/inputs/fish_msam_dynmultisite.RDS")
 
 # Compile data ------------------------------------------------------------
-data_list <- list(n.species = data$n.species,
-                  n.transects = data$n.transects,
+data_list <- list(y = data$y,
+                  vis = data$vis,
+                  size = data$size,
+                  n.species = data$n.species,
+                  n.years = data$n.years,
                   n.start = data$n.start,
                   n.end = data$n.end,
+                  n.transects = data$n.transects,
                   n.rep = data$n.rep,
-                  n.years = data$n.years,
-                  effort = data$effort,
-                  size = data$size,
-                  y = data$y,
-                  #omega prior:
-                  R = data$R,
-                  #initials
+                  #for initials
                   ymax = data$ymax,
-                  omega.init = data$omega.init)
-
+                  #for covariance prior
+                  R = data$R)
 
 # Parameters to save ------------------------------------------------------
 
 params <- c(
   #COMMUNITY parameters
-  'a1.Effort',
+  'a1.Vis',
   'a2.Size',
   'lambda.mean',
   'sig.llambda',
@@ -113,30 +111,31 @@ params <- c(
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
 inits <- function() list(N = data$ymax,
-                         lambda.mean = lambda.mean,
+                         omega = data$omega.init,
+                         lambda.mean= lambda.mean,
                          sig.llambda = sig.llambda,
                          a0.mean = a0.mean,
                          sig.a0 = sig.a0,
-                         a1.Effort = a1.Effort,
+                         a1.Vis = a1.Vis,
                          a2.Size = a2.Size)
 
 # JAGS model --------------------------------------------------------------
 
-mod2 <- jagsUI::jags(data = data_list,
+mod3 <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/konza_birds/inputs/kb_dyn_MSAM_cov.R',
+                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_cov.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 50000,
-                    n.burnin = 1000,
-                    n.thin = 10,
+                    n.iter = 80000,
+                    n.burnin = 10000,
+                    n.thin = 20,
                     DIC = TRUE)
 
 #save as an R data object
-saveRDS(mod2, 
-        file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model2.RDS")
+saveRDS(mod3, 
+        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model3.RDS")
 
 Sys.time()
 
@@ -146,7 +145,7 @@ Sys.time()
 
 parms <- c(
   #COMMUNITY parameters
-  'a1.Effort',
+  'a1.Vis',
   'a2.Size',
   'lambda.mean',
   'sig.llambda',
@@ -154,21 +153,21 @@ parms <- c(
   'sig.a0',
   'deviance')
 
-mcmcplot(mod2$samples,
+mcmcplot(mod3$samples,
          parms = parms,
-         dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM2")
+         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM3")
 
 # Get RHat per parameter ------------------------------------------------
 
-Rhat <- mod2$Rhat
+Rhat <- mod3$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/konza_birds/outputs/bird_MSAM_model_Rhat2.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat3.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
 
 
-raf <- raftery.diag(mod2$samples)
+raf <- raftery.diag(mod3$samples)
 
 names <- rownames(raf[[1]]$resmatrix)
 ch1 <- raf[[1]]$resmatrix[,2]

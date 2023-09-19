@@ -150,7 +150,8 @@ parms <- c(
   'lambda.mean',
   'sig.llambda',
   'a0.mean',
-  'sig.a0')
+  'sig.a0',
+  'deviance')
 
 mcmcplot(mod2$samples,
          parms = parms,

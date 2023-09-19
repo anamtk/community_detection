@@ -30,7 +30,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS(file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model.RDS")
+mod <- readRDS(file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model2.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -122,21 +122,21 @@ inits <- function() list(N = data$ymax,
 
 # JAGS model --------------------------------------------------------------
 
-mod2 <- jagsUI::jags(data = data_list,
+mod3 <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
                     model.file = '/scratch/atm234/konza_birds/inputs/kb_dyn_MSAM_cov.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 50000,
-                    n.burnin = 1000,
-                    n.thin = 10,
+                    n.iter = 90000,
+                    n.burnin = 10000,
+                    n.thin = 20,
                     DIC = TRUE)
 
 #save as an R data object
-saveRDS(mod2, 
-        file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model2.RDS")
+saveRDS(mod3, 
+        file ="/scratch/atm234/konza_birds/outputs/fish_MSAM_model3.RDS")
 
 Sys.time()
 
@@ -154,21 +154,21 @@ parms <- c(
   'sig.a0',
   'deviance')
 
-mcmcplot(mod2$samples,
+mcmcplot(mod3$samples,
          parms = parms,
-         dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM2")
+         dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM3")
 
 # Get RHat per parameter ------------------------------------------------
 
-Rhat <- mod2$Rhat
+Rhat <- mod3$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/konza_birds/outputs/bird_MSAM_model_Rhat2.RDS")
+saveRDS(Rhat, "/scratch/atm234/konza_birds/outputs/bird_MSAM_model_Rhat3.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
 
 
-raf <- raftery.diag(mod2$samples)
+raf <- raftery.diag(mod3$samples)
 
 names <- rownames(raf[[1]]$resmatrix)
 ch1 <- raf[[1]]$resmatrix[,2]
