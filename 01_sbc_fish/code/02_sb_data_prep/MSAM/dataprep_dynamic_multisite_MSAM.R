@@ -52,20 +52,12 @@ unique(fish$SP_CODE)
 
 # Clean dataset -----------------------------------------------------------
 
-allfsh <- bs %>%
-  filter(!(SITE == "ABUR" & TRANSECT %in% c(2) & YEAR %in% c(2002,
-                                                               2003,
-                                                               2004,
-                                                               2005))) %>%
-  dplyr::select(-QUAD, -SIDE)
-
 #get months of resurvey to match yearly all-site survey months
 # get just our practice site
 # fill visibility across a month for each site
 fish1 <- fish %>%
   #get months from yearly surveys only
   filter(MONTH %in% c(7, 8, 9, 10)) %>%
-  bind_rows(allfsh) %>%
   #make NA values for visibility
   mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
                          TRUE ~ VIS)) %>%
@@ -108,9 +100,12 @@ fish1 %>%
   filter(is.na(VIS)) %>%
   tally()
 
-#29 out of 1135 have missing vis (9%)
+fish1 %>%
+  distinct(SITE_TRANS, YEAR, VIS) %>%
+  filter(!is.na(VIS)) %>%
+  tally()
 
-#33 out of 1145 have missing vis (9%)
+#18/214 have missing vis (8%)
 
 #there are two years with missing months from the survey
 #that we want to populate with NA values for the model
@@ -130,9 +125,8 @@ groups <- fish1 %>%
 
 #combine those month IDs and missing months with the 
 #fish observation dataset
-fish2 <- groups %>%
-  full_join(fish1, by = c('SITE_TRANS', 'YEAR', 'MONTH'),
-            multiple = "all") %>%
+fish2 <- fish1 %>%
+  left_join(groups, by = c('SITE_TRANS', 'YEAR', 'MONTH')) %>%
   #make numreic variables for year and species
   mutate(specID = as.numeric(as.factor(SP_CODE)),
          yrID = as.numeric(as.factor(YEAR))) %>%
@@ -140,66 +134,19 @@ fish2 <- groups %>%
   #single site 
   dplyr::select(-SITE, -TRANSECT) 
 
-#for the replicates that don't have any data, we want
-# # to give those NA values, that's what this data pull does
-# t <- fish2 %>%
-#   #select variables of interest
-#   dplyr::select(SITE_TRANS, YEAR, yrID, specID, REP) %>%
-#   #group by the year
-#   group_by(SITE_TRANS, YEAR, yrID) %>%
-#   #make sure that the missing replicates for 2002 and 2009
-#   # get NA values for all species
-#   complete(specID, REP)
 
 #now combine that back wit hteh fisth dataset
 fish3 <- fish2 %>%
-  #full_join(fish2, by = c("SITE_TRANS", "yrID", "specID", "REP", "YEAR"),
-  #          multiple = "all") %>%
   #remove any rows where speciesID is not defined
   filter(!is.na(specID)) %>%
-  #group_by(specID) %>%
-  #fill the species code for later metadata matching
-  #fill(SP_CODE, .direction = "updown") %>%
-  #ungroup() %>%
-  #missing months were for the years where one survey
-  # wasn't completed, both years in month 7, so 
-  # we'll add in that data
-  #mutate(MONTH = replace_na(MONTH, 7)) %>%
   #get a site id that is numerical
   mutate(siteID = as.numeric(as.factor(SITE_TRANS))) %>%
   #scale visibility covaraite
   mutate(VIS = scale(VIS))  
 
 
-missing <- fish3 %>%
-  dplyr::select(specID, siteID, REP, yrID) %>%
-  mutate(specID = as.factor(specID)) %>%
-  group_by(siteID,  REP, yrID) %>%
-  complete(specID) %>%
-  ungroup() %>%
-  mutate(specID = as.numeric(specID)) %>%
-  filter(!is.na(specID))
+fish4 <- fish3 
 
-new <- missing %>% 
-  anti_join(fish3)
-
-fish4 <- fish3 %>%
-  full_join(new, by = c("siteID", "REP", "yrID", "specID")) %>%
-  group_by(siteID) %>%
-  fill(SITE_TRANS) %>%
-  ungroup() %>%
-  group_by(specID) %>%
-  fill(SP_CODE) %>%
-  ungroup() %>%
-  group_by(yrID) %>%
-  fill(YEAR) %>%
-  ungroup() %>%
-  group_by(SITE_TRANS, REP, YEAR) %>%
-  fill(MONTH) %>%
-  ungroup() %>%
-  group_by(SITE_TRANS, REP, YEAR) %>%
-  fill(VIS) %>%
-  ungroup()
 
 fish4 %>%
   filter(COUNT ==0) %>%
@@ -237,7 +184,7 @@ for(i in 1:dim(fish4)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the scaled vis data
   # for that sitexyearxreplicate combo
-  vis[site[i], yr[i], rep[i]] <- as.numeric(fish4[i,5])
+  vis[site[i], yr[i], rep[i]] <- as.numeric(fish4[i,4])
 }
 
 ### BODY SIZE covariate ###
@@ -310,7 +257,7 @@ for(i in 1:dim(fish4)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(fish4[i,7])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(fish4[i,6])
 }
 
 #generate the z-matrix of speciesxsitexyear which assumes
@@ -390,7 +337,7 @@ n.rep <- fish4 %>%
                 "6", '7', '8', '9', '10',
                 '11','12','13','14','15',
                 '16','17','18','19','20',
-                '21','22', '23') %>%
+                '21') %>%
   as.matrix()
 
 
@@ -433,7 +380,7 @@ ggcorrplot(cor(t), type = "lower",
 #or if i will need to define those as a value?? we can try it...
 omega.init <- cor(t)
 mean(omega.init, na.rm = T)
-omega.init[which(is.na(omega.init))] <- 0.04
+omega.init[which(is.na(omega.init))] <- 0.07
 # Make data list to export ------------------------------------------------
 
 
@@ -454,8 +401,9 @@ data <- list(y = y,
              R = R)
 
 #export that for using with the model
-saveRDS(data, here('sbc_fish',
+saveRDS(data, here('01_sbc_fish',
                    "data_outputs",
+                   'MSAM',
                    "model_inputs",
                    "fish_msam_dynmultisite.RDS"))
 
@@ -467,7 +415,7 @@ fish5 <- fish4 %>%
   ungroup() %>%
   distinct(SITE_TRANS, YEAR, siteID, yrID)
 
-write.csv(fish5, here('sbc_fish',
+write.csv(fish5, here('01_sbc_fish',
                       "data_outputs",
                       "metadata",
                       "site_year_IDs.csv"),
@@ -477,37 +425,56 @@ fish6 <- fish4 %>%
   ungroup() %>%
   distinct(SP_CODE, specID)
 
-write.csv(fish6, here('sbc_fish',
+write.csv(fish6, here('01_sbc_fish',
                       "data_outputs",
                       "metadata",
                       "species_IDs.csv"),
           row.names = F)
 
 # Raw community matrix ----------------------------------------------------
-# 
-# 
-# 
-# #for downstream analyses, we also want the 1-0 matrix for 
-# # occupancy of speciesxyear - which we can generate and export
-# matrix <- fish4 %>%
-#   group_by(YEAR, SP_CODE) %>%
-#   summarise(OCC = sum(OCC, na.rm = T)) %>%
-#   ungroup() %>%
-#   mutate(OCC = case_when(OCC > 0 ~ 1,
-#                          OCC ==0 ~ 0,
-#                          TRUE ~ NA_real_)) %>%
-#   pivot_wider(names_from = "YEAR",
-#               values_from = "OCC") %>%
-#   column_to_rownames(var = 'SP_CODE') %>%
-#   as.matrix()
-# 
-# #Export that matrix to a central location for all matrices
-# saveRDS(matrix, here("data_outputs",
-#                      "community_matrices",
-#                      "fish_AQUE1_raw_matrix.RDS"))
 
+#Just for visualization purposes to compare "raw" vs "corrected" bray
+#we will want to get a community matrix for one site across years
 
+#we'll do site one, and do whta folks used to do and just take the 
+#maximum number of individuals observed per species per year across
+#repeat surveys
 
+matrix <- fish4 %>%
+  filter(SITE_TRANS == "ABUR_1") %>%
+  group_by(YEAR, specID) %>%
+  summarise(COUNT = max(COUNT, na.rm = T)) %>%
+  pivot_wider(names_from = YEAR,
+              values_from = COUNT) %>%
+  column_to_rownames(var = 'specID')
 
+a <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
 
+b <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
 
+c <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+for(r in 1:nrow(matrix)){
+  for(t in 2:ncol(matrix)){
+  a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+  b[r,t] <- matrix[r,t-1] - a[r,t]
+  c[r,t] <- matrix[r,t] - a[r,t]
+  }
+}
+
+A <- colSums(a)
+B <- colSums(b)
+C <- colSums(c)
+
+bray <- (B + C)/(2*A+B+C)
+years <- 2002:2022
+
+raw_bray <- as.data.frame(cbind(raw_bray = bray,
+                                year = years))
+
+saveRDS(raw_bray, here("05_visualizations",
+                       "viz_data",
+                       "sbc_ABUR1_raw_bray.RDS"))
