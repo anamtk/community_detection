@@ -21,35 +21,35 @@ model{
   
   for(k in 1:n.species){ #loop through all species in the community
     for(i in 1:n.quads){ #loop through each transect
-      for(t in n.start[i]:n.end[i]){ #loop through the start to end year for each transect
+      for(t in n.yr[i]){ #loop through the start to end year for each transect
         
         #Biological process model:
         #latent presence
-      
-        z[k,i,t] ~ dbern(psi[k,t])
+        
+        z[k,i,t] ~ dbern(psi[k,i,t])
         #presence probability is dependent on species and year
-      
+        
         #Detection model:
         #with no covariates for detection:
         y[k,i,t] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
-         
+        
         #if we add covariates for detection, which I'll ask Megan abaout:
         #or add in cover classes here?
-      # for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
-      #   # Observation model
-      #   logit(p[k,i,t,r]) <- a0[k]  #species-level intercept
-      #   
-      #   #presence is binomial based on detection probability conditioned
-      #     #on true abundance and the total number of reps as trials 
-      #   
-      #     y[k,i,t,r] ~ dbin(p[k,i,t,r] * z[k,i,t], n.rep[i,t])
-      # } #reps
+        # for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
+        #   # Observation model
+        #   logit(p[k,i,t,r]) <- a0[k]  #species-level intercept
+        #   
+        #   #presence is binomial based on detection probability conditioned
+        #     #on true abundance and the total number of reps as trials 
+        #   
+        #     y[k,i,t,r] ~ dbin(p[k,i,t,r] * z[k,i,t], n.rep[i,t])
+        # } #reps
         
-    }# years
+      }# years
     }#transects
     
     #SPECIES-LEVEL PRIORS:
-
+    
     # #Detection intercept
     # la0[k] ~ dnorm(mu.a0, tau.a0)
     # a0[k] <- ilogit(la0[k])
@@ -65,17 +65,20 @@ model{
     
   } #species
   
-  #Species-year level priors
-  #Create recursive (year to year dependence) and covariance between species
-  #by centering all yearly psis by species around a mean value for each species
-  #or around the psis of the year before.
   
-  #year 1 psi for each species
-  psi[1:n.species,1] ~ dmnorm(sp.psi[1:n.species],omega[1:n.species,1:n.species])
-
-  #years 2+ lambda for each species
-  for(t in 2:n.years){
-    psi[1:n.species,t] ~ dmnorm(psi[1:n.species, t-1],omega[1:n.species,1:n.species])
+  for(i in 1:n.quads){
+    #Species-year level priors
+    #Create recursive (year to year dependence) and covariance between species
+    #by centering all yearly psis by species around a mean value for each species
+    #or around the psis of the year before.
+    
+    #year 1 psi for each species
+    psi[1:n.species,i,1] ~ dmnorm(sp.psi[1:n.species],omega[1:n.species,1:n.species])
+    
+    #years 2+ lambda for each species
+    for(t in 2:n.yr[i]){
+      psi[1:n.species,i,t]  ~ dmnorm(psi[1:n.species,i, t-1],omega[1:n.species,1:n.species])
+    }
   }
   
   #Prior for covariance matrix, omega
@@ -122,7 +125,7 @@ model{
   #JACCARD DISSIMILARITY
   
   for(i in 1:n.quads){
-    for(t in (n.start[i]+1):n.end[i]){
+    for(t in 2:n.yr[i]){
       for(k in 1:n.species){
         #is species k lost in site i between t and t+1?
         #if lost, value of a will be 1
@@ -157,9 +160,6 @@ model{
         (A[i, t] + B[i, t] + C[i, t])
     }
   }
-  
 
-
-  
   
 }
