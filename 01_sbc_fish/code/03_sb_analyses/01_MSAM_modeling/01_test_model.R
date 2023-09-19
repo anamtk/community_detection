@@ -41,16 +41,16 @@ params <- c(
             'sig.a0')
 
 #we found ymax to set initials, since otherwise the model will hate us
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
+inits <- function() list(N = data$ymax)#
+                         #omega = data$omega.init)
 
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init,
-                         lambda.mean = lambda.mean,
-                         a0.mean = a0.mean,
-                         sig.a0 = sig.a0,
-                         a1.Vis = a1.Vis,
-                         a2.Size = a2.Size)
+# inits <- function() list(N = data$ymax,
+#                          omega = data$omega.init,
+#                          lambda.mean = lambda.mean,
+#                          a0.mean = a0.mean,
+#                          sig.a0 = sig.a0,
+#                          a1.Vis = a1.Vis,
+#                          a2.Size = a2.Size)
 
 # JAGS model --------------------------------------------------------------
 

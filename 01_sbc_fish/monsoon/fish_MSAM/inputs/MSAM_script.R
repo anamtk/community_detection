@@ -60,8 +60,8 @@ params <- c(
 #we found ymax to set initials, since otherwise the model will hate us
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
+inits <- function() list(N = data$ymax)#,
+                         #omega = data$omega.init)
 
 # JAGS model --------------------------------------------------------------
 
