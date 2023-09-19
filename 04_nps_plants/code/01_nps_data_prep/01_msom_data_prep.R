@@ -1,12 +1,12 @@
-# Ana Miller-ter Kuile
-# July 27, 2023
-# konza bird data prep 
+# Shelby Lamm
+# September 15, 2023
+# NPS plant data prep 
 
-# this script preps a multiple sites for a dynamic occupancy model
+
+# this script preps a multiple plots for a dynamic occupancy model
 
 
 # Load packages -----------------------------------------------------------
-
 
 package.list <- c("here", "tidyverse",
                   'ggcorrplot')
@@ -21,108 +21,82 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-#Get data from the internet (don't commit this to Github, it's too big!)
-url <- 'http://lter.konza.ksu.edu/sites/default/files/data/CBP011.csv'
+#read data into R
+plants <- read.csv(here('04_nps_plants',
+                        'data_raw',
+                        'NPS_veg_data_PEFO_S.csv'))
 
-dest <- here('04_nps_plants',
-             'example',
-             'data_raw',
-             'raw_Konza_birds.csv')
-
-download.file(url = url, destfile = dest)
-
-#read that data into R
-birds <- read.csv(here('04_nps_plants',
-                       'example',
-                       'data_raw',
-                       'raw_Konza_birds.csv'))
-
-str(birds)
+str(plants)
 
 
-# Manipulate data to occupancy structure ----------------------------------
+# Manipulate data structure ----------------------------------
 
-#Data are individuals seen at different distances from a line 
-#transect. Might be worth getting some size data from AVONET for this
-#dataset, making it consistent with the fish dataset? 
+# ignoring species:
+survey <- plants %>%
+  distinct(EventYear, Plot, Transect, Quadrat, Obs_type) %>%
+  mutate(yrID = as.numeric(as.factor(EventYear))) %>%
+  group_by(Plot, Transect, Quadrat) %>%
+  mutate(quadID = cur_group_id()) %>%
+  ungroup() #%>%
+  # mutate(REP = case_when(Obs_type == "Regular" ~ 1,
+  #                        TRUE ~ 2))
 
-#need to summarise data as 1-0 for each
-#recording period in each year for each species.
-occ <- birds %>%
-  group_by(RECYEAR, RECMONTH, RECDAY, TRANSNUM,
-           WATERSHED, SPECNAME, COMMONNAME) %>%
-  summarise(total = sum(COUNT)) %>%
-  ungroup()
+# rep <- survey %>%
+#   distinct(yrID, quadID, REP)
 
-#Transect is the lowest ID, NO1B is both Transect 6 and 10
-occ %>%
-  distinct(TRANSNUM, WATERSHED)
+# when I tried to join rep with occ2, repeat and 2 did not match up 
+# (there were 2's for regular)
 
-#Get survey covariate of effort
-survey <- birds %>%
-  distinct(RECYEAR, RECMONTH, RECDAY, TRANSNUM, OBSERVER, DURATION,
-           TIME) %>%
-  filter(!is.na(DURATION)) %>%
-  mutate(DURATION = case_when(DURATION == 0 ~ NA_real_,
-                              TRUE ~ DURATION)) %>%
-  group_by(TRANSNUM, RECYEAR) %>%
-  arrange(RECMONTH) %>%
-  mutate(REP = 1:n()) %>%
-  ungroup() %>%
-  mutate(yrID = as.numeric(as.factor(RECYEAR))) %>%
-  mutate(TransID = as.numeric(as.factor(TRANSNUM)))
-
-rep <- survey %>%
-  distinct(yrID, TransID, RECMONTH, REP)
-
-occ2 <- occ %>%
-  mutate(SPECNAME = as.factor(SPECNAME)) %>%
+# including species:
+occ2 <- plants %>%
   #factor species name so we can complete it by survey interval
-  dplyr::select(-COMMONNAME) %>%
+  mutate(CurrentSpecies = as.factor(CurrentSpecies)) %>%
   #group by all the survey ID info
-  group_by(RECYEAR, RECMONTH, RECDAY, TRANSNUM, WATERSHED) %>%
+  group_by(EventYear, Plot, Transect, Quadrat) %>%
   #make sure each species is in each survey
-  complete(SPECNAME) %>%
-  #presence: 1 when there was at least one detected, 0 if none detected
-  mutate(presence = case_when(!is.na(total) ~ 1,
-                              TRUE ~ 0)) %>%
+  complete(CurrentSpecies) %>%
   ungroup() %>%
-  #get rid of "NONE" species category
-  filter(SPECNAME != "NONE") %>%
-  #remove unecessary columns
-  dplyr::select(-total) %>%
-  #re-order the factor of species now that NONE is gone
-  mutate(SPECNAME = as.factor(as.character(SPECNAME)))%>%
-  mutate(TransID = as.numeric(as.factor(TRANSNUM))) %>%
-  mutate(yrID = as.numeric(as.factor(RECYEAR))) %>%
-  mutate(SpecID = as.numeric(as.factor(SPECNAME))) %>%
-  left_join(rep, by = c("yrID", "TransID", "RECMONTH"))
-  
-         
+  #presence: 1 when cover class does not equal 0, 0 if cover class = 0
+  mutate(presence = case_when(CoverClass == 0 ~ 0,
+                              TRUE ~ 1)) %>%
+  mutate(CurrentSpecies = as.factor(as.character(CurrentSpecies))) %>%
+  mutate(yrID = as.numeric(as.factor(EventYear))) %>%
+  mutate(SpecID = as.numeric(as.factor(CurrentSpecies))) %>%
+  group_by(Plot, Transect, Quadrat) %>%
+  mutate(quadID = cur_group_id()) %>%
+  ungroup() %>%
+  mutate(REP = case_when(Obs_type == "Regular" ~ 1,
+                         TRUE ~ 2))
+
+
+
 #no missing years in the time series
-occ2 %>%
-  distinct(RECYEAR, TRANSNUM) %>%
-  group_by(TRANSNUM) %>%
+check_missing <- occ2 %>%
+  filter(Obs_type == "Regular") %>%
+  distinct(yrID, quadID) %>%
+  group_by(quadID) %>%
   tally()
 
+# not equal number of each
+# max = 8, not 10
 
 
 # Prep data structure for JAGS --------------------------------------------
 
-n.species <- length(unique(occ2$SPECNAME))
+n.species <- length(unique(occ2$CurrentSpecies))
 
-n.transects <- length(unique(occ2$TRANSNUM))
+n.quads <- length(unique(occ2$quadID))
 
 years <- occ2 %>%
-  distinct(RECYEAR) %>%
+  distinct(EventYear) %>%
   mutate(yearnum = 1:n())
 
 n.start <- occ2 %>%
   ungroup() %>%
-  distinct(TRANSNUM, RECYEAR) %>%
-  left_join(years, by = "RECYEAR") %>%
-  arrange(TRANSNUM, yearnum) %>%
-  group_by(TRANSNUM) %>%
+  distinct(quadID, EventYear) %>%
+  left_join(years, by = "EventYear") %>%
+  arrange(quadID, yearnum) %>%
+  group_by(quadID) %>%
   filter(yearnum == min(yearnum)) %>%
   ungroup() %>%
   dplyr::select(yearnum) %>%
@@ -130,25 +104,26 @@ n.start <- occ2 %>%
 
 n.end <- occ2 %>%
   ungroup() %>%
-  distinct(TRANSNUM, RECYEAR) %>%
-  left_join(years, by = "RECYEAR") %>%
-  arrange(TRANSNUM, yearnum) %>%
-  group_by(TRANSNUM) %>%
+  distinct(quadID, EventYear) %>%
+  left_join(years, by = "EventYear") %>%
+  arrange(quadID, yearnum) %>%
+  group_by(quadID) %>%
   filter(yearnum == max(yearnum)) %>%
   ungroup() %>%
   dplyr::select(yearnum) %>%
   as_vector()
 
-n.rep <- occ2 %>%
-  distinct(TRANSNUM, RECYEAR, RECMONTH, RECDAY) %>%
-  group_by(TRANSNUM, RECYEAR) %>%
-  tally() %>%
-  pivot_wider(names_from = RECYEAR,
-              values_from = n) %>%
-  column_to_rownames(var = "TRANSNUM") %>%
-  as.matrix()
 
-n.years <- length(unique(occ2$RECYEAR))
+# n.rep <- occ2 %>%
+#   distinct(TRANSNUM, RECYEAR, RECMONTH, RECDAY) %>%
+#   group_by(TRANSNUM, RECYEAR) %>%
+#   tally() %>%
+#   pivot_wider(names_from = RECYEAR,
+#               values_from = n) %>%
+#   column_to_rownames(var = "TRANSNUM") %>%
+#   as.matrix()
+
+n.years <- length(unique(occ2$EventYear))
 
 
 
@@ -162,14 +137,14 @@ n.years <- length(unique(occ2$RECYEAR))
 #now, generate IDs for the for loop where 
 # we will populate the matrix
 yr <- survey$yrID
-site <- survey$TransID  
-rep <- survey$REP
+site <- survey$quadID  
+#rep <- survey$REP
 
 #make a blank array with dims of sites x years x reps
-effort <- array(NA, dim = c(n.transects, #rows
-                         n.years, #columns
-                         4 #array elements - number of replicates
-                         ))
+effort <- array(NA, dim = c(n.quads, #rows
+                            n.years, #columns
+                            4 #array elements - number of replicates
+))
 
 #fill taht array based on the values in those columns
 # for occupancy
@@ -306,3 +281,4 @@ saveRDS(data, here('04_nps_plants',
                    'data_outputs',
                    'model_inputs',
                    'JAGS_data_list.RDS'))
+
