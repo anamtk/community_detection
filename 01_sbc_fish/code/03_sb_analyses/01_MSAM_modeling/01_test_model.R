@@ -62,13 +62,13 @@ model <- here("01_sbc_fish",
               "dyn_MSAM_multisite_cov.R")
 
 Sys.time()
-mod <- jagsUI::jags(data = data,
+mod <- jagsUI::jags(data = data_list,
                          inits = inits,
                          model.file = model,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 2,
+                         n.iter = 1,
                          DIC = TRUE)
 
 Sys.time()

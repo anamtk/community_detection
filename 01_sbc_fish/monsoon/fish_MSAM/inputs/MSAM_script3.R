@@ -73,6 +73,22 @@ sig.a0 <- as.vector(samp_df2$sig.a0)
 a1.Vis <- as.vector(samp_df2$a1.Vis)
 a2.Size <- as.vector(samp_df2$a2.Size)
 
+omega <- samp_df2 %>%
+  dplyr::select(matches("omega")) %>%
+  pivot_longer(cols = everything(),
+               names_to = "id",
+               values_to = "omega") %>%
+  mutate(id = str_sub(id, 6, nchar(id))) %>%
+  separate(id, into = c("row", "col"),
+           sep = ",") %>%
+  mutate(row = str_sub(row, 2, nchar(row)),
+         col = str_sub(col, 1, (nchar(col)-1))) %>%
+  pivot_wider(names_from = "col",
+              values_from = 'omega') %>%
+  column_to_rownames(var = "row") %>%
+  as.matrix()
+
+
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
@@ -111,7 +127,7 @@ params <- c(
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
 inits <- function() list(N = data$ymax,
-                         omega = data$omega.init,
+                         omega = omega,
                          lambda.mean= lambda.mean,
                          sig.llambda = sig.llambda,
                          a0.mean = a0.mean,
