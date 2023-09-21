@@ -11,10 +11,12 @@ model{
     #var.process is scalar but could be made dependent on site/other variables
     phi[i] <- (((1-mu[i])*mu[i])/(var.estimate[i] + var.process))-1
 
-    alpha[i] <- mu[i] * phi[i]
-    beta[i] <- (1 - mu[i]) * phi[i]
+    alphaX[i] <- mu[i] * phi[i]
+    betaX[i] <- (1 - mu[i]) * phi[i]
+    
+    alpha[i] <- max(1, alphaX[i])
+    beta[i] <- max(1, betaX[i])
 
-     
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         b[1]*AntKelp[i] +
         b[2]*AntTemp[i] +
@@ -127,7 +129,7 @@ model{
   }
   
   #PRior for overall process error
-  sig.process ~ dunif(0, 0.6)
+  sig.process ~ dunif(0, 10)
   var.process <- pow(sig.process, 2)
 
 
