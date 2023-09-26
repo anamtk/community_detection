@@ -102,8 +102,38 @@ bs2 <- bs %>%
 #combine these datasets
 fish2 <- fish1 %>%
   rbind(bs2) %>%
+  #get rid of NA counts and set to 0
   mutate(COUNT = case_when(COUNT == -99999 ~ 0,
-                            TRUE ~ COUNT))
+                            TRUE ~ COUNT)) %>%
+  #factor species code so we can fill in all species
+  #for all surveys
+  mutate(SP_CODE = as.factor(SP_CODE)) %>%
+  #group by unique surveyes
+  group_by(SITE_TRANS, YEAR, MONTH) %>%
+  #complete species list for each survey
+  complete(SP_CODE) %>%
+  #fill all the data that was missing in this
+  fill(SITE, .direction = "updown") %>%
+  fill(TRANSECT, .direction = "updown") %>%
+  fill(VIS, .direction = "updown") %>%
+  ungroup() %>%
+  #set NA counts to 0
+  mutate(COUNT = case_when(is.na(COUNT) ~ 0,
+                           TRUE ~ COUNT)) %>%
+  #change species code back to character
+  mutate(SP_CODE = as.character(SP_CODE)) %>%
+  #filter out species that are always 0,
+  #see if this works to fix modeling...
+  group_by(SP_CODE) %>%
+  mutate(tot = sum(COUNT, na.rm = T)) %>%
+  filter(tot > 0) %>% 
+  ungroup()
+
+
+spcount <- fish2 %>%
+  distinct(SITE_TRANS, YEAR, MONTH, SP_CODE) %>%
+  group_by(SITE_TRANS, MONTH, YEAR) %>%
+  tally()
 
 
 fish2 %>%
@@ -192,7 +222,7 @@ for(i in 1:dim(fish4)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the scaled vis data
   # for that sitexyearxreplicate combo
-  vis[site[i], yr[i], rep[i]] <- as.numeric(fish4[i,4])
+  vis[site[i], yr[i], rep[i]] <- as.numeric(fish4[i,5])
 }
 
 ### BODY SIZE covariate ###
@@ -378,14 +408,30 @@ t <- fish4 %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
+#there are 10 species that are never observed -
+#is this what is breaking the code???
+
+t[colSums(t, na.rm = TRUE) == 0]
+
 t1 <- t[1:15,]
 t2 <- t[16:30,]
 t3 <- t[31:41,]
 
 omega.init <- cov(t)
+#removed zeros
+omega.init[which(omega.init ==0)]
+omega.init[which(omega.init ==0)] <- mean(omega.init)
+omega.init[which(is.na(omega.init))]
+
+#these are currently not working
 omega.init1 <- cov(t1)
+omega.init1[which(omega.init1 ==0)] <- mean(omega.init1)
 omega.init2 <- cov(t2)
+omega.init2[which(omega.init2 ==0)] <- mean(omega.init2)
 omega.init3 <- cov(t3)
+omega.init3[which(omega.init3 ==0)] <- mean(omega.init3)
+
+ggcorrplot(cov(t), type = "lower")
 
 # Make data list to export ------------------------------------------------
 
