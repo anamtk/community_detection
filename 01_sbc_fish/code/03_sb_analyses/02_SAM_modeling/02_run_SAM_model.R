@@ -30,10 +30,7 @@ data_list <- readRDS(here('01_sbc_fish',
 
 # Parameters to save ------------------------------------------------------
 
-params <- c('alpha',
-            'beta',
-            'alphaX',
-            'betaX')
+params <- c('diff')
 
 
 
@@ -53,7 +50,7 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.iter = 40,
                     DIC = TRUE)
 
 Sys.time()
@@ -63,8 +60,6 @@ Sys.time()
 mcmcplot(mod$samples)
 
 gelman.diag(mod$samples, multivariate = F)
-
-
 
 # alpha and beta explorations ---------------------------------------------
 
@@ -101,6 +96,23 @@ ggplot(betaX, aes(x = betaX)) +
 ggplot(alphaX, aes(x = alphaX)) +
   geom_histogram() +
   geom_vline(xintercept = 1)
+
+diff <- as.data.frame(mod$sims.list$diff) %>%
+  pivot_longer(cols = everything(),
+               names_to = "i",
+               values_to = "diff")
+
+diffX <- diff %>%
+  filter(diff < 0) %>%
+  tally() %>%
+  as_vector()
+
+diffX/7944000
+
+ggplot(diff, aes(x = diff)) +
+  geom_histogram() +
+  geom_vline(xintercept = 0)
+
 # Look at some plots ------------------------------------------------------
 
 sum <- summary(mod$samples)

@@ -31,18 +31,26 @@ data <- readRDS(here('01_sbc_fish',
 
 # Parameters to save ------------------------------------------------------
 
-params <- c(
-            #COMMUNITY parameters
-            'a1.Vis',
-            'a2.Size',
-            'lambda.mean',
-            'sig.llambda',
-            'a0.mean',
-            'sig.a0')
+# params <- c(
+#             #COMMUNITY parameters
+#             'a1.Vis',
+#             'a2.Size',
+#             'lambda.mean',
+#             'sig.llambda',
+#             'a0.mean',
+#             'sig.a0')
+
+params <- c("N")
 
 #we found ymax to set initials, since otherwise the model will hate us
-inits <- function() list(N = data$ymax)#
-                         #omega = data$omega.init)
+# inits <- list(list(N = data$ymax,
+#                    omega = data$omega.init),
+#               list(N = data$ymax,
+#                    omega = data$omega.init2),
+#               list(N = data$ymax,
+#                    omega = data$omega.init3))
+
+inits <- function() list(N = data$ymax)
 
 # inits <- function() list(N = data$ymax,
 #                          omega = data$omega.init,
@@ -61,14 +69,33 @@ model <- here("01_sbc_fish",
               "models",
               "dyn_MSAM_multisite.R")
 
-Sys.time()
+st.time <- Sys.time()
 mod <- jagsUI::jags(data = data,
-                         inits = inits,
-                         model.file = model,
-                         parameters.to.save = params,
-                         parallel = TRUE,
-                         n.chains = 3,
-                         n.iter = 4000,
-                         DIC = TRUE)
+                    inits = inits,
+                    model.file = model,
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    n.iter = 4,
+                    DIC = TRUE)
 
-Sys.time()
+end.time <- Sys.time()
+
+end.time - st.time
+
+mcmcplot(mod$samples)
+gelman.diag(mod$samples)
+rhat <- mod$Rhat
+
+source(here("00_functions",
+            'plot_functions.R'))
+
+rhat_graph_fun(rhat)
+
+params2 <- c("bray")
+
+mod2 <- update(mod, 
+               n.iter = 15)
+
+
+

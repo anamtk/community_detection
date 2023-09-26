@@ -4,6 +4,10 @@
 
 # this script preps a multiple sites for a dynamic occupancy model
 
+#THIS IS CURRENTLY BROKEN
+#NEED TO:
+#get all species in all transect-years and fill with 0s - right now
+#it's breaking the model
 
 # Load packages -----------------------------------------------------------
 
@@ -77,41 +81,49 @@ fish1 <- fish %>%
         c("SITE", "TRANSECT"),
         sep = "_",
         remove = F) %>%
-  filter(SITE_TRANS != "ABUR_3") %>%
-  filter(SITE %in% c("ABUR", "AQUE", "MOHK", "NAPL",
-                     "BULL", "GOLB", "IVEE",
-                     "SCTW", "SCDI"))
+  #remove two transect only surveyed for a few years
+  filter(!SITE_TRANS %in% c("ABUR_3", "ABUR_2") )
 
-#WORKING: ABUR, AQUE, MOHK, NAPL, BULL, GOLB, IVEE, SCTW, SCDI
-#NOT WORKING: CARP, AHND
-# 
+#add other transects from those sites that only
+#have one survey, by taking the annual data
+#and then removing the ones taht are already in the 
+#monthly dataset
+bs2 <- bs %>%
+  filter(SITE %in% c("ABUR", "AQUE", "MOHK")) %>%
+  unite(SITE_TRANS,
+        c("SITE", "TRANSECT"),
+        sep = "_",
+        remove = F) %>%
+  filter(!SITE_TRANS %in% c('ABUR_1', "ABUR_2", 
+                            "AQUE_1", "MOHK_1")) %>%
+  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
+                TRANSECT, VIS, SP_CODE, COUNT)
 
-#some fish are never observed on transects, but going to try
-#and keep them for the "possible" species in MSAM framework
-# fish1 <- fish1 %>%
-#   group_by(SP_CODE) %>%
-#   mutate(max = max(COUNT, na.rm =T)) %>%
-#   filter(max != 0) %>%
-#   ungroup()
+#combine these datasets
+fish2 <- fish1 %>%
+  rbind(bs2) %>%
+  mutate(COUNT = case_when(COUNT == -99999 ~ 0,
+                            TRUE ~ COUNT))
 
 
-fish1 %>%
+fish2 %>%
   distinct(SITE_TRANS, YEAR, VIS) %>%
   filter(is.na(VIS)) %>%
   tally()
+#14
 
 fish1 %>%
   distinct(SITE_TRANS, YEAR, VIS) %>%
   filter(!is.na(VIS)) %>%
   tally()
 
-#18/214 have missing vis (8%)
+#14/209 have missing vis (7%)
 
 #there are two years with missing months from the survey
 #that we want to populate with NA values for the model
 # we also want to give repeat months 1:4 IDs so we can
 # model them later in JAGS (jags likes numbers)
-groups <- fish1 %>%
+groups <- fish2 %>%
   #get the distinct combos of year and month
   distinct(SITE_TRANS, YEAR, MONTH) %>%
   #group by year
@@ -125,7 +137,7 @@ groups <- fish1 %>%
 
 #combine those month IDs and missing months with the 
 #fish observation dataset
-fish2 <- fish1 %>%
+fish3 <- fish2 %>%
   left_join(groups, by = c('SITE_TRANS', 'YEAR', 'MONTH')) %>%
   #make numreic variables for year and species
   mutate(specID = as.numeric(as.factor(SP_CODE)),
@@ -136,17 +148,13 @@ fish2 <- fish1 %>%
 
 
 #now combine that back wit hteh fisth dataset
-fish3 <- fish2 %>%
+fish4 <- fish3 %>%
   #remove any rows where speciesID is not defined
   filter(!is.na(specID)) %>%
   #get a site id that is numerical
   mutate(siteID = as.numeric(as.factor(SITE_TRANS))) %>%
   #scale visibility covaraite
   mutate(VIS = scale(VIS))  
-
-
-fish4 <- fish3 
-
 
 fish4 %>%
   filter(COUNT ==0) %>%
@@ -314,8 +322,6 @@ n.start <- fish4 %>%
   dplyr::select(yrID) %>%
   as_vector()
 
-
-
 n.end <- fish4 %>%
   distinct(siteID, yrID) %>%
   group_by(siteID) %>%
@@ -337,11 +343,11 @@ n.rep <- fish4 %>%
                 "6", '7', '8', '9', '10',
                 '11','12','13','14','15',
                 '16','17','18','19','20',
-                '21') %>%
+                '21', '22') %>%
   as.matrix()
 
 
-n.rep[which(is.na(n.rep))] <- 1
+#n.rep[which(is.na(n.rep))] <- 1
 
 
 # Make R covariance matrix ------------------------------------------------
@@ -372,15 +378,15 @@ t <- fish4 %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
+t1 <- t[1:15,]
+t2 <- t[16:30,]
+t3 <- t[31:41,]
 
-ggcorrplot(cor(t), type = "lower",
-           lab = FALSE)
+omega.init <- cov(t)
+omega.init1 <- cov(t1)
+omega.init2 <- cov(t2)
+omega.init3 <- cov(t3)
 
-#set omega init to this - not sure if it will work with the NA values
-#or if i will need to define those as a value?? we can try it...
-omega.init <- cor(t)
-mean(omega.init, na.rm = T)
-omega.init[which(is.na(omega.init))] <- 0.07
 # Make data list to export ------------------------------------------------
 
 
@@ -397,6 +403,9 @@ data <- list(y = y,
              #for initials
              ymax = ymax,
              omega.init = omega.init,
+             omega.init1 = omega.init1,
+             omega.init2 = omega.init2,
+             omega.init3 = omega.init3,
              #for omega prior
              R = R)
 
