@@ -13,7 +13,8 @@
 
 
 package.list <- c("here", "tidyverse",
-                  'ggcorrplot')
+                  'ggcorrplot',
+                  'MASS')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -441,8 +442,33 @@ t[colSums(t, na.rm = TRUE) == 0]
 t2[colSums(t2, na.rm = TRUE) == 0]
 t3[colSums(t3, na.rm = TRUE) == 0]
 
-#omega.init <- solve(cov(t))
+t_cov <- cov(t)
+min(diag(t_cov))
+max(diag(t_cov))
+hist(diag(t_cov))
+#get mean value of diagonal values that are not 0
+mean(diag(t_cov)[diag(t_cov) != 0])
+#set all zero values on diagonal to be that mean value
+#diag(t_cov)[diag(t_cov) == 0] <- 1.69
+#set all diagonals to the mean
+diag(t_cov) <- 1.69
+diag(t_cov)[diag(t_cov) == 0]
 
+#top and bottom 5% of off-diagonal
+# are either greater than 0.14 or
+#less than -0.05 - remove all these values?? - set them to 
+#mean
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0.14)]
+mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0.14) & ((t_cov) > 0)])
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0.14)] <- 0.02
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < -0.05)]
+mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > -0.05) & ((t_cov) < 0)])
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < -0.05)] <- -0.006
+mean(t_cov[!t_cov == 0])
+t_cov[t_cov == 0] <- 0.04
+
+
+omega.init <- ginv(t_cov)
 #these are currently not working
 omega.init1 <- ginv(cov(t))
 omega.init2 <- ginv(cov(t2))
@@ -469,10 +495,10 @@ data <- list(y = y,
              n.rep = n.rep,
              #for initials
              ymax = ymax,
-             #omega.init = omega.init,
-             omega.init1 = omega.init1,
-             omega.init2 = omega.init2,
-             omega.init3 = omega.init3,
+             omega.init = omega.init,
+             # omega.init1 = omega.init1,
+             # omega.init2 = omega.init2,
+             # omega.init3 = omega.init3,
              #for omega prior
              R = R,
              #for hierarchical prior

@@ -45,11 +45,13 @@ params <- c(
 
 #we found ymax to set initials, since otherwise the model will hate us
 inits <- list(list(N = data$ymax,
-                   omega = data$omega.init1),
+                   omega = data$omega.init),
               list(N = data$ymax,
-                   omega = data$omega.init2),
+                   omega = data$omega.init),
               list(N = data$ymax,
-                   omega = data$omega.init3))
+                   omega = data$omega.init))
+
+#inits <- function()list(N = data$ymax)
 
 # JAGS model --------------------------------------------------------------
 
