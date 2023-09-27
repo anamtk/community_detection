@@ -61,14 +61,27 @@ model{
   #also - what should be precision on these??? are they hierarchical??
   #year 1 lambda for each species
   for(k in 1:n.species){
-  lambda[k,1] ~ dnorm(sp.lambda[k], 1E-2)
+  lambda[k,1] ~ dnorm(sp.lambda[k], tau.lambda[k])
 
   #years 2+ lambda for each species
   for(t in 2:n.years){
-    lambda[k,t] ~ dnorm(lambda[k, t-1], 1E-2)
+    lambda[k,t] ~ dnorm(lambda[k, t-1], tau.lambda[k])
   }
   }
   
+  #Species level precision priors
+  #Astar is data and is =1
+  #D <- pow(Astar, -2)  # D is the precision-type parameter
+  #hierarhical prior for sig.lambda:
+  # folded t distribution with 2 degrees of freedom for standard deviation
+  for(k in 1:n.species){
+    t.obs[k] ~ dt(0.001,D,4) # folded t distribution with 2 degrees of freedom for standard deviation
+    sig.lambda[k] <- abs(t.obs[k])  # abs value, hierarchical folded t priors for sd
+    #compute tau from sig
+    tau.lambda[k] <- pow(sig.lambda[k],-2)# compute precision based on folded-t sd
+  }
+  
+  D ~ dunif(0.001, 10)
   #Community-level hyperpriors
   #All species-level priors are centered around hyperpriors for 
   # the community for that variaable

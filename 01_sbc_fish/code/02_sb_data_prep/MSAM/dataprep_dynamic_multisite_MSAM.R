@@ -121,13 +121,13 @@ fish2 <- fish1 %>%
   mutate(COUNT = case_when(is.na(COUNT) ~ 0,
                            TRUE ~ COUNT)) %>%
   #change species code back to character
-  mutate(SP_CODE = as.character(SP_CODE)) %>%
+  mutate(SP_CODE = as.character(SP_CODE))# %>%
   #filter out species that are always 0,
   #see if this works to fix modeling...
-  group_by(SP_CODE) %>%
-  mutate(tot = sum(COUNT, na.rm = T)) %>%
-  filter(tot > 0) %>% 
-  ungroup()
+  # group_by(SP_CODE) %>%
+  # mutate(tot = sum(COUNT, na.rm = T)) %>%
+  # filter(tot > 0) %>%
+  # ungroup()
 
 
 spcount <- fish2 %>%
@@ -142,12 +142,12 @@ fish2 %>%
   tally()
 #14
 
-fish1 %>%
+fish2 %>%
   distinct(SITE_TRANS, YEAR, VIS) %>%
   filter(!is.na(VIS)) %>%
   tally()
 
-#14/209 have missing vis (7%)
+#14/470 have missing vis (7%)
 
 #there are two years with missing months from the survey
 #that we want to populate with NA values for the model
@@ -407,29 +407,50 @@ t <- fish4 %>%
               values_fill = 0) %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
+
+t2 <- fish4 %>%
+  group_by(yrID, siteID, specID) %>%
+  summarise(COUNT = max(COUNT, na.rm = T)) %>%
+  ungroup() %>%
+  unite("site_year", c("yrID", "siteID"),
+        sep = "_") %>%
+  dplyr::select(specID, COUNT, site_year) %>%
+  pivot_wider(names_from = specID,
+              values_from = COUNT,
+              values_fill = 0) %>%
+  column_to_rownames(var = "site_year") %>%
+  mutate(across(everything(), ~replace_na(.x, 0)))
+
+t3 <- fish4 %>%
+  group_by(yrID, siteID, specID) %>%
+  summarise(COUNT = mean(COUNT, na.rm = T, trim = 0.23)) %>%
+  ungroup() %>%
+  unite("site_year", c("yrID", "siteID"),
+        sep = "_") %>%
+  dplyr::select(specID, COUNT, site_year) %>%
+  pivot_wider(names_from = specID,
+              values_from = COUNT,
+              values_fill = 0) %>%
+  column_to_rownames(var = "site_year") %>%
+  mutate(across(everything(), ~replace_na(.x, 0)))
 # 
 #there are 10 species that are never observed -
 #is this what is breaking the code???
 
 t[colSums(t, na.rm = TRUE) == 0]
+t2[colSums(t2, na.rm = TRUE) == 0]
+t3[colSums(t3, na.rm = TRUE) == 0]
 
-t1 <- t[1:15,]
-t2 <- t[16:30,]
-t3 <- t[31:41,]
-
-omega.init <- cov(t)
-#removed zeros
-omega.init[which(omega.init ==0)]
-omega.init[which(omega.init ==0)] <- mean(omega.init)
-omega.init[which(is.na(omega.init))]
+#omega.init <- solve(cov(t))
 
 #these are currently not working
-omega.init1 <- cov(t1)
-omega.init1[which(omega.init1 ==0)] <- mean(omega.init1)
-omega.init2 <- cov(t2)
-omega.init2[which(omega.init2 ==0)] <- mean(omega.init2)
-omega.init3 <- cov(t3)
-omega.init3[which(omega.init3 ==0)] <- mean(omega.init3)
+omega.init1 <- ginv(cov(t))
+omega.init2 <- ginv(cov(t2))
+omega.init3 <- ginv(cov(t3))
+
+omega.init1[colSums(omega.init1, na.rm = TRUE)==0] <- mean(omega.init1)
+omega.init2[colSums(omega.init2, na.rm = TRUE)==0]<- mean(omega.init2)
+omega.init3[colSums(omega.init3, na.rm = TRUE)==0]<- mean(omega.init3)
 
 ggcorrplot(cov(t), type = "lower")
 
@@ -448,12 +469,14 @@ data <- list(y = y,
              n.rep = n.rep,
              #for initials
              ymax = ymax,
-             omega.init = omega.init,
+             #omega.init = omega.init,
              omega.init1 = omega.init1,
              omega.init2 = omega.init2,
              omega.init3 = omega.init3,
              #for omega prior
-             R = R)
+             R = R,
+             #for hierarchical prior
+             Astar = 1)
 
 #export that for using with the model
 saveRDS(data, here('01_sbc_fish',
