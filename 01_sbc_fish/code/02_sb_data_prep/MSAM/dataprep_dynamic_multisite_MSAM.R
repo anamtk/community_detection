@@ -408,77 +408,118 @@ t <- fish4 %>%
               values_fill = 0) %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
-
-t2 <- fish4 %>%
-  group_by(yrID, siteID, specID) %>%
-  summarise(COUNT = max(COUNT, na.rm = T)) %>%
-  ungroup() %>%
-  unite("site_year", c("yrID", "siteID"),
-        sep = "_") %>%
-  dplyr::select(specID, COUNT, site_year) %>%
-  pivot_wider(names_from = specID,
-              values_from = COUNT,
-              values_fill = 0) %>%
-  column_to_rownames(var = "site_year") %>%
-  mutate(across(everything(), ~replace_na(.x, 0)))
-
-t3 <- fish4 %>%
-  group_by(yrID, siteID, specID) %>%
-  summarise(COUNT = mean(COUNT, na.rm = T, trim = 0.23)) %>%
-  ungroup() %>%
-  unite("site_year", c("yrID", "siteID"),
-        sep = "_") %>%
-  dplyr::select(specID, COUNT, site_year) %>%
-  pivot_wider(names_from = specID,
-              values_from = COUNT,
-              values_fill = 0) %>%
-  column_to_rownames(var = "site_year") %>%
-  mutate(across(everything(), ~replace_na(.x, 0)))
 # 
-#there are 10 species that are never observed -
-#is this what is breaking the code???
+# t2 <- fish4 %>%
+#   group_by(yrID, siteID, specID) %>%
+#   summarise(COUNT = max(COUNT, na.rm = T)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "siteID"),
+#         sep = "_") %>%
+#   dplyr::select(specID, COUNT, site_year) %>%
+#   pivot_wider(names_from = specID,
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# 
+# t3 <- fish4 %>%
+#   group_by(yrID, siteID, specID) %>%
+#   summarise(COUNT = mean(COUNT, na.rm = T, trim = 0.23)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "siteID"),
+#         sep = "_") %>%
+#   dplyr::select(specID, COUNT, site_year) %>%
+#   pivot_wider(names_from = specID,
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# 
 
-t[colSums(t, na.rm = TRUE) == 0]
-t2[colSums(t2, na.rm = TRUE) == 0]
-t3[colSums(t3, na.rm = TRUE) == 0]
+t1 <- t[1:64,]
+t2 <- t[65:128,]
+t3 <- t[129:194,]
 
-t_cov <- cov(t)
-min(diag(t_cov))
-max(diag(t_cov))
-hist(diag(t_cov))
+t_cov <- cov(t1)
+t_cov2 <- cov(t2)
+t_cov3 <- cov(t3)
 #get mean value of diagonal values that are not 0
-mean(diag(t_cov)[diag(t_cov) != 0])
+diag_mean <- mean(diag(t_cov)[diag(t_cov) != 0])
+diag_mean2 <- mean(diag(t_cov2)[diag(t_cov2) != 0])
+diag_mean3 <- mean(diag(t_cov3)[diag(t_cov3) != 0])
 #set all zero values on diagonal to be that mean value
-#diag(t_cov)[diag(t_cov) == 0] <- 1.69
-#set all diagonals to the mean
-diag(t_cov) <- 1.69
-diag(t_cov)[diag(t_cov) == 0]
+#set all diagonals to the mean (this did work):
+diag(t_cov) <- diag_mean
+diag(t_cov2) <- diag_mean2
+diag(t_cov3) <- diag_mean3
 
 #top and bottom 5% of off-diagonal
-# are either greater than 0.14 or
-#less than -0.05 - remove all these values?? - set them to 
-#mean
-t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0.14)]
-mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0.14) & ((t_cov) > 0)])
-t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0.14)] <- 0.02
-t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < -0.05)]
-mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > -0.05) & ((t_cov) < 0)])
-t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < -0.05)] <- -0.006
-mean(t_cov[!t_cov == 0])
-t_cov[t_cov == 0] <- 0.04
+(upper <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0)], 
+         probs = c(0.95)))
+(lower <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0)], 
+         probs = c(0.05)))
+(upper2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > 0)], 
+                   probs = c(0.95)))
+(lower2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0)], 
+                   probs = c(0.05)))
+(upper3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > 0)], 
+                   probs = c(0.95)))
+(lower3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0)], 
+                   probs = c(0.05)))
 
 
+#find mean of values that are positivie but less than the upper quantile
+umean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < upper) & ((t_cov) > 0)])
+#set all extreme positive values to this mean
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) >= upper)] <- umean
+
+#find the mean of values tha are negative but greater than the lower quantile
+lmean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > lower) & ((t_cov) < 0)])
+#set all extreme negative values to this mean
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0) & (t_cov <= lower)] <- lmean
+
+#get off diagonal mean that is not 0
+odiag_mean <- mean(t_cov[!t_cov == 0])
+#set any zero values to that off diagonal mean
+t_cov[t_cov == 0] <- odiag_mean
+
+#find mean of values that are positivie but less than the upper quantile
+umean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < upper2) & ((t_cov2) > 0)])
+#set all extreme positive values to this mean
+t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) >= upper2)] <- umean2
+
+#find the mean of values tha are negative but greater than the lower quantile
+lmean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > lower2) & ((t_cov2) < 0)])
+#set all extreme negative values to this mean
+t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0) & (t_cov2 <= lower2)] <- lmean2
+
+#get off diagonal mean that is not 0
+odiag_mean2 <- mean(t_cov2[!t_cov2 == 0])
+#set any zero values to that off diagonal mean
+t_cov2[t_cov2 == 0] <- odiag_mean2
+
+#find mean of values that are positivie but less than the upper quantile
+umean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < upper3) & ((t_cov3) > 0)])
+#set all extreme positive values to this mean
+t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) >= upper3)] <- umean3
+
+#find the mean of values tha are negative but greater than the lower quantile
+lmean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > lower3) & ((t_cov3) < 0)])
+#set all extreme negative values to this mean
+t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0) & (t_cov3 <= lower3)] <- lmean3
+
+#get off diagonal mean that is not 0
+odiag_mean3 <- mean(t_cov3[!t_cov3 == 0])
+#set any zero values to that off diagonal mean
+t_cov3[t_cov3 == 0] <- odiag_mean3
+
+#invert to get precision matrix
 omega.init <- ginv(t_cov)
 #these are currently not working
-omega.init1 <- ginv(cov(t))
-omega.init2 <- ginv(cov(t2))
-omega.init3 <- ginv(cov(t3))
+omega.init1 <- ginv(t_cov)
+omega.init2 <- ginv(t_cov2)
+omega.init3 <- ginv(t_cov3)
 
-omega.init1[colSums(omega.init1, na.rm = TRUE)==0] <- mean(omega.init1)
-omega.init2[colSums(omega.init2, na.rm = TRUE)==0]<- mean(omega.init2)
-omega.init3[colSums(omega.init3, na.rm = TRUE)==0]<- mean(omega.init3)
-
-ggcorrplot(cov(t), type = "lower")
 
 # Make data list to export ------------------------------------------------
 
@@ -496,9 +537,9 @@ data <- list(y = y,
              #for initials
              ymax = ymax,
              omega.init = omega.init,
-             # omega.init1 = omega.init1,
-             # omega.init2 = omega.init2,
-             # omega.init3 = omega.init3,
+             omega.init1 = omega.init1,
+             omega.init2 = omega.init2,
+             omega.init3 = omega.init3,
              #for omega prior
              R = R,
              #for hierarchical prior

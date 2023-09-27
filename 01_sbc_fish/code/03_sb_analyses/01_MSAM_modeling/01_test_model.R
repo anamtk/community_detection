@@ -45,11 +45,15 @@ params <- c(
 
 #we found ymax to set initials, since otherwise the model will hate us
 inits <- list(list(N = data$ymax,
-                   omega = data$omega.init),
+                   omega = data$omega.init1),
               list(N = data$ymax,
-                   omega = data$omega.init),
+                   omega = data$omega.init2),
               list(N = data$ymax,
-                   omega = data$omega.init))
+                   omega = data$omega.init3))
+
+inits <- list(list(N = data$ymax),
+              list(N = data$ymax),
+              list(N = data$ymax))
 
 #inits <- function()list(N = data$ymax)
 
@@ -60,73 +64,19 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "dyn_MSAM_multisite_cov.R")
-
-st.time <- Sys.time()
-mod <- jagsUI::jags(data = data,
-                    inits = inits,
-                    model.file = model,
-                    parameters.to.save = params,
-                    parallel = TRUE,
-                    n.chains = 3,
-                    n.iter = 1,
-                    DIC = TRUE)
-
-end.time <- Sys.time()
-
-end.time - st.time
-
-
-# Model without covariance ------------------------------------------------
-
-
-# Parameters to save ------------------------------------------------------
-
-params <- c(
-  #COMMUNITY parameters
-  'a1.Vis',
-  'a2.Size',
-  'lambda.mean',
-  'sig.llambda',
-  'a0.mean',
-  'sig.a0',
-  'sig.lambda')
-
-
-#we found ymax to set initials, since otherwise the model will hate us
-# inits <- list(list(N = data$ymax),
-#               list(N = data$ymax),
-#               list(N = data$ymax))
-
-inits <- function()list(N = data$ymax)
-
-# JAGS model --------------------------------------------------------------
-
-model <- here("01_sbc_fish",
-              "code", 
-              "03_sb_analyses",
-              '01_MSAM_modeling',
-              "models",
               "dyn_MSAM_multisite.R")
 
-st.time <- Sys.time()
+(st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,
                     inits = inits,
                     model.file = model,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 1,
+                    n.iter = 4000,
                     DIC = TRUE)
 
 end.time <- Sys.time()
 
 end.time - st.time
-
-
-
-
-
-
-
 

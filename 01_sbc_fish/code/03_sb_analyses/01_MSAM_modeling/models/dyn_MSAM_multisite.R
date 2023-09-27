@@ -75,13 +75,15 @@ model{
   #hierarhical prior for sig.lambda:
   # folded t distribution with 2 degrees of freedom for standard deviation
   for(k in 1:n.species){
-    t.obs[k] ~ dt(0.001,D,4) # folded t distribution with 2 degrees of freedom for standard deviation
-    sig.lambda[k] <- abs(t.obs[k])  # abs value, hierarchical folded t priors for sd
+    t.obs[k] ~ dt(0,D,2) # folded t distribution with 2 degrees of freedom for standard deviation
+    #(sig:add a small value re: Doing Bayesian Analysis Book)
+    sig.lambda[k] <- abs(t.obs[k]) + 0.001  # abs value, hierarchical folded t priors for sd
     #compute tau from sig
     tau.lambda[k] <- pow(sig.lambda[k],-2)# compute precision based on folded-t sd
   }
   
-  D ~ dunif(0.001, 10)
+  #from Kiona's meta-analysis papers
+  D <- 1/(1*1)
   #Community-level hyperpriors
   #All species-level priors are centered around hyperpriors for 
   # the community for that variaable
