@@ -8,7 +8,7 @@
 
 # Load packages -----------------------------------------------------------
 
-package.list <- c("here", "tidyverse",
+package.list <- c("here", "tidyverse", "MASS",
                   'ggcorrplot')
 
 ## Installing them if they aren't already on the computer
@@ -55,7 +55,7 @@ survey <- plants %>%
 rep <- survey %>%
   distinct(yrID, quadID, REP)
 
-
+# Ma
 
 # including species:
 occ2 <- plants %>%
@@ -80,6 +80,12 @@ occ2 <- plants %>%
   left_join(years, by = c("quadID", "EventYear"))
 
 
+check <- occ2 %>%
+  #filter(Obs_type == "Regular") %>%
+  #distinct(yrID, quadID, SpecID, REP) %>%
+  group_by(SpecID) %>%
+  mutate(n = sum(presence))
+
 
 # see if missing years in the time series
 check_missing <- occ2 %>%
@@ -87,6 +93,7 @@ check_missing <- occ2 %>%
   distinct(yrID, quadID) %>%
   group_by(quadID) %>%
   tally()
+
 
 
 # Prep data structure for JAGS --------------------------------------------
@@ -127,7 +134,8 @@ rep <- occ2$REP #get a replicate for each iteration of the loop
 
 y <- array(NA, dim = c(n.species, #rows
                        n.quads, #column
-                       n.years #first array level
+                       n.years, #first array level
+                       2 #number of potential replicates
 ))
 
 #fill that array based on the values in those columns
@@ -139,7 +147,7 @@ for(i in 1:dim(occ2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i]] <- as.numeric(occ2[i,11])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(occ2[i,11])
 }
 
 
@@ -214,12 +222,29 @@ t <- occ2 %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
 
-ggcorrplot(cor(t), type = "lower",
+ggcorrplot(cov(t), type = "lower",
            lab = FALSE)
+
+t[colSums(t, na.rm = T) == 0]
+t[rowSums(t, na.rm = T) == 0]
 
 #set omega init to this - not sure if it will work with the NA values
 #or if i will need to define those as a value?? we can try it...
-omega.init <- cor(t)
+t1 <- t[1:770,]
+t1[colSums(t1, na.rm = T) == 0]
+t2 <- t[771:1540,]
+t3 <- t[1541:2310,]
+
+cov1 <- cov(t1, use = "complete.obs")
+cov1[cov1 == 0] <- 0.001
+cov2 <- cov(t2, use = "complete.obs")
+cov2[cov2 == 0] <- 0.001
+cov3 <- cov(t3, use = "complete.obs")
+cov3[cov3 == 0] <- 0.001
+
+omega.init1 <- ginv(cov1)
+omega.init2 <- ginv(cov2)
+omega.init3 <- ginv(cov3)
 
 # Prep list for JAGS ------------------------------------------------------
 
@@ -230,7 +255,9 @@ data <- list(n.species = n.species,
              y = y,
              z = z,
              R = R,
-             omega.init = omega.init)
+             omega.init1 = omega.init1,
+             omega.init2 = omega.init2,
+             omega.init3 = omega.init3)
 
 saveRDS(data, here('04_nps_plants',
                    'data_outputs',

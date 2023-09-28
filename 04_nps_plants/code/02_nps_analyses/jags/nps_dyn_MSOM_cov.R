@@ -29,9 +29,12 @@ model{
         z[k,i,t] ~ dbern(psi[k,i,t])
         #presence probability is dependent on species and year
         
+        for(r in 1:n.rep[i,t]){
         #Detection model:
         #with no covariates for detection:
-        y[k,i,t] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
+        y[k,i,t,r] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
+          
+        }
         
         #if we add covariates for detection, which I'll ask Megan abaout:
         #or add in cover classes here?
@@ -46,7 +49,7 @@ model{
         # } #reps
         
       }# years
-    }#transects
+    }# transects
     
     #SPECIES-LEVEL PRIORS:
     
@@ -129,34 +132,34 @@ model{
       for(k in 1:n.species){
         #is species k lost in site i between t and t+1?
         #if lost, value of a will be 1
-        a[k,i,t] <- (z[k,i,t-1] == 1)*(z[k,i,t] == 0)
+        b[k,i,t] <- (z[k,i,t-1] == 1)*(z[k,i,t] == 0)
         #is species k gained in site i between t and t+1
         #if gained, value of b will be 1
-        b[k,i,t] <- (z[k,i,t-1]== 0)*(z[k,i,t] == 1)
+        c[k,i,t] <- (z[k,i,t-1]== 0)*(z[k,i,t] == 1)
         #is species k shared in site i between t and t+1
         #if shared, value of c will be 1
-        c[k,i,t] <- (z[k,i,t-1]==1)*(z[k,i,t]==1)
+        a[k,i,t] <- (z[k,i,t-1]==1)*(z[k,i,t]==1)
       }
       #for all years 2 onward:
       #total number of species lost
-      A[i,t] <- sum(a[,i,t])
+      B[i,t] <- sum(a[,i,t])
       #total number of species gained
-      B[i,t] <- sum(b[,i,t])
+      C[i,t] <- sum(b[,i,t])
       #total number of species shared
-      C[i,t] <- sum(c[,i,t])
+      A[i,t] <- sum(c[,i,t])
       
       # #total turnover is (A+B)/(A+B+C)
-      tot_turnover[i,t] <- (A[i, t] + B[i, t])/
+      tot_turnover[i,t] <- (B[i, t] + C[i, t])/
         (A[i, t] + B[i, t] + C[i, t])
       # #gain is B/(A+B+C)
-      gain[i,t] <- (B[i, t])/
+      gain[i,t] <- (C[i, t])/
         (A[i, t] + B[i, t] + C[i, t])
       # #loss is A/(A+B+C)
-      loss[i,t] <- (A[i, t])/
+      loss[i,t] <- (B[i, t])/
         (A[i, t] + B[i, t] + C[i, t])
       #
       # #Jaccard beta diversity is shared/total, so C/A+B+C
-      jaccard[i,t] <- (C[i, t])/
+      jaccard[i,t] <- (A[i, t])/
         (A[i, t] + B[i, t] + C[i, t])
     }
   }
