@@ -38,9 +38,7 @@ params <- c(
             'lambda.mean',
             'sig.llambda',
             'a0.mean',
-            'sig.a0',
-            'S',
-            'G')
+            'sig.a0')
 
 #params <- c("N")
 
