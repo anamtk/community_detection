@@ -336,6 +336,10 @@ for(i in 1:dim(Ndf)[1]){ #dim[1] = n.rows
 #set all zeros (which could be true or false) to NA
 ymax[ymax == 0] <- NA
 
+ymax2 <- ymax
+
+ymax2[is.na(ymax2)] <- 1
+
 # Get covariates and list elements ----------------------------------------
 
 #values for for-loops in the model
@@ -536,6 +540,7 @@ data <- list(y = y,
              n.rep = n.rep,
              #for initials
              ymax = ymax,
+             ymax2 = ymax2,
              omega.init = omega.init,
              omega.init1 = omega.init1,
              omega.init2 = omega.init2,

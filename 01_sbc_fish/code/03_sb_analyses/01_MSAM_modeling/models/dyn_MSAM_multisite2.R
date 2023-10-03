@@ -18,28 +18,52 @@ model{
   
   for(k in 1:n.species){ #loop through all species in the community
     for(i in 1:n.transects){ #loop through each transect
-      for(t in n.start[i]:n.end[i]){ #loop through the start to end year for each transect
-        
-      #Biological process model
-      #latent abundance
-      N[k,i,t] ~ dpois(lambda[k,t])
-        #abundance rate parameter, lambda, is dependent on species and year
       
-      for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
-        # Observation model
-        logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-          a1.Vis*vis[i,t,r] + #visibility effect, not species dependent
-          a2.Size*size[k] #size effect, not species dependent
+      #first year abundanace based on lambda
+      #N[k,i,1] ~ dpois(lambda1[k])
+      N[k,i,1] <- 4
+      for(t in (n.start[i]+1):n.end[i]){ #loop through the start to end year for each transect
         
-        #abundance is binomial based on detection probability
-        #and total true abundance at the site
-        y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
-      } #reps
-    }# years
+        #Biological process model
+        #latent abundance
+        #N[k,i,t] <- S[k,i,t] + G[k,i,t]
+        
+        N[k,i,t] <- 5
+        #surviving
+        #S[k,i,t] ~ dbin(phi[k,t-1], N[k,i,t-1])
+        S[k,i,t] ~ dbin(phi[k,t-1], 5)
+        #gaining
+        #G[k,i,t] ~ dpois(N[k,i,t-1]*gamma[k,t-1])
+        G[k,i,t] ~ dpois(5*gamma[k,t-1])
+        #abundance rate parameter, lambda, is dependent on species and year
+      }
+      
+      for(t in n.start[i]:n.end[i]){
+        for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
+          # Observation model
+          logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
+            a1.Vis*vis[i,t,r] + #visibility effect, not species dependent
+            a2.Size*size[k] #size effect, not species dependent
+          
+          #abundance is binomial based on detection probability
+          #and total true abundance at the site
+          #y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
+          y[k,i,t,r] ~ dbin(p[k,i,t,r], ymax2[k,i,t])
+        } #reps
+      }# years
+    
+      
     }#transects
     
-    #SPECIES-LEVEL PRIORS:
+    #persistence and colonization are currently
+    #dependent on species and year
+    for(t in 1:21){
+      phi[k,t] ~ dnorm(mu.phi, tau.phi)
+      gamma[k,t] ~ dnorm(mu.gamma, tau.gamma)
+    } #persistence/colonization year loop
 
+    #SPECIES-LEVEL PRIORS:
+    
     #Detection intercept and slopes
     la0[k] ~ dnorm(mu.a0, tau.a0)
     a0[k] <- ilogit(la0[k])
@@ -47,11 +71,11 @@ model{
     #to make recursive portion (below), we need to know a mean species-level
     #lambda to populate the first year of species-year lambdas
     sp.llambda[k] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    sp.lambda[k] <- ilogit(sp.llambda[k])
+    lambda1[k] <- ilogit(sp.llambda[k])
     # sp.tau.lambda[k] <- pow(sp.sig.lambda[k], -2)
     # sp.sig.lambda[k] ~ dunif(0, 5)
     
-
+    
   } #species
   
   #Species-year level priors
@@ -62,27 +86,27 @@ model{
   #DOUBLE CHECK WITH KIONA - THAT these should be on lambda (ilogit) scale, not the llambda scale
   #also - what should be precision on these??? are they hierarchical??
   #year 1 lambda for each species
-  for(k in 1:n.species){
-  lambda[k,1] ~ dnorm(sp.lambda[k], sp.tau.lambda[k])
-
-  #years 2+ lambda for each species
-  for(t in 2:n.years){
-    lambda[k,t] ~ dnorm(lambda[k, t-1], sp.tau.lambda[k])
-  }
-  }
-  
+  # for(k in 1:n.species){
+  #   lambda[k,1] ~ dnorm(sp.lambda[k], sp.tau.lambda[k])
+  #   
+  #   #years 2+ lambda for each species
+  #   for(t in 2:n.years){
+  #     lambda[k,t] ~ dnorm(lambda[k, t-1], sp.tau.lambda[k])
+  #   }
+  # }
+  # 
   #Species level precision priors
   #hierarhical prior for sig.lambda:
   # folded t distribution with 2 degrees of freedom for standard deviation
-  for(k in 1:n.species){
-    t.obs[k] ~ dt(0,D,2) # folded t distribution with 2 degrees of freedom for standard deviation
-    #(sig:add a small value re: Doing Bayesian Analysis Book)
-    sp.sig.lambda[k] <- abs(t.obs[k]) + 0.001  # abs value, hierarchical folded t priors for sd
-    #compute tau from sig
-    sp.tau.lambda[k] <- pow(sp.sig.lambda[k],-2)# compute precision based on folded-t sd
-  }
-  #from Kiona's meta-analysis papers
-  D <- 1/(1*1)
+  # for(k in 1:n.species){
+  #   t.obs[k] ~ dt(0,D,2) # folded t distribution with 2 degrees of freedom for standard deviation
+  #   #(sig:add a small value re: Doing Bayesian Analysis Book)
+  #   sig.lambda[k] <- abs(t.obs[k]) + 0.001  # abs value, hierarchical folded t priors for sd
+  #   #compute tau from sig
+  #   tau.lambda[k] <- pow(sig.lambda[k],-2)# compute precision based on folded-t sd
+  # }
+  # #from Kiona's meta-analysis papers
+  # D <- 1/(1*1)
   
   
   
@@ -100,7 +124,19 @@ model{
   a0.mean ~ dbeta(1,1)
   mu.a0 <- logit(a0.mean)
   tau.a0 <- pow(sig.a0, -2)
-  sig.a0 ~ dunif(0, 50)
+  sig.a0 ~ dunif(0, 10)
+  
+  #for persistence
+  phi.mean ~ dbeta(1, 1)
+  mu.phi <- logit(phi.mean)
+  sig.phi ~ dunif(0, 10)
+  tau.phi <- pow(sig.phi, -2)
+  
+  #for colonization
+  gamma.mean ~ dbeta(1,1)
+  mu.gamma <- logit(gamma.mean)
+  sig.gamma ~ dunif(0, 10)
+  tau.gamma <- pow(sig.phi,-2)
   
   #covariate means
   a1.Vis ~ dnorm(0, 1E-2)
@@ -169,47 +205,47 @@ model{
   # }
   
   #IF WE WANT TO partition components of Bray:
-  for(i in 1:n.transects){
-    for(t in (n.start[i]+1):n.end[i]){
-      for(k in 1:n.species){
-        # num individuals in both time periods per species
-        a[k,i,t] <- min(N[k,i,t-1], N[k,i,t])
-        # num individuals only in first time point
-        b[k,i,t] <- N[k,i,t-1] - a[k,i,t]
-        # num individuals only in second time point
-        c[k,i,t] <- N[k,i,t] - a[k,i,t]
-      }
-      #for all years 2 onward:
-      #total number of shared individuals across time periods
-      A[i,t] <- sum(a[,i,t])
-      #total number of individuals in only first time period
-      B[i,t] <- sum(b[,i,t])
-      #total number of individuals in only second time period
-      C[i,t] <- sum(c[,i,t])
-
-      #total bray-curtis (B+C)/(2A+B+C)
-      num[i,t] <- B[i,t] + C[i,t]
-      denom1[i,t] <- 2*A[i,t]+B[i,t]+C[i,t]
-      #if all values are zero - this just keeps the eqn. from
-      #dividing by zero
-      denom[i,t] <- ifelse(denom1[i,t]==0,1, denom1[i,t])
-      bray[i,t] <- num[i,t]/denom[i,t]
-
-      #how much is dissimilarity shaped by
-      # individuals of one species being replaced by individuals
-      #of another species?
-      num.bal[i,t] <- min(B[i,t], C[i,t])
-      denom.bal1[i,t] <- A[i,t] + num.bal[i,t]
-      denom.bal[i,t] <- ifelse(denom.bal1[i,t] == 0,1, denom.bal1[i,t])
-      bray_balanced[i,t] <- num.bal[i,t]/denom.bal[i,t]
-
-      #how much is dissimilarity shaped by
-      # individuals that are lost without substitution?
-      bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
-    }
-  }
-
-
+  # for(i in 1:n.transects){
+  #   for(t in (n.start[i]+1):n.end[i]){
+  #     for(k in 1:n.species){
+  #       # num individuals in both time periods per species
+  #       a[k,i,t] <- min(N[k,i,t-1], N[k,i,t])
+  #       # num individuals only in first time point
+  #       b[k,i,t] <- N[k,i,t-1] - a[k,i,t]
+  #       # num individuals only in second time point
+  #       c[k,i,t] <- N[k,i,t] - a[k,i,t]
+  #     }
+  #     #for all years 2 onward:
+  #     #total number of shared individuals across time periods
+  #     A[i,t] <- sum(a[,i,t])
+  #     #total number of individuals in only first time period
+  #     B[i,t] <- sum(b[,i,t])
+  #     #total number of individuals in only second time period
+  #     C[i,t] <- sum(c[,i,t])
+  #     
+  #     #total bray-curtis (B+C)/(2A+B+C)
+  #     num[i,t] <- B[i,t] + C[i,t]
+  #     denom1[i,t] <- 2*A[i,t]+B[i,t]+C[i,t]
+  #     #if all values are zero - this just keeps the eqn. from
+  #     #dividing by zero
+  #     denom[i,t] <- ifelse(denom1[i,t]==0,1, denom1[i,t])
+  #     bray[i,t] <- num[i,t]/denom[i,t]
+  #     
+  #     #how much is dissimilarity shaped by
+  #     # individuals of one species being replaced by individuals
+  #     #of another species?
+  #     num.bal[i,t] <- min(B[i,t], C[i,t])
+  #     denom.bal1[i,t] <- A[i,t] + num.bal[i,t]
+  #     denom.bal[i,t] <- ifelse(denom.bal1[i,t] == 0,1, denom.bal1[i,t])
+  #     bray_balanced[i,t] <- num.bal[i,t]/denom.bal[i,t]
+  #     
+  #     #how much is dissimilarity shaped by
+  #     # individuals that are lost without substitution?
+  #     bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
+  #   }
+  # }
+  # 
+  # 
   
   
 }
