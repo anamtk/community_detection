@@ -29,6 +29,17 @@ data <- readRDS(here('04_nps_plants',
                      'model_inputs',
                      'nps_msam_dynmultisite.RDS'))
 
+data <- list(n.species = n.species,
+             n.quads = n.quads,
+             n.yr = n.yr,
+             n.rep = n.rep,
+             y = y,
+             z = z,
+             R = R,
+             omega.init1 = omega.init1,
+             omega.init2 = omega.init2,
+             omega.init3 = omega.init3)
+
 
 # Set Initials ------------------------------------------------------------
 
@@ -71,6 +82,7 @@ model <- here("04_nps_plants",
               "nps_dyn_MSOM_cov.R")
 
 Sys.time()
+start<-proc.time()
 mod <- jagsUI::jags(data = data,
                     inits = inits,
                     #inits = NULL,
@@ -82,4 +94,5 @@ mod <- jagsUI::jags(data = data,
                     DIC = TRUE)
 
 Sys.time()
-
+end<-proc.time()
+end-start
