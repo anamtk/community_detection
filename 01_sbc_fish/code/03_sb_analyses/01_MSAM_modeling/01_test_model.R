@@ -64,7 +64,7 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "dyn_MSAM_multisite.R")
+              "dyn_MSAM_multisite3.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,
@@ -74,7 +74,7 @@ mod <- jagsUI::jags(data = data,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.iter = 1,
                     DIC = TRUE)
 
 end.time <- Sys.time()

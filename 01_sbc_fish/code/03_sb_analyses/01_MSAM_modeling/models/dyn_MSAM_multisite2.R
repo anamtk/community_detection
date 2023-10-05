@@ -20,21 +20,17 @@ model{
     for(i in 1:n.transects){ #loop through each transect
       
       #first year abundanace based on lambda
-      #N[k,i,1] ~ dpois(lambda1[k])
-      N[k,i,1] <- 4
+      N[k,i,1] ~ dpois(lambda[k,i,1])
+      
       for(t in (n.start[i]+1):n.end[i]){ #loop through the start to end year for each transect
         
         #Biological process model
         #latent abundance
-        #N[k,i,t] <- S[k,i,t] + G[k,i,t]
-        
-        N[k,i,t] <- 5
+        N[k,i,t] <- S[k,i,t] + G[k,i,t]
         #surviving
-        #S[k,i,t] ~ dbin(phi[k,t-1], N[k,i,t-1])
-        S[k,i,t] ~ dbin(phi[k,t-1], 5)
+        S[k,i,t] ~ dbin(phi[k,t-1], N[k,i,t-1])
         #gaining
-        #G[k,i,t] ~ dpois(N[k,i,t-1]*gamma[k,t-1])
-        G[k,i,t] ~ dpois(5*gamma[k,t-1])
+        G[k,i,t] ~ dpois(lambda[k,i,t-1]*gamma[k,t-1])
         #abundance rate parameter, lambda, is dependent on species and year
       }
       
@@ -60,7 +56,10 @@ model{
     for(t in 1:21){
       phi[k,t] ~ dnorm(mu.phi, tau.phi)
       gamma[k,t] ~ dnorm(mu.gamma, tau.gamma)
+      for(i in 1:n.transects){
+      lambda[k,i,t] ~ dnorm(mu.llambda, tau.llambda)
     } #persistence/colonization year loop
+    }
 
     #SPECIES-LEVEL PRIORS:
     
@@ -70,8 +69,8 @@ model{
     
     #to make recursive portion (below), we need to know a mean species-level
     #lambda to populate the first year of species-year lambdas
-    sp.llambda[k] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    lambda1[k] <- ilogit(sp.llambda[k])
+    #sp.llambda[k] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
+    #lambda[k] <- ilogit(sp.llambda[k])
     # sp.tau.lambda[k] <- pow(sp.sig.lambda[k], -2)
     # sp.sig.lambda[k] ~ dunif(0, 5)
     
