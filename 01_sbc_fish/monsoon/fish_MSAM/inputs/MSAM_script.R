@@ -5,7 +5,7 @@
 #this script runs the fish MSOM
 
 # Load packages ---------------------------------------------------------------
-Sys.time()
+(start.time <- Sys.time())
 
 
 # Load packages,
@@ -30,18 +30,22 @@ data <- readRDS("/scratch/atm234/sbc_fish/inputs/fish_msam_dynmultisite.RDS")
 
 # Compile data ------------------------------------------------------------
 data_list <- list(y = data$y,
-             vis = data$vis,
-             size = data$size,
-             n.species = data$n.species,
-             n.years = data$n.years,
-             n.start = data$n.start,
-             n.end = data$n.end,
-             n.transects = data$n.transects,
-             n.rep = data$n.rep,
-             #for initials
-             ymax = data$ymax,
-             #for covariance prior
-             R = data$R)
+                 vis = data$vis,
+                 size = data$size,
+                 n.species = data$n.species,
+                 n.years = data$n.years,
+                 n.start = data$n.start,
+                 n.end = data$n.end,
+                 n.transects = data$n.transects,
+                 n.rep = data$n.rep,
+                 #for initials
+                 ymax = data$ymax,
+                 omega.init = data$omega.init,
+                 omega.init1 = data$omega.init1,
+                 omega.init2 = data$omega.init2,
+                 omega.init3 = data$omega.init3,
+                 #for covariance prior
+                 R = data$R)
 
 # Parameters to save ------------------------------------------------------
 
@@ -49,44 +53,64 @@ params <- c(
   #COMMUNITY parameters
   'a1.Vis',
   'a2.Size',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'a0.mean',
-  'sig.a0',
-  'omega')
+  't.lambda',
+  "E",
+  'mu.a0',
+  'sig.a0')
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
+# inits <- list(list(N = data$ymax,
+#                    omega = data$omega.init),
+#               list(N = data$ymax,
+#                    omega = data$omega.init + 0.1),
+#               list(N = data$ymax,
+#                    omega = data$omega.init + 0.2))
+
+inits <- list(list(N = data$ymax),
+              list(N = data$ymax),
+              list(N = data$ymax))
 
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
-                        inits = inits,
-                        #inits = NULL,
-                        model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_cov.R',
-                        parameters.to.save = params,
-                        parallel = TRUE,
-                        n.chains = 3,
-                        n.iter = 4000,
-                        n.burnin = 100,
-                        DIC = TRUE)
+                    inits = inits,
+                    #inits = NULL,
+                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_KO.R',
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    n.iter = 4000,
+                    DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
         file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model.RDS")
 
-Sys.time()
+(end.time <- Sys.time())
 
 
-
+(tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
+parms <- c(
+  #COMMUNITY parameters
+  'a1.Vis',
+  'a2.Size',
+  'mu.llambda',
+  'sig.llambda',
+  "E",
+  'mu.a0',
+  'sig.a0',
+  'deviance')
+
 mcmcplot(mod$samples,
+         parms = parms,
          dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM")
 
 # Get RHat per parameter ------------------------------------------------
@@ -97,7 +121,6 @@ saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
-
 
 raf <- raftery.diag(mod$samples)
 
@@ -115,9 +138,6 @@ raf_all <- as.data.frame(cbind(names,
                names_to = "chain",
                values_to = 'iterations') 
 
-ggplot(raf_all, aes(x = iterations/3)) +
-  geom_histogram() 
-
 raf_all %>%
   summarise(iterations_90 = quantile(iterations, 
                                      probs = 0.9, 
@@ -127,10 +147,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-# <dbl>         <dbl> <dbl>
-#   1        20717.        29211. 86112
 
 bu1 <- raf[[1]]$resmatrix[,1]
 bu2 <- raf[[2]]$resmatrix[,1]
@@ -147,7 +163,7 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#792
+
 
 
 

@@ -4,12 +4,17 @@
 
 # this script preps a multiple sites for a dynamic occupancy model
 
+#THIS IS CURRENTLY BROKEN
+#NEED TO:
+#get all species in all transect-years and fill with 0s - right now
+#it's breaking the model
 
 # Load packages -----------------------------------------------------------
 
 
 package.list <- c("here", "tidyverse",
-                  'ggcorrplot')
+                  'ggcorrplot',
+                  'MASS')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -52,20 +57,12 @@ unique(fish$SP_CODE)
 
 # Clean dataset -----------------------------------------------------------
 
-allfsh <- bs %>%
-  filter(!(SITE == "ABUR" & TRANSECT %in% c(2) & YEAR %in% c(2002,
-                                                               2003,
-                                                               2004,
-                                                               2005))) %>%
-  dplyr::select(-QUAD, -SIDE)
-
 #get months of resurvey to match yearly all-site survey months
 # get just our practice site
 # fill visibility across a month for each site
 fish1 <- fish %>%
   #get months from yearly surveys only
   filter(MONTH %in% c(7, 8, 9, 10)) %>%
-  bind_rows(allfsh) %>%
   #make NA values for visibility
   mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
                          TRUE ~ VIS)) %>%
@@ -85,38 +82,91 @@ fish1 <- fish %>%
         c("SITE", "TRANSECT"),
         sep = "_",
         remove = F) %>%
-  filter(SITE_TRANS != "ABUR_3") %>%
-  filter(SITE %in% c("ABUR", "AQUE", "MOHK", "NAPL",
-                     "BULL", "GOLB", "IVEE",
-                     "SCTW", "SCDI"))
+  #remove two transect only surveyed for a few years
+  filter(!SITE_TRANS %in% c("ABUR_3", "ABUR_2") )
 
-#WORKING: ABUR, AQUE, MOHK, NAPL, BULL, GOLB, IVEE, SCTW, SCDI
-#NOT WORKING: CARP, AHND
-# 
+#add other transects from those sites that only
+#have one survey, by taking the annual data
+#and then removing the ones taht are already in the 
+#monthly dataset
+bs2 <- bs %>%
+  filter(SITE %in% c("ABUR", "AQUE", "MOHK")) %>%
+  unite(SITE_TRANS,
+        c("SITE", "TRANSECT"),
+        sep = "_",
+        remove = F) %>%
+  filter(!SITE_TRANS %in% c('ABUR_1', "ABUR_2", 
+                            "AQUE_1", "MOHK_1")) %>%
+  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
+                TRANSECT, VIS, SP_CODE, COUNT)
 
-#some fish are never observed on transects, but going to try
-#and keep them for the "possible" species in MSAM framework
-# fish1 <- fish1 %>%
-#   group_by(SP_CODE) %>%
-#   mutate(max = max(COUNT, na.rm =T)) %>%
-#   filter(max != 0) %>%
-#   ungroup()
+#min(bs2$VIS, na.rm = T)
+
+bs3 <- bs %>%
+  filter(!SITE %in% c("ABUR", "AQUE", "MOHK")) %>%
+  unite(SITE_TRANS,
+        c("SITE", "TRANSECT"),
+        sep = "_",
+        remove = F) %>%
+  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
+                TRANSECT, VIS, SP_CODE, COUNT)
+
+#combine these datasets
+fish2 <- fish1 %>%
+  rbind(bs2) %>%
+  rbind(bs3) %>%
+  #get rid of NA counts and set to 0
+  mutate(COUNT = case_when(COUNT == -99999 ~ 0,
+                            TRUE ~ COUNT)) %>%
+  #factor species code so we can fill in all species
+  #for all surveys
+  mutate(SP_CODE = as.factor(SP_CODE)) %>%
+  #group by unique surveyes
+  group_by(SITE_TRANS, YEAR, MONTH) %>%
+  #complete species list for each survey
+  complete(SP_CODE) %>%
+  #fill all the data that was missing in this
+  fill(SITE, .direction = "updown") %>%
+  fill(TRANSECT, .direction = "updown") %>%
+  fill(VIS, .direction = "updown") %>%
+  ungroup() %>%
+  #set NA counts to 0
+  mutate(COUNT = case_when(is.na(COUNT) ~ 0,
+                           TRUE ~ COUNT)) %>%
+  #change species code back to character
+  mutate(SP_CODE = as.character(SP_CODE))# %>%
+  #filter out species that are always 0,
+  #see if this works to fix modeling...
+  # group_by(SP_CODE) %>%
+  # mutate(tot = sum(COUNT, na.rm = T)) %>%
+  # filter(tot > 0) %>%
+  # ungroup()
 
 
-fish1 %>%
+spcount <- fish2 %>%
+  distinct(SITE_TRANS, YEAR, MONTH, SP_CODE) %>%
+  group_by(SITE_TRANS, MONTH, YEAR) %>%
+  tally()
+
+
+fish2 %>%
   distinct(SITE_TRANS, YEAR, VIS) %>%
   filter(is.na(VIS)) %>%
   tally()
+#14
 
-#29 out of 1135 have missing vis (9%)
+fish2 %>%
+  distinct(SITE_TRANS, YEAR, VIS) %>%
+  filter(!is.na(VIS)) %>%
+  tally()
 
-#33 out of 1145 have missing vis (9%)
+#14/470 have missing vis (7%)
 
 #there are two years with missing months from the survey
 #that we want to populate with NA values for the model
 # we also want to give repeat months 1:4 IDs so we can
 # model them later in JAGS (jags likes numbers)
-groups <- fish1 %>%
+groups <- fish2 %>%
   #get the distinct combos of year and month
   distinct(SITE_TRANS, YEAR, MONTH) %>%
   #group by year
@@ -130,9 +180,8 @@ groups <- fish1 %>%
 
 #combine those month IDs and missing months with the 
 #fish observation dataset
-fish2 <- groups %>%
-  full_join(fish1, by = c('SITE_TRANS', 'YEAR', 'MONTH'),
-            multiple = "all") %>%
+fish3 <- fish2 %>%
+  left_join(groups, by = c('SITE_TRANS', 'YEAR', 'MONTH')) %>%
   #make numreic variables for year and species
   mutate(specID = as.numeric(as.factor(SP_CODE)),
          yrID = as.numeric(as.factor(YEAR))) %>%
@@ -140,66 +189,17 @@ fish2 <- groups %>%
   #single site 
   dplyr::select(-SITE, -TRANSECT) 
 
-#for the replicates that don't have any data, we want
-# # to give those NA values, that's what this data pull does
-# t <- fish2 %>%
-#   #select variables of interest
-#   dplyr::select(SITE_TRANS, YEAR, yrID, specID, REP) %>%
-#   #group by the year
-#   group_by(SITE_TRANS, YEAR, yrID) %>%
-#   #make sure that the missing replicates for 2002 and 2009
-#   # get NA values for all species
-#   complete(specID, REP)
 
 #now combine that back wit hteh fisth dataset
-fish3 <- fish2 %>%
-  #full_join(fish2, by = c("SITE_TRANS", "yrID", "specID", "REP", "YEAR"),
-  #          multiple = "all") %>%
+fish4 <- fish3 %>%
   #remove any rows where speciesID is not defined
   filter(!is.na(specID)) %>%
-  #group_by(specID) %>%
-  #fill the species code for later metadata matching
-  #fill(SP_CODE, .direction = "updown") %>%
-  #ungroup() %>%
-  #missing months were for the years where one survey
-  # wasn't completed, both years in month 7, so 
-  # we'll add in that data
-  #mutate(MONTH = replace_na(MONTH, 7)) %>%
   #get a site id that is numerical
   mutate(siteID = as.numeric(as.factor(SITE_TRANS))) %>%
+  mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
+                         TRUE ~ VIS)) %>%
   #scale visibility covaraite
   mutate(VIS = scale(VIS))  
-
-
-missing <- fish3 %>%
-  dplyr::select(specID, siteID, REP, yrID) %>%
-  mutate(specID = as.factor(specID)) %>%
-  group_by(siteID,  REP, yrID) %>%
-  complete(specID) %>%
-  ungroup() %>%
-  mutate(specID = as.numeric(specID)) %>%
-  filter(!is.na(specID))
-
-new <- missing %>% 
-  anti_join(fish3)
-
-fish4 <- fish3 %>%
-  full_join(new, by = c("siteID", "REP", "yrID", "specID")) %>%
-  group_by(siteID) %>%
-  fill(SITE_TRANS) %>%
-  ungroup() %>%
-  group_by(specID) %>%
-  fill(SP_CODE) %>%
-  ungroup() %>%
-  group_by(yrID) %>%
-  fill(YEAR) %>%
-  ungroup() %>%
-  group_by(SITE_TRANS, REP, YEAR) %>%
-  fill(MONTH) %>%
-  ungroup() %>%
-  group_by(SITE_TRANS, REP, YEAR) %>%
-  fill(VIS) %>%
-  ungroup()
 
 fish4 %>%
   filter(COUNT ==0) %>%
@@ -208,6 +208,8 @@ fish4 %>%
 fish4 %>%
   filter(COUNT >0) %>%
   tally()
+
+11764/87006
 
 # Get covariates in order -------------------------------------------------
 
@@ -310,7 +312,7 @@ for(i in 1:dim(fish4)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(fish4[i,7])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(fish4[i,6])
 }
 
 #generate the z-matrix of speciesxsitexyear which assumes
@@ -350,6 +352,14 @@ for(i in 1:dim(Ndf)[1]){ #dim[1] = n.rows
 #set all zeros (which could be true or false) to NA
 ymax[ymax == 0] <- NA
 
+z <- ymax
+
+z[z > 0] <- 1
+
+ymax2 <- ymax
+
+ymax2[is.na(ymax2)] <- 1
+
 # Get covariates and list elements ----------------------------------------
 
 #values for for-loops in the model
@@ -366,8 +376,6 @@ n.start <- fish4 %>%
   ungroup() %>%
   dplyr::select(yrID) %>%
   as_vector()
-
-
 
 n.end <- fish4 %>%
   distinct(siteID, yrID) %>%
@@ -390,11 +398,11 @@ n.rep <- fish4 %>%
                 "6", '7', '8', '9', '10',
                 '11','12','13','14','15',
                 '16','17','18','19','20',
-                '21','22', '23') %>%
+                '21', '22', '23') %>%
   as.matrix()
 
 
-n.rep[which(is.na(n.rep))] <- 1
+#n.rep[which(is.na(n.rep))] <- 1
 
 
 # Make R covariance matrix ------------------------------------------------
@@ -425,15 +433,118 @@ t <- fish4 %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
+# t2 <- fish4 %>%
+#   group_by(yrID, siteID, specID) %>%
+#   summarise(COUNT = max(COUNT, na.rm = T)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "siteID"),
+#         sep = "_") %>%
+#   dplyr::select(specID, COUNT, site_year) %>%
+#   pivot_wider(names_from = specID,
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# 
+# t3 <- fish4 %>%
+#   group_by(yrID, siteID, specID) %>%
+#   summarise(COUNT = mean(COUNT, na.rm = T, trim = 0.23)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "siteID"),
+#         sep = "_") %>%
+#   dplyr::select(specID, COUNT, site_year) %>%
+#   pivot_wider(names_from = specID,
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# 
 
-ggcorrplot(cor(t), type = "lower",
-           lab = FALSE)
+t1 <- t[1:64,]
+t2 <- t[65:128,]
+t3 <- t[129:194,]
 
-#set omega init to this - not sure if it will work with the NA values
-#or if i will need to define those as a value?? we can try it...
-omega.init <- cor(t)
-mean(omega.init, na.rm = T)
-omega.init[which(is.na(omega.init))] <- 0.04
+t_cov <- cov(t1)
+t_cov2 <- cov(t2)
+t_cov3 <- cov(t3)
+#get mean value of diagonal values that are not 0
+diag_mean <- mean(diag(t_cov)[diag(t_cov) != 0])
+diag_mean2 <- mean(diag(t_cov2)[diag(t_cov2) != 0])
+diag_mean3 <- mean(diag(t_cov3)[diag(t_cov3) != 0])
+#set all zero values on diagonal to be that mean value
+#set all diagonals to the mean (this did work):
+diag(t_cov) <- diag_mean
+diag(t_cov2) <- diag_mean2
+diag(t_cov3) <- diag_mean3
+
+#top and bottom 5% of off-diagonal
+(upper <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0)], 
+         probs = c(0.95)))
+(lower <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0)], 
+         probs = c(0.05)))
+(upper2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > 0)], 
+                   probs = c(0.95)))
+(lower2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0)], 
+                   probs = c(0.05)))
+(upper3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > 0)], 
+                   probs = c(0.95)))
+(lower3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0)], 
+                   probs = c(0.05)))
+
+
+#find mean of values that are positivie but less than the upper quantile
+umean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < upper) & ((t_cov) > 0)])
+#set all extreme positive values to this mean
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) >= upper)] <- umean
+
+#find the mean of values tha are negative but greater than the lower quantile
+lmean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > lower) & ((t_cov) < 0)])
+#set all extreme negative values to this mean
+t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0) & (t_cov <= lower)] <- lmean
+
+#get off diagonal mean that is not 0
+odiag_mean <- mean(t_cov[!t_cov == 0])
+#set any zero values to that off diagonal mean
+t_cov[t_cov == 0] <- odiag_mean
+
+#find mean of values that are positivie but less than the upper quantile
+umean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < upper2) & ((t_cov2) > 0)])
+#set all extreme positive values to this mean
+t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) >= upper2)] <- umean2
+
+#find the mean of values tha are negative but greater than the lower quantile
+lmean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > lower2) & ((t_cov2) < 0)])
+#set all extreme negative values to this mean
+t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0) & (t_cov2 <= lower2)] <- lmean2
+
+#get off diagonal mean that is not 0
+odiag_mean2 <- mean(t_cov2[!t_cov2 == 0])
+#set any zero values to that off diagonal mean
+t_cov2[t_cov2 == 0] <- odiag_mean2
+
+#find mean of values that are positivie but less than the upper quantile
+umean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < upper3) & ((t_cov3) > 0)])
+#set all extreme positive values to this mean
+t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) >= upper3)] <- umean3
+
+#find the mean of values tha are negative but greater than the lower quantile
+lmean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > lower3) & ((t_cov3) < 0)])
+#set all extreme negative values to this mean
+t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0) & (t_cov3 <= lower3)] <- lmean3
+
+#get off diagonal mean that is not 0
+odiag_mean3 <- mean(t_cov3[!t_cov3 == 0])
+#set any zero values to that off diagonal mean
+t_cov3[t_cov3 == 0] <- odiag_mean3
+
+#invert to get precision matrix
+omega.init <- ginv(t_cov)
+#these are currently not working
+omega.init1 <- ginv(t_cov)
+omega.init2 <- ginv(t_cov2)
+omega.init3 <- ginv(t_cov3)
+
+
 # Make data list to export ------------------------------------------------
 
 
@@ -449,13 +560,21 @@ data <- list(y = y,
              n.rep = n.rep,
              #for initials
              ymax = ymax,
+             ymax2 = ymax2,
+             z = z,
              omega.init = omega.init,
+             omega.init1 = omega.init1,
+             omega.init2 = omega.init2,
+             omega.init3 = omega.init3,
              #for omega prior
-             R = R)
+             R = R,
+             #for hierarchical prior
+             Astar = 1)
 
 #export that for using with the model
-saveRDS(data, here('sbc_fish',
+saveRDS(data, here('01_sbc_fish',
                    "data_outputs",
+                   'MSAM',
                    "model_inputs",
                    "fish_msam_dynmultisite.RDS"))
 
@@ -467,7 +586,7 @@ fish5 <- fish4 %>%
   ungroup() %>%
   distinct(SITE_TRANS, YEAR, siteID, yrID)
 
-write.csv(fish5, here('sbc_fish',
+write.csv(fish5, here('01_sbc_fish',
                       "data_outputs",
                       "metadata",
                       "site_year_IDs.csv"),
@@ -477,37 +596,56 @@ fish6 <- fish4 %>%
   ungroup() %>%
   distinct(SP_CODE, specID)
 
-write.csv(fish6, here('sbc_fish',
+write.csv(fish6, here('01_sbc_fish',
                       "data_outputs",
                       "metadata",
                       "species_IDs.csv"),
           row.names = F)
 
 # Raw community matrix ----------------------------------------------------
-# 
-# 
-# 
-# #for downstream analyses, we also want the 1-0 matrix for 
-# # occupancy of speciesxyear - which we can generate and export
-# matrix <- fish4 %>%
-#   group_by(YEAR, SP_CODE) %>%
-#   summarise(OCC = sum(OCC, na.rm = T)) %>%
-#   ungroup() %>%
-#   mutate(OCC = case_when(OCC > 0 ~ 1,
-#                          OCC ==0 ~ 0,
-#                          TRUE ~ NA_real_)) %>%
-#   pivot_wider(names_from = "YEAR",
-#               values_from = "OCC") %>%
-#   column_to_rownames(var = 'SP_CODE') %>%
-#   as.matrix()
-# 
-# #Export that matrix to a central location for all matrices
-# saveRDS(matrix, here("data_outputs",
-#                      "community_matrices",
-#                      "fish_AQUE1_raw_matrix.RDS"))
 
+#Just for visualization purposes to compare "raw" vs "corrected" bray
+#we will want to get a community matrix for one site across years
 
+#we'll do site one, and do whta folks used to do and just take the 
+#maximum number of individuals observed per species per year across
+#repeat surveys
 
+matrix <- fish4 %>%
+  filter(SITE_TRANS == "ABUR_1") %>%
+  group_by(YEAR, specID) %>%
+  summarise(COUNT = max(COUNT, na.rm = T)) %>%
+  pivot_wider(names_from = YEAR,
+              values_from = COUNT) %>%
+  column_to_rownames(var = 'specID')
 
+a <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
 
+b <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
 
+c <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+for(r in 1:nrow(matrix)){
+  for(t in 2:ncol(matrix)){
+  a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+  b[r,t] <- matrix[r,t-1] - a[r,t]
+  c[r,t] <- matrix[r,t] - a[r,t]
+  }
+}
+
+A <- colSums(a)
+B <- colSums(b)
+C <- colSums(c)
+
+bray <- (B + C)/(2*A+B+C)
+years <- 2002:2022
+
+raw_bray <- as.data.frame(cbind(raw_bray = bray,
+                                year = years))
+
+saveRDS(raw_bray, here("05_visualizations",
+                       "viz_data",
+                       "sbc_ABUR1_raw_bray.RDS"))

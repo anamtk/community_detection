@@ -6,15 +6,36 @@ model{
     # Likelihood ###
     #-------------------------------------##
     
+    #bray is proportional, so beta distribution works here
     bray[i] ~ dbeta(alpha[i], beta[i])
       
     #var.process is scalar but could be made dependent on site/other variables
+    #phi incorporates mu (mean estimate), var.estimate (which is from
+    #"data" on standard deviation (squared) from the original detection 
+    #correction model) 
+    #and var.process is something we're tryign to estimate,
+    #basically, the rest of the variation not accounted for
     phi[i] <- (((1-mu[i])*mu[i])/(var.estimate[i] + var.process))-1
 
-    alpha[i] <- mu[i] * phi[i]
-    beta[i] <- (1 - mu[i]) * phi[i]
+    #alpha and beta are based on mu and phi values
+    #sometimes these values send alpha and beta outside
+    #the domain, so we have extra code below to get them to
+    #stay where they belong
+    alphaX[i] <- mu[i] * phi[i]
+    betaX[i] <- (1 - mu[i]) * phi[i]
+    
+    #here is where we get alpha and beta to stay in their
+    #domain
+    alpha[i] <- max(0.01, alphaX[i])
+    beta[i] <- max(0.01, betaX[i])
+    
+    #to get a good estimate of a prior for var.process, we
+    #track the difference between these two values for each
+    #data point
+    diff[i] <- (1-mu[i])*mu[i] - var.estimate[i]
 
-     
+    #Regression of mu, which is dependent on antecedent
+    #kelp biomass, temperature, and chl-a
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         b[1]*AntKelp[i] +
         b[2]*AntTemp[i] +
@@ -127,9 +148,10 @@ model{
   }
   
   #PRior for overall process error
-  sig.process ~ dunif(0, 0.6)
-  var.process <- pow(sig.process, 2)
+  # sig.process ~ dunif(0, 10)
+  # var.process <- pow(sig.process, 2)
 
+  var.process ~ dunif(0, min(diff[]))
 
   #MISSING DATA PRIORS
   mu.kelp ~ dunif(-10, 10)

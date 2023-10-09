@@ -23,7 +23,7 @@ source(here("00_functions",
 
 # Load Data ---------------------------------------------------------------
 
-rhat <- readRDS(here('sbc_fish',
+rhat <- readRDS(here('01_sbc_fish',
                      'monsoon',
                      'fish_MSAM',
                      'outputs',

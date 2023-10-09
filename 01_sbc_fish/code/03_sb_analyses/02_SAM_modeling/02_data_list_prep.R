@@ -23,8 +23,8 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-all_data <- read.csv(here("data_outputs",
-                          'sbc_fish',
+all_data <- read.csv(here('01_sbc_fish',
+                          'data_outputs',
                           "SAM",
                           "data_prep",
                           "stability_metrics_with_covariates.csv"))
@@ -34,7 +34,7 @@ all_data <- read.csv(here("data_outputs",
 n.data <- nrow(all_data)
 
 bray <- as.vector(all_data$Mean)
-var.estimate <- as.vector(all_data$SD)
+var.estimate <- as.vector(all_data$SD^2)
 
 n.transects <- length(unique(all_data$SITE_TRANS))
 
@@ -120,8 +120,8 @@ data <- list(n.data = n.data,
              Temp = Temp,
              Chla = Chla)
 
-saveRDS(data, here("data_outputs",
-                   'sbc_fish',
+saveRDS(data, here('01_sbc_fish',
+                   "data_outputs",
                    'SAM',
                    "model_inputs",
                    "bray_SAM_input_data.RDS"))

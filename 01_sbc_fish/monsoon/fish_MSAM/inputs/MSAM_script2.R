@@ -8,7 +8,7 @@
 
 
 # Load packages ---------------------------------------------------------------
-Sys.time()
+(start.time <- Sys.time())
 
 
 # Load packages,
@@ -66,12 +66,29 @@ samp_df2 <- samp_df %>%
 
 #for fish model root nodes:
 #omega
-lambda.mean <- as.vector(samp_df2$lambda.mean)
+mu.llambda <- as.vector(samp_df2$mu.llambda)
 sig.llambda <- as.vector(samp_df2$sig.llambda)
-a0.mean <- as.vector(samp_df2$a0.mean)
+t.lambda <- as.vector(samp_df2$t.lambda)
+E <- as.vector(samp_df2$E)
+mu.a0 <- as.vector(samp_df2$mu.a0)
 sig.a0 <- as.vector(samp_df2$sig.a0)
 a1.Vis <- as.vector(samp_df2$a1.Vis)
 a2.Size <- as.vector(samp_df2$a2.Size)
+
+# omega <- samp_df2 %>%
+#   dplyr::select(matches("omega")) %>%
+#   pivot_longer(cols = everything(),
+#                names_to = "id",
+#                values_to = "omega") %>%
+#   mutate(id = str_sub(id, 6, nchar(id))) %>%
+#   separate(id, into = c("row", "col"),
+#            sep = ",") %>%
+#   mutate(row = str_sub(row, 2, nchar(row)),
+#          col = str_sub(col, 1, (nchar(col)-1))) %>%
+#   pivot_wider(names_from = "col",
+#               values_from = 'omega') %>%
+#   column_to_rownames(var = "row") %>%
+#   as.matrix()
 
 # Load Data ---------------------------------------------------------------
 
@@ -99,11 +116,12 @@ params <- c(
   #COMMUNITY parameters
   'a1.Vis',
   'a2.Size',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'a0.mean',
-  'sig.a0',
-  'omega')
+  't.lambda',
+  "E",
+  'mu.a0',
+  'sig.a0')
 
 # INits -------------------------------------------------------------------
 
@@ -111,10 +129,11 @@ params <- c(
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
 inits <- function() list(N = data$ymax,
-                         omega = data$omega.init,
-                         lambda.mean= lambda.mean,
+                         mu.llambda = mu.llambda,
                          sig.llambda = sig.llambda,
-                         a0.mean = a0.mean,
+                         t.lambda = t.lambda,
+                         E = E,
+                         mu.a0 = mu.a0,
                          sig.a0 = sig.a0,
                          a1.Vis = a1.Vis,
                          a2.Size = a2.Size)
@@ -124,7 +143,7 @@ inits <- function() list(N = data$ymax,
 mod2 <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_cov.R',
+                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_KO.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
@@ -137,19 +156,20 @@ mod2 <- jagsUI::jags(data = data_list,
 saveRDS(mod2, 
         file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model2.RDS")
 
-Sys.time()
+(end.time <- Sys.time())
 
 
-
+(tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
 parms <- c(
   #COMMUNITY parameters
   'a1.Vis',
   'a2.Size',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'a0.mean',
+  "E",
+  'mu.a0',
   'sig.a0',
   'deviance')
 
@@ -183,9 +203,6 @@ raf_all <- as.data.frame(cbind(names,
                names_to = "chain",
                values_to = 'iterations') 
 
-ggplot(raf_all, aes(x = iterations/3)) +
-  geom_histogram() 
-
 raf_all %>%
   summarise(iterations_90 = quantile(iterations, 
                                      probs = 0.9, 
@@ -195,10 +212,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-# <dbl>         <dbl> <dbl>
-#   1        20717.        29211. 86112
 
 bu1 <- raf[[1]]$resmatrix[,1]
 bu2 <- raf[[2]]$resmatrix[,1]
@@ -215,7 +228,7 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#792
+
 
 
 
