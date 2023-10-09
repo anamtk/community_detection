@@ -53,11 +53,12 @@ params <- c(
   #COMMUNITY parameters
   'a1.Vis',
   'a2.Size',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'a0.mean',
-  'sig.a0',
-  'omega')
+  't.lambda',
+  "E",
+  'mu.a0',
+  'sig.a0')
 
 # INits -------------------------------------------------------------------
 
@@ -71,21 +72,20 @@ params <- c(
 #               list(N = data$ymax,
 #                    omega = data$omega.init + 0.2))
 
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
+inits <- list(list(N = data$ymax),
+              list(N = data$ymax),
+              list(N = data$ymax))
 
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_cov.R',
+                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_KO.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 41000,
-                    n.burnin = 1000,
-                    n.thin = 10,
+                    n.iter = 4000,
                     DIC = TRUE)
 
 #save as an R data object
@@ -98,14 +98,14 @@ saveRDS(mod,
 (tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
-
 parms <- c(
   #COMMUNITY parameters
   'a1.Vis',
   'a2.Size',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'a0.mean',
+  "E",
+  'mu.a0',
   'sig.a0',
   'deviance')
 
@@ -121,7 +121,6 @@ saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
-
 
 raf <- raftery.diag(mod$samples)
 
@@ -139,9 +138,6 @@ raf_all <- as.data.frame(cbind(names,
                names_to = "chain",
                values_to = 'iterations') 
 
-ggplot(raf_all, aes(x = iterations/3)) +
-  geom_histogram() 
-
 raf_all %>%
   summarise(iterations_90 = quantile(iterations, 
                                      probs = 0.9, 
@@ -151,10 +147,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-# <dbl>         <dbl> <dbl>
-#   1        20717.        29211. 86112
 
 bu1 <- raf[[1]]$resmatrix[,1]
 bu2 <- raf[[2]]$resmatrix[,1]
@@ -171,7 +163,7 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#792
+
 
 
 

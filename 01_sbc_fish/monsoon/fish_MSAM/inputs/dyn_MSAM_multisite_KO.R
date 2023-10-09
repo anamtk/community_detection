@@ -8,15 +8,6 @@ model{
   # This script considers first year abundance and then any following year
   # abundance as dependent on the previous year abundance state 
   
-  #This model also includes a covariance matrix among fish abundances, such
-  #that we are aiming to incorporate some estimate of species interactions,
-  #including competition, predation, facilitation, etc.
-  
-  # Right now, I'm modeling transect-level data, but I would really like to 
-  # be able to add a random hierarchy of transects within a reef site - not
-  # sure where to put this random effect into the model - might be a good
-  # convo for a future meeting with Kiona
-  
   # Right now this model has these aspects:
   ## 1. Multi-site, multi-species, multi-year
   ## 2. Species-level abundance parameter (lambda) varies by year
@@ -29,92 +20,157 @@ model{
     for(i in 1:n.transects){ #loop through each transect
       for(t in n.start[i]:n.end[i]){ #loop through the start to end year for each transect
         
-      #Biological process model
-      #latent abundance
-      N[k,i,t] ~ dpois(lambda[k,t])
+        #Biological process model
+        #latent abundance
+        N[k,i,t] ~ dpois(lambda[k,t])
         #abundance rate parameter, lambda, is dependent on species and year
-      
-      for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
-        # Observation model
-        logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-          a1.Vis*vis[i,t,r] + #visibility effect, not species dependent
-          a2.Size*size[k] #size effect, not species dependent
         
-        #abundance is binomial based on detection probability
-        #and total true abundance at the site
-        y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
-      } #reps
-    }# years
+        for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
+          # Observation model
+          logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
+            a1.Vis*vis[i,t,r] + #visibility effect, not species dependent
+            a2.Size*size[k] #size effect, not species dependent
+          
+          #abundance is binomial based on detection probability
+          #and total true abundance at the site
+          y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
+        } #reps
+      }# years
     }#transects
     
     #SPECIES-LEVEL PRIORS:
-
+    
     #Detection intercept and slopes
+    # KO: If you include additional hierarchies for species (e.g., species
+    # nested in functional group or genus), I'd also include those additional 
+    # hierarchies here.
+    ## KO: Important: a0 is the intercept for in the logit-scale linear model,
+    ## and thus should not constrain a0 to (0,1), with the following ilogit 
+    ## coding is doing.
+    #la0[k] ~ dnorm(mu.a0, tau.a0) ## Not appropriate
+    #a0[k] <- ilogit(la0[k]) ## Not appropriate
+    ## KO: This would be more appropriate:
     a0[k] ~ dnorm(mu.a0, tau.a0)
-    #"baseline" detection probability at scaled vis and size = 0:
+    ## KO: If you want to "look" at the predicted "base-line" probability of detection
+    ## e.g., when vis = 0 and size = 0, then you could compute:
     p0[k] <- ilogit(a0[k])
     
     #to make recursive portion (below), we need to know a mean species-level
     #lambda to populate the first year of species-year lambdas
     sp.llambda[k] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    sp.lambda[k] <- exp(sp.llambda[k])
+    ## KO: Important, lambda is the expected abundance associated with the Poisson
+    ## model for latent abundance; we do not want to use ilogit here as this will 
+    ## constrain sp.lambda to (0,1), which doesn't make sense for an abundance
+    ## quantity.
+    #sp.lambda[k] <- ilogit(sp.llambda[k]) ## Not appropriate
+    ## KO: This is more appropriate:
+    #sp.lambda[k] <- log(sp.llambda[k])
+    sp.lambda[k] <- exp(sp.llambda[k]) #is this correct, actually?
     
     
   } #species
   
   #Species-year level priors
-  #Create recursive (year to year dependence) and covariance between species
+  #Create recursive (year to year dependence)
   #by centering all yearly lambdas by species around a mean value for each species
   #or around the lambda of the year before.
   
   #DOUBLE CHECK WITH KIONA - THAT these should be on lambda (ilogit) scale, not the llambda scale
+  #also - what should be precision on these??? are they hierarchical??
   #year 1 lambda for each species
-  lambda[1:n.species,1] ~ dmnorm(sp.lambda[1:n.species],omega[1:n.species,1:n.species])
-
-  #years 2+ lambda for each species
-  for(t in 2:n.years){
-    lambda[1:n.species,t] ~ dmnorm(lambda[1:n.species, t-1],omega[1:n.species,1:n.species])
+  for(k in 1:n.species){
+    ## KO: we might "anchor" the initial lambda at sp.lambda, so that:
+    ## lambda[k,1] = sp.lambda[k]
+    ## KO: also, yes, I would model on the LOG scale and compute lambda; 
+    ## If we give a normal prior to lambda, this could allow for lambda < 0.
+    #lambda[k,1] ~ dnorm(sp.lambda[k], sp.tau.lambda[k]) ## Not appropriate?
+    ## KO: More appropriate:
+    # llambda[k,1] ~ dnorm(sp.llambda[k], sp.tau.lambda[k])
+    # lambda[k,1] <- exp(llambda[k,1])
+    ## KO: This is the version that would "anchor" lambda at t = 1:
+    lambda[k,1] <- sp.lambda[k]
+    llambda[k,1] <- sp.llambda[k]
+    #years 2+ lambda for each species
+    for(t in 2:n.years){
+      ## KO: Again, would model lambda on log scale to obey it's domain:
+      #lambda[k,t] ~ dnorm(lambda[k, t-1], sp.tau.lambda[k]) ## Not appropriate
+      ## KO: More appropriate:
+      llambda[k,t] ~ dnorm(llambda[k, t-1], sp.tau.lambda[k])
+      lambda[k,t] <- exp(llambda[k,t])
+    }
   }
   
-  # lambda[1:n.species,1] ~ dmnorm.vcov(sp.lambda[1:n.species],sigma[1:n.species,1:n.species])
-  # 
-  # #years 2+ lambda for each species
-  # for(t in 2:n.years){
-  #   lambda[1:n.species,t] ~ dmnorm.vcov(lambda[1:n.species, t-1],sigma[1:n.species,1:n.species])
+  #Species level precision priors
+  #hierarhical prior for sig.lambda:
+  # folded t distribution with 2 degrees of freedom for standard deviation
+  # for(k in 1:n.species){
+  #   t.obs[k] ~ dt(0,D,2) # folded t distribution with 2 degrees of freedom for standard deviation
+  #   #(sig:add a small value re: Doing Bayesian Analysis Book)
+  #   ## KO: I don't see why we need to add the "small" value; I've never had to do this, and
+  #   ## the "original" Gelman paper about modeling hierarchical variances doesn't do this.
+  #   sp.sig.lambda[k] <- abs(t.obs[k]) + 0.001  # abs value, hierarchical folded t priors for sd
+  #   #compute tau from sig
+  #   sp.tau.lambda[k] <- pow(sp.sig.lambda[k],-2)# compute precision based on folded-t sd
   # }
+  #from Kiona's meta-analysis papers
+  ## KO: We want to use the above folded-t as a hierarchical prior for the 
+  ## species-level standard deviations, so that the "population-level" parameter
+  ## (D) is treated as unknown and given a prior (not fixed):
+  ## D ~ dunif(0,)
+  #D <- 1/(1*1)
   
-  
-  #Prior for covariance matrix, omega
-  # parameterize precision matrices with Wishart distributions
-  #wishart uses R, which is a n.species x n.species matrix and 
-  #degrees of freedom (second parameter) >= n.species
-  #R is "data" you provide - will likely use cov() in R to create these data
-  omega[1:n.species,1:n.species] ~ dwish(R[1:n.species,1:n.species], n.species)
-  
-  #ask Kiona: what is this sigma??? took from Shelby's code
-  #This may be important if not converging with just omega -
-  #look @ the JAGS user manual for more info on the other dmnorm distribution
-  #and options
-  #Sigma[1:n.species,1:n.species] <- inverse(omega[1:n.species,1:n.species])
+  ## KO: Swap above with hierarchical folded-t prior below:
+  for(k in 1:n.species){
+    # folded t prior for species-level standard deviations, with 2 degrees of 
+    # freedom and precision-type parameter, D:
+    t.lambda[k] ~ dt(0,D,2) 
+    # abs value to produce "folded" t:
+    sp.sig.lambda[k] <- abs(t.lambda[k]) + 0.001
+    #compute tau from sig
+    sp.tau.lambda[k] <- pow(sp.sig.lambda[k],-2)
+  }
+  # Give prior to population-level scale parameter (A) and compute precision-
+  # type parameter, D:
+  ## KO: want to make sure U(0,10) is wide enough; check posterior for A,
+  ## to see if it bumps up against upper limit (e.g., 10)
+  E ~ dunif(0,10)
+  D <- 1/(E*E)
   
   
   #Community-level hyperpriors
   #All species-level priors are centered around hyperpriors for 
-  # the community for that variaable
+  # the community for that variable
   
   #initial abundance
-  lambda.mean <- exp(mu.llambda)
-  mu.llambda ~ dnorm(0, 0.00001)
+  ## KO: Why is lambda.mean being constrained to (0,1) with the beta prior?
+  ## KO: mu.llambda is on a log-scale (e.g., log expected abundance), not logit
+  ## KO: scale, right?
+  # lambda.mean ~ dbeta(1,1)
+  # mu.llambda <- logit(lambda.mean)
   sig.llambda ~ dunif(0, 10)
   tau.llambda <- pow(sig.llambda, -2)
+  ## KO: The following would be more appropriate
+  mu.llambda ~ dnorm(0,0.00001)
+  lambda.mean <- exp(mu.llambda)
+  
   
   #Detection intercept
-  mu.a0 ~ dnorm(0, 0.001)
+  ## KO: Again, beta and logit transform lot appropriate here.
+  # a0.mean ~ dbeta(1,1)
+  # mu.a0 <- logit(a0.mean)
+  ## KO: More appropriate:
+  mu.a0 ~ dnorm(0,0.001)
+  # Can compute population-level "baseline" probability of detection:
   mu.p0 <- ilogit(mu.a0)
+  
+  # KO: The priors below are appropriate, just need to check that posterior
+  # for sig.a0 isn't bumping up against prior upper limit (e.g., 50)
   tau.a0 <- pow(sig.a0, -2)
   sig.a0 ~ dunif(0, 50)
   
   #covariate means
+  ## KO: These priors for the covariate EFFECTS are fine, but might want to 
+  ## specify a slightly smaller precision (e.g., 0.001)
   a1.Vis ~ dnorm(0, 0.001)
   a2.Size ~ dnorm(0, 0.001)
   
@@ -124,6 +180,8 @@ model{
     for(t in n.start[i]:n.end[i]){
       for(r in 1:n.rep[i,t]){
         #missing data in the visibility column
+        ## KO: Seems fine, assuming vis can be positive or negative (which would
+        ## be the case if continuous and standardized)
         vis[i,t,r] ~ dnorm(mu.missingvis, tau.missingvis)
       }
     }
@@ -198,7 +256,7 @@ model{
       B[i,t] <- sum(b[,i,t])
       #total number of individuals in only second time period
       C[i,t] <- sum(c[,i,t])
-
+      
       #total bray-curtis (B+C)/(2A+B+C)
       num[i,t] <- B[i,t] + C[i,t]
       denom1[i,t] <- 2*A[i,t]+B[i,t]+C[i,t]
@@ -206,7 +264,7 @@ model{
       #dividing by zero
       denom[i,t] <- ifelse(denom1[i,t]==0,1, denom1[i,t])
       bray[i,t] <- num[i,t]/denom[i,t]
-
+      
       #how much is dissimilarity shaped by
       # individuals of one species being replaced by individuals
       #of another species?
@@ -214,14 +272,11 @@ model{
       denom.bal1[i,t] <- A[i,t] + num.bal[i,t]
       denom.bal[i,t] <- ifelse(denom.bal1[i,t] == 0,1, denom.bal1[i,t])
       bray_balanced[i,t] <- num.bal[i,t]/denom.bal[i,t]
-
+      
       #how much is dissimilarity shaped by
       # individuals that are lost without substitution?
       bray_gradient[i,t] <- bray[i,t] - bray_balanced[i,t]
     }
   }
 
-
-  
-  
 }
