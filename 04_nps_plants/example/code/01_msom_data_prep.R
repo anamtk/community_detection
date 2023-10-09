@@ -171,7 +171,7 @@ effort <- array(NA, dim = c(n.transects, #rows
                          4 #array elements - number of replicates
                          ))
 
-#fill taht array based on the values in those columns
+#fill that array based on the values in those columns
 # for occupancy
 for(i in 1:dim(survey)[1]){ #dim[1] = n.rows
   #using info from the dataframe on the site of row i,

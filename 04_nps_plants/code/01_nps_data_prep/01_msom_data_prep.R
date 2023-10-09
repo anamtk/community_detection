@@ -8,7 +8,7 @@
 
 # Load packages -----------------------------------------------------------
 
-package.list <- c("here", "tidyverse",
+package.list <- c("here", "tidyverse", "MASS",
                   'ggcorrplot')
 
 ## Installing them if they aren't already on the computer
@@ -32,20 +32,30 @@ str(plants)
 # Manipulate data structure ----------------------------------
 
 # ignoring species:
-survey <- plants %>%
-  distinct(EventYear, Plot, Transect, Quadrat, Obs_type) %>%
-  mutate(yrID = as.numeric(as.factor(EventYear))) %>%
+years <- plants %>%
+  distinct(EventYear, Plot, Transect, Quadrat) %>%
   group_by(Plot, Transect, Quadrat) %>%
   mutate(quadID = cur_group_id()) %>%
-  ungroup() #%>%
-  # mutate(REP = case_when(Obs_type == "Regular" ~ 1,
-  #                        TRUE ~ 2))
+  arrange(EventYear) %>%
+  mutate(yrID = 1:n()) %>%
+  ungroup() %>%
+  distinct(quadID, yrID, EventYear)
 
-# rep <- survey %>%
-#   distinct(yrID, quadID, REP)
 
-# when I tried to join rep with occ2, repeat and 2 did not match up 
-# (there were 2's for regular)
+survey <- plants %>%
+  distinct(EventYear, Plot, Transect, Quadrat, Obs_type) %>%
+  group_by(Plot, Transect, Quadrat) %>%
+  mutate(quadID = cur_group_id()) %>%
+  ungroup() %>%
+  mutate(REP = case_when(Obs_type == "Regular" ~ 1,
+                         TRUE ~ 2)) %>%
+  left_join(years, by = c("quadID", "EventYear"))
+
+
+rep <- survey %>%
+  distinct(yrID, quadID, REP)
+
+# Ma
 
 # including species:
 occ2 <- plants %>%
@@ -60,25 +70,30 @@ occ2 <- plants %>%
   mutate(presence = case_when(CoverClass == 0 ~ 0,
                               TRUE ~ 1)) %>%
   mutate(CurrentSpecies = as.factor(as.character(CurrentSpecies))) %>%
-  mutate(yrID = as.numeric(as.factor(EventYear))) %>%
+  #mutate(yrID = as.numeric(as.factor(EventYear))) %>%
   mutate(SpecID = as.numeric(as.factor(CurrentSpecies))) %>%
   group_by(Plot, Transect, Quadrat) %>%
   mutate(quadID = cur_group_id()) %>%
   ungroup() %>%
   mutate(REP = case_when(Obs_type == "Regular" ~ 1,
-                         TRUE ~ 2))
+                         TRUE ~ 2)) %>%
+  left_join(years, by = c("quadID", "EventYear"))
 
 
+check <- occ2 %>%
+  #filter(Obs_type == "Regular") %>%
+  #distinct(yrID, quadID, SpecID, REP) %>%
+  group_by(SpecID) %>%
+  mutate(n = sum(presence))
 
-#no missing years in the time series
+
+# see if missing years in the time series
 check_missing <- occ2 %>%
   filter(Obs_type == "Regular") %>%
   distinct(yrID, quadID) %>%
   group_by(quadID) %>%
   tally()
 
-# not equal number of each
-# max = 8, not 10
 
 
 # Prep data structure for JAGS --------------------------------------------
@@ -87,91 +102,44 @@ n.species <- length(unique(occ2$CurrentSpecies))
 
 n.quads <- length(unique(occ2$quadID))
 
-years <- occ2 %>%
-  distinct(EventYear) %>%
-  mutate(yearnum = 1:n())
-
-n.start <- occ2 %>%
-  ungroup() %>%
-  distinct(quadID, EventYear) %>%
-  left_join(years, by = "EventYear") %>%
-  arrange(quadID, yearnum) %>%
+n.yr <- years %>%
+  select(c(quadID, yrID)) %>%
+  arrange(quadID, yrID) %>%
   group_by(quadID) %>%
-  filter(yearnum == min(yearnum)) %>%
+  filter(yrID == max(yrID)) %>%
   ungroup() %>%
-  dplyr::select(yearnum) %>%
+  dplyr::select(yrID) %>%
   as_vector()
 
-n.end <- occ2 %>%
-  ungroup() %>%
-  distinct(quadID, EventYear) %>%
-  left_join(years, by = "EventYear") %>%
-  arrange(quadID, yearnum) %>%
-  group_by(quadID) %>%
-  filter(yearnum == max(yearnum)) %>%
-  ungroup() %>%
-  dplyr::select(yearnum) %>%
-  as_vector()
+n.rep <- rep %>%
+  group_by(quadID, yrID) %>%
+  pivot_wider(names_from = yrID, 
+              values_from = REP,
+              values_fn = length) %>%
+  column_to_rownames(var = "quadID") %>%
+  as.matrix()
 
-
-# n.rep <- occ2 %>%
-#   distinct(TRANSNUM, RECYEAR, RECMONTH, RECDAY) %>%
-#   group_by(TRANSNUM, RECYEAR) %>%
-#   tally() %>%
-#   pivot_wider(names_from = RECYEAR,
-#               values_from = n) %>%
-#   column_to_rownames(var = "TRANSNUM") %>%
-#   as.matrix()
-
-n.years <- length(unique(occ2$EventYear))
-
+n.years <- length(unique(occ2$yrID))
 
 
 # Get covariates in order -------------------------------------------------
 
-####Effort covariate - site, year, visit month
-#Now we need to make an array of the observed
-#effort data with rows for sites, columns for years,
-# and matrix elements for each replicate
-
-#now, generate IDs for the for loop where 
-# we will populate the matrix
-yr <- survey$yrID
-site <- survey$quadID  
-#rep <- survey$REP
-
-#make a blank array with dims of sites x years x reps
-effort <- array(NA, dim = c(n.quads, #rows
-                            n.years, #columns
-                            4 #array elements - number of replicates
-))
-
-#fill taht array based on the values in those columns
-# for occupancy
-for(i in 1:dim(survey)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the site of row i,
-  # the year of row i and the replicate of row i,
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the scaled vis data
-  # for that sitexyearxreplicate combo
-  effort[site[i], yr[i], rep[i]] <- as.numeric(survey[i,6])
-}
 
 #now, generate IDs for the for loop where 
 # we will populate the matrix
 yr <- occ2$yrID #get a yearID for each iteration of the loop
-site <- occ2$TransID #site ID for each iteration fo the loop
+site <- occ2$quadID #site ID for each iteration fo the loop
 spec <- occ2$SpecID #get a species ID for each iteration of the loop
 rep <- occ2$REP #get a replicate for each iteration of the loop
 
 y <- array(NA, dim = c(n.species, #rows
-                       n.transects, #column
+                       n.quads, #column
                        n.years, #first array level
-                       4 #second array level
+                       2 #number of potential replicates
 ))
 
-#fill taht array based on the values in those columns
-# for occupancy
+#fill that array based on the values in those columns
+# for [occupancy] presence
 for(i in 1:dim(occ2)[1]){ #dim[1] = n.rows
   #using info from the dataframe on the species of row i,
   #the site of row i, 
@@ -179,7 +147,7 @@ for(i in 1:dim(occ2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(occ2[i,7])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(occ2[i,11])
 }
 
 
@@ -187,7 +155,7 @@ for(i in 1:dim(occ2)[1]){ #dim[1] = n.rows
 # no false positives
 #z matrix is speciesxsitexyear summed over all reps
 zdf <- occ2 %>% 
-  group_by(TransID, yrID, SpecID) %>%
+  group_by(quadID, yrID, SpecID) %>%
   #get total occupancy for each speciesxyear
   summarise(tot_occ = sum(presence, na.rm = T)) %>%
   #set that to 1-0 values again
@@ -196,21 +164,20 @@ zdf <- occ2 %>%
                              TRUE ~ NA_real_)) 
 
 
-
 nspecs <- max(zdf$SpecID) #get the dimension of rows
-nsites <- max(zdf$TransID) #get dimension for columns
+nsites <- max(zdf$quadID) #get dimension for columns
 nyrs <- max(zdf$yrID) #get the dimension of 3rd dimension
 
 #now, generate IDs for the for loop where 
 # we will populate the matrix
 yr <- zdf$yrID #get a yearID for each iteration of the loop
-site <-zdf$TransID #site ID for each iteration fo the loop
+site <-zdf$quadID #site ID for each iteration fo the loop
 spec <- zdf$SpecID #get a species ID for each iteration of the loop
 
 #make a blank array with dims of species x years 
 z <- array(NA, dim = c(nspecs, nsites, nyrs))
 
-#fill taht array based on the values in those columns
+#fill that array based on the values in those columns
 # for occupancy
 for(i in 1:dim(zdf)[1]){ #dim[1] = n.rows
   #using info from the dataframe on the species of row i,
@@ -242,10 +209,10 @@ R<-diag(x=0.1, n.species, n.species)
 #covariance among species abundances, we'll see how it goes
 
 t <- occ2 %>%
-  group_by(yrID, TransID, SpecID) %>%
+  group_by(yrID, quadID, SpecID) %>%
   summarise(presence = mean(presence, na.rm = T)) %>%
   ungroup() %>%
-  unite("site_year", c("yrID", "TransID"),
+  unite("site_year", c("yrID", "quadID"),
         sep = "_") %>%
   dplyr::select(SpecID, presence, site_year) %>%
   pivot_wider(names_from = SpecID,
@@ -255,30 +222,46 @@ t <- occ2 %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
 
-ggcorrplot(cor(t), type = "lower",
+ggcorrplot(cov(t), type = "lower",
            lab = FALSE)
+
+t[colSums(t, na.rm = T) == 0]
+t[rowSums(t, na.rm = T) == 0]
 
 #set omega init to this - not sure if it will work with the NA values
 #or if i will need to define those as a value?? we can try it...
-omega.init <- cor(t)
+t1 <- t[1:770,]
+t1[colSums(t1, na.rm = T) == 0]
+t2 <- t[771:1540,]
+t3 <- t[1541:2310,]
+
+cov1 <- cov(t1, use = "complete.obs")
+cov1[cov1 == 0] <- 0.001
+cov2 <- cov(t2, use = "complete.obs")
+cov2[cov2 == 0] <- 0.001
+cov3 <- cov(t3, use = "complete.obs")
+cov3[cov3 == 0] <- 0.001
+
+omega.init1 <- ginv(cov1)
+omega.init2 <- ginv(cov2)
+omega.init3 <- ginv(cov3)
 
 # Prep list for JAGS ------------------------------------------------------
 
 data <- list(n.species = n.species,
-             n.transects = n.transects,
-             n.start = n.start,
-             n.end = n.end,
+             n.quads = n.quads,
+             n.yr = n.yr,
              n.rep = n.rep,
-             n.years = n.years,
-             effort = effort,
              y = y,
              z = z,
              R = R,
-             omega.init = omega.init)
+             omega.init1 = omega.init1,
+             omega.init2 = omega.init2,
+             omega.init3 = omega.init3)
 
 saveRDS(data, here('04_nps_plants',
-                   'example',
                    'data_outputs',
+                   'MSAM',
                    'model_inputs',
-                   'JAGS_data_list.RDS'))
+                   'nps_msam_dynmultisite.RDS'))
 
