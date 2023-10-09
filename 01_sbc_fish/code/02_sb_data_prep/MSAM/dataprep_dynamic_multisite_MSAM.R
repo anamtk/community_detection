@@ -100,9 +100,21 @@ bs2 <- bs %>%
   dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
                 TRANSECT, VIS, SP_CODE, COUNT)
 
+#min(bs2$VIS, na.rm = T)
+
+bs3 <- bs %>%
+  filter(!SITE %in% c("ABUR", "AQUE", "MOHK")) %>%
+  unite(SITE_TRANS,
+        c("SITE", "TRANSECT"),
+        sep = "_",
+        remove = F) %>%
+  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
+                TRANSECT, VIS, SP_CODE, COUNT)
+
 #combine these datasets
 fish2 <- fish1 %>%
   rbind(bs2) %>%
+  rbind(bs3) %>%
   #get rid of NA counts and set to 0
   mutate(COUNT = case_when(COUNT == -99999 ~ 0,
                             TRUE ~ COUNT)) %>%
@@ -184,6 +196,8 @@ fish4 <- fish3 %>%
   filter(!is.na(specID)) %>%
   #get a site id that is numerical
   mutate(siteID = as.numeric(as.factor(SITE_TRANS))) %>%
+  mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
+                         TRUE ~ VIS)) %>%
   #scale visibility covaraite
   mutate(VIS = scale(VIS))  
 
@@ -194,6 +208,8 @@ fish4 %>%
 fish4 %>%
   filter(COUNT >0) %>%
   tally()
+
+11764/87006
 
 # Get covariates in order -------------------------------------------------
 
@@ -336,6 +352,10 @@ for(i in 1:dim(Ndf)[1]){ #dim[1] = n.rows
 #set all zeros (which could be true or false) to NA
 ymax[ymax == 0] <- NA
 
+z <- ymax
+
+z[z > 0] <- 1
+
 ymax2 <- ymax
 
 ymax2[is.na(ymax2)] <- 1
@@ -378,7 +398,7 @@ n.rep <- fish4 %>%
                 "6", '7', '8', '9', '10',
                 '11','12','13','14','15',
                 '16','17','18','19','20',
-                '21', '22') %>%
+                '21', '22', '23') %>%
   as.matrix()
 
 
@@ -541,6 +561,7 @@ data <- list(y = y,
              #for initials
              ymax = ymax,
              ymax2 = ymax2,
+             z = z,
              omega.init = omega.init,
              omega.init1 = omega.init1,
              omega.init2 = omega.init2,
