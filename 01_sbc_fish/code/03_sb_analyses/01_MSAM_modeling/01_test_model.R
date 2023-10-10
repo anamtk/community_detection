@@ -37,8 +37,6 @@ params <- c(
             'a2.Size',
             'mu.llambda',
             'sig.llambda',
-            't.lambda',
-            "E",
             'mu.a0',
             'sig.a0'
             )
@@ -46,16 +44,16 @@ params <- c(
 #params <- c("N")
 
 #we found ymax to set initials, since otherwise the model will hate us
-inits <- list(list(N = data$ymax,
-                   omega = data$omega.init),
-              list(N = data$ymax,
-                   omega = data$omega.init),
-              list(N = data$ymax,
-                   omega = data$omega.init))
+# inits <- list(list(N = data$ymax,
+#                    omega = data$omega.init),
+#               list(N = data$ymax,
+#                    omega = data$omega.init),
+#               list(N = data$ymax,
+#                    omega = data$omega.init))
 
-# inits <- list(list(N = data$ymax),
-#               list(N = data$ymax),
-#               list(N = data$ymax))
+inits <- list(list(N = data$ymax),
+              list(N = data$ymax),
+              list(N = data$ymax))
 
 
 #inits <- function()list(N = data$ymax)
@@ -67,7 +65,7 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "dyn_MSAM_multisite_cov.R")
+              "simple_MSAM.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,
@@ -78,7 +76,7 @@ mod <- jagsUI::jags(data = data,
                     parallel = TRUE,
                     n.chains = 3,
                     #n.burnin = 2000,
-                    n.iter = 1,
+                    n.iter = 4000,
                     DIC = TRUE)
 
 end.time <- Sys.time()

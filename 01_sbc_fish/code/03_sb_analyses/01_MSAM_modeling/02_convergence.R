@@ -27,7 +27,7 @@ rhat <- readRDS(here('01_sbc_fish',
                      'monsoon',
                      'fish_MSAM',
                      'outputs',
-                     'fish_MSAM_model_Rhat.RDS'))
+                     'fish_MSAM_model_Rhat2.RDS'))
 
 
 rhat2 <- readRDS(here('sbc_fish',

@@ -35,17 +35,14 @@ model{
     
     for(t in 1:n.years){
     llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    lambda[k,t] <- ilogit(llambda[k,t])
-    # lomega[k,t] ~ dnorm(mu.lomega, tau.lomega)
-    # omega[k,t] <- ilogit(lomega[k,t])
+    lambda[k,t] <- exp(llambda[k,t])
     }
 
   }
   
   #Community-level hyperpriors
   #initial abundance
-  lambda.mean ~ dbeta(1,1)
-  mu.llambda <- logit(lambda.mean)
+  mu.llambda ~ dnorm(0, 0.00001)
   sig.llambda ~ dunif(0, 10)
   tau.llambda <- pow(sig.llambda, -2)
   
@@ -55,14 +52,13 @@ model{
   # sig.lomega ~ dunif(0, 10)
   # tau.lomega <- pow(sig.lomega, -2)
   #Detection intercept
-  a0.mean ~ dbeta(1,1)
-  mu.a0 <- logit(a0.mean)
+  mu.a0 ~ dnorm(0, 0.001)
   tau.a0 <- pow(sig.a0, -2)
   sig.a0 ~ dunif(0, 50)
   
   #covariate means
-  a1.Vis ~ dnorm(0, 1E-2)
-  a2.Size ~ dnorm(0, 1E-2)
+  a1.Vis ~ dnorm(0, 0.001)
+  a2.Size ~ dnorm(0, 0.001)
   
   #missing data 
   #SOme data for visibility are missing, so we're imputing them
