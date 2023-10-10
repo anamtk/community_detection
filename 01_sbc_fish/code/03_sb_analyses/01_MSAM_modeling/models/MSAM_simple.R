@@ -20,7 +20,7 @@ model{
             #and total true abundance at the site
             y[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
             
-            y.rep[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
+            #y.rep[k,i,t,r] ~ dbin(p[k,i,t,r], N[k,i,t])
             
         }
         
@@ -47,10 +47,6 @@ model{
   tau.llambda <- pow(sig.llambda, -2)
   
   #initial occupancy
-  # omega.mean ~ dbeta(1,1)
-  # mu.lomega <- logit(omega.mean)
-  # sig.lomega ~ dunif(0, 10)
-  # tau.lomega <- pow(sig.lomega, -2)
   #Detection intercept
   mu.a0 ~ dnorm(0, 0.001)
   tau.a0 <- pow(sig.a0, -2)
