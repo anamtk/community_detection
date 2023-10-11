@@ -71,19 +71,20 @@ model{
     
     #SPECIES-LEVEL PRIORS:
   
-  #initial year occupancy species-level priors
-  lpsi1[k] ~ dnorm(mu.lpsi, tau.lpsi)
-  psi1[k] <- ilogit(lpsi[k])
+    #initial year occupancy species-level priors
+    lpsi1[k] ~ dnorm(mu.lpsi, tau.lpsi)
+    psi1[k] <- ilogit(lpsi1[k])
   
-  #persistence and colonization are currently
-  #dependent on species and year
-  for(t in 1:(n.yr[i]-1)){
-    lphi[k,t] ~ dnorm(mu.lphi, tau.lphi)
-    phi[k,t] <- ilogit(lphi[k,t])
-    lgamma[k,t] ~ dnorm(mu.lgamma, tau.lgamma)
-    gamma[k,t] <- ilogit(lgamma[k,t])
+    #persistence and colonization are currently
+    #dependent on species and year
+    #for(i in 1:n.quads){
+    for(t in 1:(n.yr[i]-1)){
+      lphi[k,t] ~ dnorm(mu.lphi, tau.lphi)
+      phi[k,t] <- ilogit(lphi[k,t])
+      lgamma[k,t] ~ dnorm(mu.lgamma, tau.lgamma)
+      gamma[k,t] <- ilogit(lgamma[k,t])
     
-  } #persistence/colonization year loop
+    }#} #persistence/colonization year loop
   
     #Detection hierarchy
     lp[k] ~ dnorm(mu.lp, tau.lp)
@@ -93,7 +94,7 @@ model{
     # #Detection intercept
     # a0[k] ~ dnorm(mu.a0, tau.a0)
     
-    }
+  } #species
     
   
   #Community-level hyperpriors
