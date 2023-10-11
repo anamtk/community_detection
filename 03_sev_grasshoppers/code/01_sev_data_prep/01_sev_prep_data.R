@@ -23,7 +23,7 @@
 # Load packages -----------------------------------------------------------
 
 package.list <- c("here", "tidyverse",
-                  'ggcorrplot')
+                  'ggcorrplot', 'readxl')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -34,13 +34,13 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-hopper <- read.csv(here('sev_grasshopper',
+hopper <- read.csv(here('03_sev_grasshoppers',
                         'data_raw',
                         'sev106_grasshopper_counts.csv'))
 
-life <- read.csv(here('sev_grasshopper',
+life <- read_xlsx(here('03_sev_grasshoppers',
                       'data_raw',
-                      'SEV_grasshopper_species_list2020.csv'))
+                      'SEV_grasshopper_species_list2020.xlsx'))
 
 # Subset data -------------------------------------------------------------
 
