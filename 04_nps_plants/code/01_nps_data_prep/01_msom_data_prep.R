@@ -254,10 +254,7 @@ data <- list(n.species = n.species,
              n.rep = n.rep,
              y = y,
              z = z,
-             R = R,
-             omega.init1 = omega.init1,
-             omega.init2 = omega.init2,
-             omega.init3 = omega.init3)
+             R = R)
 
 saveRDS(data, here('04_nps_plants',
                    'data_outputs',
