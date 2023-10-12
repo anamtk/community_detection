@@ -103,13 +103,14 @@ n.species <- length(unique(occ2$CurrentSpecies))
 n.quads <- length(unique(occ2$quadID))
 
 n.yr <- years %>%
-  select(c(quadID, yrID)) %>%
+  dplyr::select(quadID, yrID) %>%
   arrange(quadID, yrID) %>%
   group_by(quadID) %>%
   filter(yrID == max(yrID)) %>%
   ungroup() %>%
   dplyr::select(yrID) %>%
   as_vector()
+n.yr <- unname(n.yr)
 
 n.rep <- rep %>%
   group_by(quadID, yrID) %>%
@@ -130,12 +131,11 @@ n.years <- length(unique(occ2$yrID))
 yr <- occ2$yrID #get a yearID for each iteration of the loop
 site <- occ2$quadID #site ID for each iteration fo the loop
 spec <- occ2$SpecID #get a species ID for each iteration of the loop
-rep <- occ2$REP #get a replicate for each iteration of the loop
+#rep <- occ2$REP #get a replicate for each iteration of the loop
 
 y <- array(NA, dim = c(n.species, #rows
                        n.quads, #column
-                       n.years, #first array level
-                       2 #number of potential replicates
+                       n.years #first array level
 ))
 
 #fill that array based on the values in those columns
@@ -147,7 +147,7 @@ for(i in 1:dim(occ2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(occ2[i,11])
+  y[spec[i], site[i], yr[i]] <- as.numeric(occ2[i,11])
 }
 
 
@@ -253,12 +253,11 @@ data <- list(n.species = n.species,
              n.yr = n.yr,
              n.rep = n.rep,
              y = y,
-             z = z,
-             R = R)
+             z = z)
 
 saveRDS(data, here('04_nps_plants',
                    'data_outputs',
                    'MSAM',
                    'model_inputs',
-                   'nps_msam_dynmultisite.RDS'))
+                   'nps_msam_multisite.RDS'))
 

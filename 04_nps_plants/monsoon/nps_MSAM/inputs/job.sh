@@ -7,10 +7,8 @@
 #SBATCH --mail-type=all
 #SBATCH --mail-user=sml665@nau.edu
 
-# load modules for R and JAGS
-module load R/4.1.2
-module --ignore-cache load 'jags/4.3.0-cg2qbw6'
 
-# Run the application: precede the application command with 'srun'
-# This script is the script that has the jags wrapper for running JAGS
+module load R/4.1.2
+module load jags/4.3.0
+
 srun Rscript MSAM_script.R

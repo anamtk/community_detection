@@ -27,13 +27,11 @@ data <- readRDS(here('04_nps_plants',
                      'data_outputs',
                      'MSAM',
                      'model_inputs',
-                     'nps_msam_dynmultisite.RDS'))
-
-n.yr <- as.vector(unname(data$n.yr))
+                     'nps_msam_multisite.RDS'))
 
 data <- list(n.species = data$n.species,
              n.quads = data$n.quads,
-             n.yr = n.yr,
+             n.yr = data$n.yr,
              n.rep = data$n.rep,
              y = data$y,
              z = data$z)
@@ -62,10 +60,10 @@ inits <- list(list(N = data$z),
 params <- c(
   'psi.mean',
   'sig.lpsi',
-  'phi.mean',
-  'sig.lphi',
-  'gamma.mean',
-  'sig.gamma',
+  # 'phi.mean',
+  # 'sig.lphi',
+  # 'gamma.mean',
+  # 'sig.gamma',
   'p.mean',
   'sig.lp'
 )
@@ -77,7 +75,7 @@ model <- here("04_nps_plants",
               'code',
               '02_nps_analyses',
               'jags',
-              "nps_dyn_MSOM_simple.R")
+              "nps_MSOM_simple.R")
 
 Sys.time()
 start<-proc.time()

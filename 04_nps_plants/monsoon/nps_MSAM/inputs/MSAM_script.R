@@ -1,8 +1,8 @@
-#Monsoon script - fish MSAM
+#Monsoon script - NPS MSAM
 # Ana Miller-ter Kuile
-# July 27, 2023
+# October 11, 2023
 
-#this script runs the fish MSOM
+#this script runs the plants MSOM
 
 # Load packages ---------------------------------------------------------------
 Sys.time()
@@ -26,7 +26,7 @@ for(i in package.list){library(i, character.only = T)}
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-data <- readRDS("nps_msam_dynmultisite.RDS")
+data <- readRDS("/scratch/sml665/nps_plants/inputs/nps_msam_multisite.RDS")
 
 # Compile data ------------------------------------------------------------
 
@@ -35,13 +35,8 @@ data_list <- list(n.species = data$n.species,
              n.yr = data$n.yr,
              n.rep = data$n.rep,
              y = data$y,
-             #omega prior:
-             R = data$R,
              #initials
-             z = data$z,
-             omega.init1 = data$omega.init1,
-             omega.init2 = data$omega.init2,
-             omega.init3 = data$omega.init3)
+             z = data$z)
 
 # Parameters to save ------------------------------------------------------
 
@@ -50,9 +45,9 @@ params <- c(
   'psi.mean',
   'sig.lpsi',
   'p.mean',
-  'sig.lp',
-  'omega'
+  'sig.lp'
 )
+
 
 # INits -------------------------------------------------------------------
 
@@ -60,24 +55,24 @@ params <- c(
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
 
-#inits <- function() list(N = data$z) #,
+inits <- function() list(N = data$z) 
 
 #model breaks with these initials...
                          #omega = data$omega.init)
 
-inits <- list(list(N = data$z,
-                   omega = data$omega.init1),
-              list(N = data$z,
-                   omega = data$omega.init2),
-              list(N = data$z,
-                   omega = data$omega.init3))
+# inits <- list(list(N = data$z,
+#                    omega = data$omega.init1),
+#               list(N = data$z,
+#                    omega = data$omega.init2),
+#               list(N = data$z,
+#                    omega = data$omega.init3))
 
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
                         inits = inits,
                         #inits = NULL,
-                        model.file = 'nps_dyn_MSOM_cov.R',
+                        model.file = '/scratch/sml665/nps_plants/inputs/nps_MSOM_simple.R',
                         parameters.to.save = params,
                         parallel = TRUE,
                         n.chains = 3,
@@ -86,7 +81,7 @@ mod <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(mod, 
-        file ="./outputs/nps_MSAM_model.RDS")
+        file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model.RDS")
 
 Sys.time()
 
@@ -105,7 +100,7 @@ parms <- c(
 
 mcmcplot(mod$samples,
          parms = parms,
-         dir = "./outputs/mcmcplots/MSAM")
+         dir = "/scratch/sml665/nps_plants/outputs/mcmcplots/MSAM")
 
 # Get RHat per parameter ------------------------------------------------
 
@@ -113,7 +108,7 @@ mcmcplot(mod$samples,
 # to plot per-parameter convergence
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "./outputs/nps_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/sml665/nps_plants/outputs/nps_MSAM_model_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
