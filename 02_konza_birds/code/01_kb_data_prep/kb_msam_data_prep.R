@@ -21,7 +21,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-birds <- read.csv(here("konza_birds",
+birds <- read.csv(here("02_konza_birds",
                        "data_raw",
                        "CBP011.csv"))
 
