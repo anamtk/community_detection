@@ -65,30 +65,15 @@ samp_df2 <- samp_df %>%
                 -deviance, -mean_dev) 
 
 #for fish model root nodes:
-#omega
 mu.llambda <- as.vector(samp_df2$mu.llambda)
 sig.llambda <- as.vector(samp_df2$sig.llambda)
-t.lambda <- as.vector(samp_df2$t.lambda)
-E <- as.vector(samp_df2$E)
 mu.a0 <- as.vector(samp_df2$mu.a0)
+#sig.a0 seemed to be covering the whole domain of dunif(0,50) so updated to 100 in
+#next run
 sig.a0 <- as.vector(samp_df2$sig.a0)
 a1.Vis <- as.vector(samp_df2$a1.Vis)
 a2.Size <- as.vector(samp_df2$a2.Size)
 
-# omega <- samp_df2 %>%
-#   dplyr::select(matches("omega")) %>%
-#   pivot_longer(cols = everything(),
-#                names_to = "id",
-#                values_to = "omega") %>%
-#   mutate(id = str_sub(id, 6, nchar(id))) %>%
-#   separate(id, into = c("row", "col"),
-#            sep = ",") %>%
-#   mutate(row = str_sub(row, 2, nchar(row)),
-#          col = str_sub(col, 1, (nchar(col)-1))) %>%
-#   pivot_wider(names_from = "col",
-#               values_from = 'omega') %>%
-#   column_to_rownames(var = "row") %>%
-#   as.matrix()
 
 # Load Data ---------------------------------------------------------------
 
@@ -118,37 +103,47 @@ params <- c(
   'a2.Size',
   'mu.llambda',
   'sig.llambda',
-  't.lambda',
-  "E",
   'mu.a0',
-  'sig.a0')
+  'sig.a0'
+)
+
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
-#also Kiona suggested setting initials for omega based on covariance, since
-#the model will struggle with this
-inits <- function() list(N = data$ymax,
-                         mu.llambda = mu.llambda,
-                         sig.llambda = sig.llambda,
-                         t.lambda = t.lambda,
-                         E = E,
-                         mu.a0 = mu.a0,
-                         sig.a0 = sig.a0,
-                         a1.Vis = a1.Vis,
-                         a2.Size = a2.Size)
+inits <- list(list(N = data$ymax,
+                   mu.llambda = mu.llambda,
+                   sig.llambda = sig.llambda,
+                   mu.a0 = mu.a0,
+                   sig.a0 = sig.a0,
+                   a1.Vis = a1.Vis,
+                   a2.Size = a2.Size),
+              list(N = data$ymax,
+                   mu.llambda = mu.llambda + 0.05,
+                   sig.llambda = sig.llambda + 0.05,
+                   mu.a0 = mu.a0 + 5,
+                   sig.a0 = sig.a0 + 5,
+                   a1.Vis = a1.Vis + 0.05,
+                   a2.Size = a2.Size + 0.5),
+              list(N = data$ymax,
+                   mu.llambda = mu.llambda - 0.05,
+                   sig.llambda = sig.llambda + 1,
+                   mu.a0 = mu.a0 - 5,
+                   sig.a0 = sig.a0 + 10,
+                   a1.Vis = a1.Vis - 0.05,
+                   a2.Size = a2.Size - 0.5))
 
 # JAGS model --------------------------------------------------------------
 
 mod2 <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_KO.R',
+                    model.file = '/scratch/atm234/sbc_fish/inputs/MSAM_simple.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
                     n.iter = 50000,
-                    n.burnin = 1000,
+                    n.burnin = 5000,
                     n.thin = 10,
                     DIC = TRUE)
 
@@ -162,19 +157,7 @@ saveRDS(mod2,
 (tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
-parms <- c(
-  #COMMUNITY parameters
-  'a1.Vis',
-  'a2.Size',
-  'mu.llambda',
-  'sig.llambda',
-  "E",
-  'mu.a0',
-  'sig.a0',
-  'deviance')
-
 mcmcplot(mod2$samples,
-         parms = parms,
          dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM2")
 
 # Get RHat per parameter ------------------------------------------------
