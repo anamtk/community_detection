@@ -33,32 +33,38 @@ data <- readRDS(here('03_sev_grasshoppers',
 
 params <- c(
             #COMMUNITY parameters
-            'p.mean',
-            'sig.lp',
-            'lambda.mean',
-            'sig.lambda')
+            'mu.llambda',
+            'sig.llambda',
+            'mu.a0',
+            'sig.a0',
+            'a1.Rep')
 
 
 #we found ymax to set initials, since otherwise the model will hate us
-inits <- function() list(N = data$ymax,
-                         omega = data$omega.init)
+inits <- function() list(N = data$ymax)
 
 # JAGS model --------------------------------------------------------------
 
 model <- here('03_sev_grasshoppers',
               "code",
               '02_sev_analyses',
+              "MSAM",
               'jags',
-              'sev_dyn_MSAM_cov.R')
+              'sev_MSAM_simple.R')
 
-Sys.time()
+start.time <- Sys.time()
 mod <- jagsUI::jags(data = data,
                          inits = inits,
                          model.file = model,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 1,
+                         n.iter = 4000,
                          DIC = TRUE)
 
-Sys.time()
+end.time <- Sys.time()
+
+end.time - start.time
+
+mcmcplot(mod$samples)
+gelman.diag(mod$samples, multivariate = F)
