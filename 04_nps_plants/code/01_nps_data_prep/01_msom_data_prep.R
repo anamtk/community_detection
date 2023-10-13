@@ -22,12 +22,44 @@ for(i in package.list){library(i, character.only = T)}
 # Load data ---------------------------------------------------------------
 
 #read data into R
+# plants <- read.csv(here('04_nps_plants',
+#                         'data_raw',
+#                         'NPS_veg_data_PEFO_S.csv'))
+# 
+# str(plants)
+
+#this is in the new email from Megan, and includes the lifegroups and 
+#durations for all the plants
 plants <- read.csv(here('04_nps_plants',
-                        'data_raw',
-                        'NPS_veg_data_PEFO_S.csv'))
+                         'data_raw',
+                         'NPS_veg_data.PEFO_S_v2.csv'))
 
 str(plants)
 
+
+# Remove unknown species --------------------------------------------------
+
+plants %>%
+  distinct(CurrentSpecies)
+
+#these are the species we can remove from the dataset because we have
+#no info (or little) on their growth forms and duration
+#10052015-1
+#PEFO_S08_20221025_unk1
+#PEFO_S09_20221020_unk2
+#PEFO_S10_20221022_unk1
+#PEFO20101001_1
+#PEFO20111012_1
+#UnknownForb
+
+plants <- plants %>%
+  filter(!CurrentSpecies %in% c('10052015-1',
+                                'PEFO_S08_20221025_unk1',
+                                'PEFO_S09_20221020_unk2',
+                                'PEFO_S10_20221022_unk1',
+                                'PEFO20101001_1',
+                                'PEFO20111012_1',
+                                'UnknownForb'))
 
 # Manipulate data structure ----------------------------------
 
@@ -65,6 +97,10 @@ occ2 <- plants %>%
   group_by(EventYear, Plot, Transect, Quadrat) %>%
   #make sure each species is in each survey
   complete(CurrentSpecies) %>%
+  ungroup() %>%
+  group_by(CurrentSpecies) %>%
+  fill(Lifeform, .direction = "updown") %>%
+  fill(Duration, .direction = "updown") %>%
   ungroup() %>%
   #presence: 1 when cover class does not equal 0, 0 if cover class = 0
   mutate(presence = case_when(CoverClass == 0 ~ 0,
@@ -124,6 +160,103 @@ n.years <- length(unique(occ2$yrID))
 
 
 # Get covariates in order -------------------------------------------------
+
+#lifeform_duration, cover classes here as covariates
+
+#LIFE FORMS
+#some species identified with just a number or with just a genus,
+#so these look like they often ahve an unknown duration
+#I think we can just reclassify these as "unknown grass", "unknown forb"
+
+lifeforms <- occ2 %>%
+  unite(lifegroup,
+        c(Lifeform, Duration),
+        sep = "_",
+        remove = F)
+
+t <- lifeforms %>%
+  distinct(CurrentSpecies, lifegroup)
+
+#for cell-referencing, you will want to make the group with the 
+#most species in it the "baseline"
+lifeforms %>%
+  distinct(CurrentSpecies, lifegroup) %>%
+  group_by(lifegroup) %>%
+  tally()
+#looks like it is forb_annual
+
+lifeforms2 <- lifeforms %>%
+  distinct(SpecID, lifegroup) %>%
+  #factor lifegroup to put in a logical order, with highest number first
+  mutate(lifegroup2 = factor(lifegroup, levels = c('forb_annual', "forb_biennial",
+                                                  'forb_perennial','forb_NA',
+                                                  'graminoid_annual','graminoid_perennial',
+                                                  'graminoid_NA',
+                                                  'shrub_perennial', 
+                                                  'cactus_perennial', 
+                                                   'succulent_perennial'))) %>%
+  #make this numeric because JAGS wants numeric factor variables
+  mutate(lifegroup2 = as.numeric(lifegroup2))
+
+#pull out as a vector for the model
+lifegroup <- lifeforms2 %>%
+  dplyr::select(lifegroup2) %>%
+  as_vector()
+
+#get a number for indexing in the model
+n.groups <- length(unique(lifeforms2$lifegroup2))
+
+#COVER CLASSES
+#SHELBY - I've set this up so that it should work for you, but I think we 
+#should make this actually a scaled value based on the median of each cover
+#class
+#What that means is to basically just set each cover class to = it's median 
+#continuous percentage value
+#then use the scale function to get the scaled value of this
+#code that should work for this (thoough you'll have to change all the numbers
+#after the ~s in the case_when:
+covers <- occ2 %>%
+  mutate(cover = case_when(CoverClass == 0 ~ 0,
+                           CoverClass == 1 ~ 0.05,
+                           CoverClass == 2 ~ 0.5,
+                           CoverClass == 3 ~ 5,
+                           CoverClass == 4 ~ 10,
+                           CoverClass == 5 ~ 11,
+                           CoverClass == 6 ~ 12,
+                           CoverClass == 7 ~ 13,
+                           CoverClass == 8 ~ 20,
+                           CoverClass == 9 ~ 50,
+                           CoverClass == 10 ~ 75,
+                           CoverClass == 11 ~ 100,
+                           #double check that the NAs came from "completing"
+                           #species in the pipe that created "occ2" above
+                           is.na(CoverClass) ~ 0,
+                           TRUE ~ NA_real_)) %>%
+  mutate(cover = scale(cover))
+
+
+yr <- covers$yrID #get a yearID for each iteration of the loop
+site <- covers$quadID #site ID for each iteration fo the loop
+spec <- covers$SpecID #get a species ID for each iteration of the loop
+rep <- covers$REP #get a replicate for each iteration of the loop
+
+cover <- array(NA, dim = c(n.species,
+                           n.quads,
+                           n.years,
+                           2))
+
+for(i in 1:dim(covers)[1]){ #dim[1] = n.rows
+  #using info from the dataframe on the species of row i,
+  #the site of row i, 
+  # the year of row i and the replicate of row i,
+  # populate that space in the array with the column in
+  # the dataframe that corresponds to the cover class group
+  #for that combo
+  #(NEED TO UPDATE - probably to median %cover for the cover class)
+  cover[spec[i], site[i], yr[i], rep[i]] <- as.numeric(covers[i,18])
+}
+# Get response data  ------------------------------------------------------
+
 
 
 #now, generate IDs for the for loop where 
@@ -252,6 +385,8 @@ data <- list(n.species = n.species,
              n.quads = n.quads,
              n.yr = n.yr,
              n.rep = n.rep,
+             cover = cover,
+             lifegroup = lifegroup,
              y = y,
              z = z)
 
