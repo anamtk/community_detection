@@ -28,21 +28,21 @@ birds <- read.csv(here("02_konza_birds",
 str(birds)
 #for body size
 #Supplementary Data 1 here: https://figshare.com/s/b990722d72a26b5bfead
-avonet <- read.csv(here('konza_birds',
+avonet <- read.csv(here('02_konza_birds',
                         'data_raw',
                         'AVONET_BirdLife.csv'))
 
-avonet2 <- read.csv(here('konza_birds',
+avonet2 <- read.csv(here('02_konza_birds',
                          'data_raw',
                         'AVONET_BirdTree.csv'))
 
-avonet3 <- read.csv(here('konza_birds',
+avonet3 <- read.csv(here('02_konza_birds',
                          'data_raw',
                          'AVONET_eBird.csv'))
 
 #to link the konza birds via codes and scientific names to the avonet data
 #from here: https://www.birdpop.org/pages/birdSpeciesCodes.php
-codes <- read.csv(here('konza_birds',
+codes <- read.csv(here('02_konza_birds',
                        'data_raw',
                        'IBP-AOS-LIST23.csv'))
 
@@ -258,6 +258,9 @@ yr <- survey2$yrID
 site <- survey2$TransID  
 rep <- survey2$REP
 
+survey3 <- survey2 %>%
+  mutate(effort = scale(DURATION))
+
 #make a blank array with dims of sites x years x reps
 effort <- array(NA, dim = c(n.transects, #rows
                          n.years, #columns
@@ -272,7 +275,7 @@ for(i in 1:dim(survey2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the scaled vis data
   # for that sitexyearxreplicate combo
-  effort[site[i], yr[i], rep[i]] <- as.numeric(survey2[i,6])
+  effort[site[i], yr[i], rep[i]] <- as.numeric(survey3[i,10])
 }
 
 #now, generate IDs for the for loop where 
@@ -366,9 +369,9 @@ t <- birds5 %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
-
-ggcorrplot(cor(t), type = "lower",
-           lab = FALSE)
+# 
+# ggcorrplot(cor(t), type = "lower",
+#            lab = FALSE)
 
 #set omega init to this - not sure if it will work with the NA values
 #or if i will need to define those as a value?? we can try it...
@@ -393,7 +396,8 @@ data <- list(n.species = n.species,
 
 
 #export that for using with the model
-saveRDS(data, here('konza_birds',
+saveRDS(data, here('02_konza_birds',
                    "data_outputs",
+                   "MSAM",
                    "model_inputs",
                    "bird_msam_dynmultisite.RDS"))

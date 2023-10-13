@@ -23,8 +23,9 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load Data ---------------------------------------------------------------
 
-data <- readRDS(here("konza_birds",
+data <- readRDS(here("02_konza_birds",
                      "data_outputs",
+                     "MSAM",
                      "model_inputs",
                      "bird_msam_dynmultisite.RDS"))
 
@@ -34,9 +35,9 @@ params <- c(
             #COMMUNITY parameters
             'a1.Effort',
             'a2.Size',
-            'lambda.mean',
-            'sig.lambda',
-            'a0.mean',
+            'mu.llambda',
+            'sig.llambda',
+            'mu.a0',
             'sig.a0')
 
 
@@ -46,20 +47,26 @@ inits <- function() list(N = data$ymax)#,
 
 # JAGS model --------------------------------------------------------------
 
-model <- here("konza_birds",
+model <- here("02_konza_birds",
               "code", 
               "02_kb_analyses",
+              "MSAM",
               'jags',
-              "kb_dyn_MSAM_cov.R")
+              "kb_MSAM_simple.R")
 
-Sys.time()
+start.time <- Sys.time()
 mod <- jagsUI::jags(data = data,
                          inits = inits,
                          model.file = model,
                          parameters.to.save = params,
                          parallel = TRUE,
                          n.chains = 3,
-                         n.iter = 1,
+                         n.iter = 4000,
                          DIC = TRUE)
 
-Sys.time()
+end.time <- Sys.time()
+
+end.time - start.time
+
+mcmcplot(mod$samples)
+gelman.diag(mod$samples)

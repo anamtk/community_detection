@@ -65,10 +65,9 @@ samp_df2 <- samp_df %>%
                 -deviance, -mean_dev) 
 
 #for bird model root nodes:
-#omega
-lambda.mean <- as.vector(samp_df2$lambda.mean)
+mu.llambda <- as.vector(samp_df2$mu.llambda)
 sig.llambda <- as.vector(samp_df2$sig.llambda)
-a0.mean <- as.vector(samp_df2$a0.mean)
+mu.a0 <- as.vector(samp_df2$mu.a0)
 sig.a0 <- as.vector(samp_df2$sig.a0)
 a1.Effort <- as.vector(samp_df2$a1.Effort)
 a2.Size <- as.vector(samp_df2$a2.Size)
@@ -101,36 +100,49 @@ params <- c(
   #COMMUNITY parameters
   'a1.Effort',
   'a2.Size',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'a0.mean',
-  'sig.a0',
-  'omega')
+  'mu.a0',
+  'sig.a0')
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
-inits <- function() list(N = data$ymax,
-                         lambda.mean = lambda.mean,
-                         sig.llambda = sig.llambda,
-                         a0.mean = a0.mean,
-                         sig.a0 = sig.a0,
-                         a1.Effort = a1.Effort,
-                         a2.Size = a2.Size)
+inits <- list(list(N = data$ymax,
+                   mu.llambda = mu.llambda,
+                   sig.llambda = sig.llambda,
+                   mu.a0 = mu.a0,
+                   sig.a0 = sig.a0,
+                   a1.Effort = a1.Effort,
+                   a2.Size = a2.Size),
+              list(N = data$ymax,
+                   mu.llambda = mu.llambda + 0.05,
+                   sig.llambda = sig.llambda + 0.05,
+                   mu.a0 = mu.a0 + 1,
+                   sig.a0 = sig.a0 + 1,
+                   a1.Effort = a1.Effort + 0.05,
+                   a2.Size = a2.Size + 0.05),
+              list(N = data$ymax,
+                   mu.llambda = mu.llambda - 0.05,
+                   sig.llambda = sig.llambda + 0.08,
+                   mu.a0 = mu.a0 - 1,
+                   sig.a0 = sig.a0 + 2,
+                   a1.Effort = a1.Effort - 0.05,
+                   a2.Size = a2.Size - 0.05))
 
 # JAGS model --------------------------------------------------------------
 
 mod2 <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/konza_birds/inputs/kb_dyn_MSAM_cov.R',
+                    model.file = '/scratch/atm234/konza_birds/inputs/kb_MSAM_simple.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
                     n.iter = 50000,
-                    n.burnin = 1000,
+                    n.burnin = 5000,
                     n.thin = 10,
                     DIC = TRUE)
 
@@ -140,22 +152,9 @@ saveRDS(mod2,
 
 Sys.time()
 
-
-
 # Check convergence -------------------------------------------------------
 
-parms <- c(
-  #COMMUNITY parameters
-  'a1.Effort',
-  'a2.Size',
-  'lambda.mean',
-  'sig.llambda',
-  'a0.mean',
-  'sig.a0',
-  'deviance')
-
 mcmcplot(mod2$samples,
-         parms = parms,
          dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM2")
 
 # Get RHat per parameter ------------------------------------------------
@@ -196,10 +195,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-# <dbl>         <dbl> <dbl>
-#   1        20717.        29211. 86112
 
 bu1 <- raf[[1]]$resmatrix[,1]
 bu2 <- raf[[2]]$resmatrix[,1]
@@ -216,7 +211,6 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#792
 
 
 
