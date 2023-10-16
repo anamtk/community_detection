@@ -66,10 +66,17 @@ samp_df2 <- samp_df %>%
 
 #for bird model root nodes:
 #omega
-lambda.mean <- as.vector(samp_df2$lambda.mean)
+mu.llambda <- as.vector(samp_df2$mu.llambda)
 sig.llambda <- as.vector(samp_df2$sig.llambda)
-p.mean <- as.vector(samp_df2$p.mean)
-sig.lp <- as.vector(samp_df2$sig.lp)
+mu.a0 <- as.vector(samp_df2$mu.a0)
+sig.a0 <- as.vector(samp_df2$sig.a0)
+a1.Rep <- c(NA, -3, -3.5)
+
+mu.llambda
+sig.llambda
+mu.a0
+sig.a0 
+a1.Rep 
 
 # Load Data ---------------------------------------------------------------
 
@@ -78,57 +85,73 @@ data <- readRDS("/scratch/atm234/sev_hoppers/inputs/sev_msam_dynmultisite.RDS")
 
 # Compile data ------------------------------------------------------------
 
-data_list <- list(y = data$y,
-                  reprod = data$reprod,
-                  n.species = data$n.species,
-                  n.years = data$n.years,
-                  n.start = data$n.start,
-                  n.end = data$n.end,
-                  n.transects = data$n.transects,
-                  n.rep = data$n.rep,
-                  #for initials
-                  ymax = data$ymax,
-                  omega.init = data$omega.init,
-                  #for omega prior
-                  R = data$R)
+data_list <-  list(y = data$y,
+                   reprod = data$reprod,
+                   n.species = data$n.species,
+                   n.years = data$n.years,
+                   n.start = data$n.start,
+                   n.end = data$n.end,
+                   n.transects = data$n.transects,
+                   n.rep = data$n.rep,
+                   #for initials
+                   ymax = data$ymax,
+                   omega.init = data$omega.init,
+                   #for omega prior
+                   R = data$R)
+
 
 
 # Parameters to save ------------------------------------------------------
 
 params <- c(
   #COMMUNITY parameters
-  'p.mean',
-  'sig.lp',
-  'lambda.mean',
+  'mu.llambda',
   'sig.llambda',
-  'omega')
+  'mu.a0',
+  'sig.a0',
+  'a1.Rep')
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
-inits <- function() list(N = data$ymax,
-                         lambda.mean = lambda.mean,
-                         sig.llambda = sig.llambda,
-                         p.mean = p.mean,
-                         sig.lp = sig.lp)
+inits <- list(list(N = data$ymax,
+                              mu.llambda = mu.llambda,
+                              sig.llambda = sig.llambda,
+                              mu.a0 = mu.a0,
+                              sig.a0 = sig.a0,
+                              a1.Rep = a1.Rep),
+                         list(N = data$ymax,
+                              mu.llambda = mu.llambda + 0.5,
+                              sig.llambda = sig.llambda + 0.4,
+                              mu.a0 = mu.a0 + 5,
+                              sig.a0 = sig.a0 + 0.5,
+                              a1.Rep = a1.Rep + 0.5),
+                         list(N = data$ymax,
+                              mu.llambda = mu.llambda - 0.5,
+                              sig.llambda = sig.llambda + 0.8,
+                              mu.a0 = mu.a0 -5,
+                              sig.a0 = sig.a0 + 1,
+                              a1.Rep = a1.Rep - 0.5)
+                         )
 
 # JAGS model --------------------------------------------------------------
 
 mod2 <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/sev_hoppers/inputs/sev_dyn_MSAM_cov.R',
+                    model.file = '/scratch/atm234/sev_hoppers/inputs/sev_MSAM_simple.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
                     n.iter = 50000,
-                    n.burnin = 1000,
+                    n.burnin = 5000,
+                    n.thin = 10,
                     DIC = TRUE)
 
 #save as an R data object
-saveRDS(mod2, 
+saveRDS(mod2,
         file ="/scratch/atm234/sev_hoppers/outputs/sev_MSAM_model2.RDS")
 
 Sys.time()
@@ -137,16 +160,7 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
-parms <- c(
-  #COMMUNITY parameters
-  'p.mean',
-  'sig.lp',
-  'lambda.mean',
-  'sig.llambda',
-  'deviance')
-
 mcmcplot(mod2$samples,
-         parms = parms,
          dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM2")
 
 # Get RHat per parameter ------------------------------------------------
@@ -166,26 +180,26 @@ ch1 <- raf[[1]]$resmatrix[,2]
 ch2 <- raf[[2]]$resmatrix[,2]
 ch3 <- raf[[3]]$resmatrix[,2]
 
-raf_all <- as.data.frame(cbind(names, 
+raf_all <- as.data.frame(cbind(names,
                                ch1, ch2, ch3)) %>%
   mutate(ch1 = as.numeric(ch1),
          ch2 = as.numeric(ch2),
          ch3 = as.numeric(ch3)) %>%
   pivot_longer(ch1:ch3,
                names_to = "chain",
-               values_to = 'iterations') 
+               values_to = 'iterations')
 
 ggplot(raf_all, aes(x = iterations/3)) +
-  geom_histogram() 
+  geom_histogram()
 
 raf_all %>%
-  summarise(iterations_90 = quantile(iterations, 
-                                     probs = 0.9, 
+  summarise(iterations_90 = quantile(iterations,
+                                     probs = 0.9,
                                      na.rm = T)/3,
             iterations_95 = quantile(iterations,
                                      probs = 0.95,
                                      na.rm = T)/3,
-            max = max(iterations, 
+            max = max(iterations,
                       na.rm = T)/3)
 # A tibble: 1 × 3
 # iterations_90 iterations_95   max
@@ -203,7 +217,7 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
   filter(!str_detect(names, "z")) %>%
   pivot_longer(bu1:bu3,
                names_to = "chain",
-               values_to = 'iterations') 
+               values_to = 'iterations')
 
 burn %>%
   summarise(max(iterations, na.rm = T))
