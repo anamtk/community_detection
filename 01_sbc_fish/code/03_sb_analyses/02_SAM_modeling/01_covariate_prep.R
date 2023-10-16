@@ -30,29 +30,37 @@ for(i in package.list){library(i, character.only = T)}
 #summarise monthly for now? and later think about
 #more biologically-relevant "seasons"?)
 
-biomass <- read.csv(here("data_raw",
-                         'sbc_fish',
+biomass <- read.csv(here('01_sbc_fish',
+                         "data_raw",
                          "environmental",
-                         "Annual_All_Species_Biomass_at_transect_20230201.csv"))
+                         "Annual_All_Species_Biomass_at_transect_20230814.csv"))
 
-bottemp <- read.csv(here("data_raw",
-                         'sbc_fish',
-                         "environmental",
-                         "Bottom_temp_all_years_20220729.csv"))
+#from temp "data prep" script for SAM. these are HUGE datasets
+#so didn't want to put summary in here because it takes forever
+bottemp <- read.csv(here('01_sbc_fish',
+                         "data_outputs",
+                         'SAM',
+                         "data_prep",
+                         "seasonal_bottom_temps.csv"))
 
-chl_a <- read.csv(here("data_outputs",
-                       'sbc_fish',
+chl_a <- read.csv(here('01_sbc_fish',
+                       "data_outputs",
                        "SAM",
                        'data_prep',
                        "monthly_chla.csv"))
 
 #to get the sites and transects we need for the other 
 #two datasets
-stability <- read.csv(here("data_outputs",
-                           'sbc_fish',
-                           'SAM',
-                           'data_prep',
-                           "corrected_stability_metrics.csv"))
+stability <- readRDS(here("01_sbc_fish",
+                           "monsoon",
+                           "fish_MSAM",
+                           "outputs",
+                           "fish_bray_meanSD.RDS"))
+
+IDs <- read.csv(here('01_sbc_fish',
+                      "data_outputs",
+                      "metadata",
+                      "site_year_IDs.csv"))
 # Biomass by Year by Site -------------------------------------------------
 
 colnames(biomass)
@@ -63,73 +71,6 @@ biomass <- biomass %>%
   dplyr::select(YEAR, MONTH, SITE, 
                 TRANSECT, SP_CODE, DRY_GM2) %>%
   filter(SP_CODE == "MAPY")
-
-
-# Summarise bottom temps --------------------------------------------------
-
-colnames(bottemp)
-
-bottemp2 <- bottemp %>%
-  separate(DATE_LOCAL, into = c("YEAR", "MONTH", "DAY"),
-           sep = "-")
-
-#summarise by site, year, and month, and get SD in temp
-#maybe want to do that by year - we'll see...
-#or add in the variability as a lag later? who knows
-bottemp3 <- bottemp2 %>%
-  group_by(SITE, YEAR, MONTH) %>%
-  summarise(sd_TEMP = sd(TEMP_C, na.rm = T),
-            TEMP_C = mean(TEMP_C, na.rm = T)) %>%
-  ungroup()
-  
-ggplot(bottemp3, aes(x = MONTH, y = TEMP_C)) +
-  geom_point(position = position_jitter(width = 0.25))
-
-#standardize:
-#whatever months have + are one season, whatever months
-#have - values are the other season
-
-bottemp3 %>%
-  mutate(TEMP_C = scale(TEMP_C)) %>%
-  group_by(MONTH) %>%
-  summarise(mean = mean(TEMP_C))
-  
-bottemp3 %>%
-  group_by(MONTH) %>%
-  summarise(mean = mean(TEMP_C))
-
-write.csv(bottemp3, here("data_outputs",
-                         'sbc_fish',
-                         'SAM',
-                         "data_prep",
-                         "monthly_bottom_temps.csv"))
-
-
-#looks like splitting up months <15C on average
-#and >=15C might be a good call?
-
-bottemp4 <- bottemp2 %>%
-  mutate(SEASON = case_when(MONTH %in% c("12", "01", "02",
-                                         "03", "04", "05") ~ "COLD",
-                            MONTH %in% c("06", "07", "08", "09",
-                                         "10", "11") ~ "WARM")) %>%
-  group_by(SITE, YEAR, SEASON) %>%
-  summarise(sd_TEMP = sd(TEMP_C, na.rm = T),
-            TEMP_C = mean(TEMP_C, na.rm = T)) %>%
-  ungroup()
-
-ggplot(bottemp4, aes(x = SEASON, y = TEMP_C)) +
-  geom_point(position = position_jitter(width = 0.25))
-
-bottemp5 <- bottemp2 %>%
-  group_by(SITE, YEAR) %>%
-  summarise(sd_TEMP = sd(TEMP_C, na.rm = T),
-            TEMP_C = mean(TEMP_C, na.rm = T)) %>%
-  ungroup()
-
-ggplot(bottemp5, aes(x = YEAR, y = TEMP_C)) +
-  geom_point()
-
 
 # Get seasonal Chlorophyl_a -----------------------------------------------
 
@@ -146,32 +87,45 @@ chl_a2 <- chl_a %>%
 ggplot(chl_a2, aes(x = SEASON, y = chla)) +
   geom_point(position = position_jitter(width = 0.25))
 
+
+# Prep stability dataset --------------------------------------------------
+
+stability2 <- as.data.frame(stability) %>%
+  rownames_to_column(var = "var") %>%
+  filter(var != "deviance") %>%
+  separate(var,
+           into = c('siteID', 'yrID'),
+           sep = ",") %>%
+  mutate(siteID = str_sub(siteID, 6, nchar(siteID))) %>%
+  mutate(yrID = str_sub(yrID, 1, (nchar(yrID)-1))) %>%
+  rename("bray" = "Mean") %>%
+  dplyr::select(yrID, siteID, bray, SD) %>%
+  mutate(yrID = as.numeric(yrID),
+         siteID = as.numeric(siteID)) %>%
+  left_join(IDs, by = c("siteID", "yrID"))
+
+
 # Get site and transect IDs -----------------------------------------------
 
-sites <- stability %>%
-  distinct(SITE_TRANS, siteID) %>%
+sites <- stability2 %>%
+  distinct(siteID, SITE_TRANS) %>%
   separate(SITE_TRANS, into= c("SITE", "TRANSECT"),
            sep = "_",
-           remove = F) %>%
-  mutate(siteID2 = as.numeric(as.factor(SITE)))
+           remove = F) 
 
 site <- sites$SITE
 sitetrans <- sites$SITE_TRANS
 
 # Filter environmental to sites and transects in dataset ------------------
 
-bottemp6 <- bottemp4 %>%
+bottemp2 <- bottemp %>%
   filter(SITE %in% site)
 
-bottemp6 %>%
+bottemp2 %>%
   group_by(SEASON) %>%
   summarise(mean = mean(TEMP_C))
 
-write.csv(bottemp6, here("data_outputs",
-                         'sbc_fish',
-                         'SAM',
-                         'data_prep',
-                         "seasonal_bottom_temps.csv"))
+
 
 biomass2 <- biomass %>%
   unite(c(SITE, TRANSECT),
@@ -206,10 +160,10 @@ bio_lags <- biomass2 %>%
 #temperatuer lags - seasonally - going back 
 #how many seasons now??? HMMM....
 
-temp_lags <- bottemp6 %>%
+temp_lags <- bottemp2 %>%
   group_by(SITE) %>%
   arrange(SITE, YEAR, SEASON) %>%
-  #this creates a column for a lag 1:12 months ago
+  #this creates a column for a lag 1:5 seasons ago
   do(data.frame(., setNames(shift(.$TEMP_C, 1:5), c("TEMP_C_l1",
                                                      "TEMP_C_l2", "TEMP_C_l3",
                                                      "TEMP_C_l4", "TEMP_C_l5")))) %>%
@@ -227,7 +181,7 @@ temp_lags2 <- temp_lags %>%
 chla_lags <- chl_a2 %>%
   group_by(site) %>%
   arrange(site, YEAR, SEASON) %>%
-  #this creates a column for a lag 1:12 months ago
+  #this creates a column for a lag 1:5 seasons ago
   do(data.frame(., setNames(shift(.$chla, 1:5), c("chla_l1",
                                                     "chla_l2", "chla_l3",
                                                     "chla_l4", "chla_l5")))) %>%
@@ -238,17 +192,18 @@ chla_lags <- chl_a2 %>%
 chla_lags2 <- chla_lags %>%
   filter(SEASON == "WARM") %>%
   dplyr::select(-SEASON) 
+
 # Combine all data --------------------------------------------------------
 
-all_data <- stability %>%
+all_data <- stability2 %>%
   left_join(bio_lags, by = c("YEAR",
                              "SITE_TRANS")) %>%
   left_join(temp_lags2, by = c("SITE", "YEAR")) %>%
   left_join(chla_lags2, by = c("SITE" = "site", "YEAR"))
   
 
-write.csv(all_data, here("data_outputs",
-                         "sbc_fish",
+write.csv(all_data, here("01_sbc_fish",
+                         "data_outputs",
                          'SAM',
                          'data_prep',
                         "stability_metrics_with_covariates.csv"))

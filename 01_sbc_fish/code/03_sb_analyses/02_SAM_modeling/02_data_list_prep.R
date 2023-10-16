@@ -33,7 +33,7 @@ all_data <- read.csv(here('01_sbc_fish',
 
 n.data <- nrow(all_data)
 
-bray <- as.vector(all_data$Mean)
+bray <- as.vector(all_data$bray)
 var.estimate <- as.vector(all_data$SD^2)
 
 n.transects <- length(unique(all_data$SITE_TRANS))
