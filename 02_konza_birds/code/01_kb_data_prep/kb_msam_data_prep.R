@@ -401,3 +401,73 @@ saveRDS(data, here('02_konza_birds',
                    "MSAM",
                    "model_inputs",
                    "bird_msam_dynmultisite.RDS"))
+
+# Uncorrected bray for all sites-years ------------------------------------
+
+#pulling out and calculating bray-curtis for all 
+#communities so we can compare to the "corrected" version
+#after the model
+
+diss_fun <- function(site){
+  
+  matrix <- birds5 %>%
+    filter(TransID == site) %>%
+    group_by(yrID, SpecID) %>%
+    summarise(COUNT = max(NOBS, na.rm = T)) %>%
+    pivot_wider(names_from = yrID,
+                values_from = COUNT) %>%
+    column_to_rownames(var = 'SpecID')
+  
+  a <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  b <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  c <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  for(r in 1:nrow(matrix)){
+    for(t in 2:ncol(matrix)){
+      a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+      b[r,t] <- matrix[r,t-1] - a[r,t]
+      c[r,t] <- matrix[r,t] - a[r,t]
+    }
+  }
+  
+  A <- colSums(a)
+  B <- colSums(b)
+  C <- colSums(c)
+  
+  bray <- (B + C)/(2*A+B+C)
+  
+  bray_df <- birds5 %>%
+    filter(TransID == site) %>%
+    distinct(yrID, TransID) %>%
+    cbind(bray) %>%
+    mutate(type = "observed")
+  
+  return(bray_df)
+}
+
+sites <- unique(birds5$TransID)
+results <- lapply(sites, FUN = diss_fun)
+
+results_df <- do.call(rbind, results)
+
+saveRDS(results_df, here('05_visualizations',
+                         'viz_data',
+                         'konza_observed_bray.RDS'))
+
+
+# Export metadata ---------------------------------------------------------
+
+sites <- birds5 %>%
+  distinct(RECYEAR, TRANSNUM,
+           WATERSHED,
+           TransID, yrID)
+
+write.csv(sites, here('02_konza_birds',
+               'data_outputs',
+               'metadata',
+               'site_year_IDs.csv'))
