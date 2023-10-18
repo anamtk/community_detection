@@ -33,6 +33,9 @@ data <- list(n.species = data$n.species,
              n.quads = data$n.quads,
              n.yr = data$n.yr,
              n.rep = data$n.rep,
+             cover = data$cover,
+             lifegroup = data$lifegroup,
+             n.groups = data$n.groups,
              y = data$y,
              z = data$z)
 
@@ -50,22 +53,13 @@ inits <- list(list(N = data$z),
 
 # Parameters to save ------------------------------------------------------
 
-# params <- c(
-#   'a1.Effort',
-#   'lambda.mean',
-#   'sig.lambda',
-#   'a0.mean',
-#   'sig.a0')
-
 params <- c(
   'psi.mean',
   'sig.lpsi',
-  # 'phi.mean',
-  # 'sig.lphi',
-  # 'gamma.mean',
-  # 'sig.gamma',
-  'p.mean',
-  'sig.lp'
+  'mu.a0',
+  'sig.a0',
+  'a1.Cover',
+  'a2.LifeGroup'
 )
 
 

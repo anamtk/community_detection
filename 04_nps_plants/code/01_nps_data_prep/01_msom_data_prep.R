@@ -165,7 +165,7 @@ n.years <- length(unique(occ2$yrID))
 
 #LIFE FORMS
 #some species identified with just a number or with just a genus,
-#so these look like they often ahve an unknown duration
+#so these look like they often have an unknown duration
 #I think we can just reclassify these as "unknown grass", "unknown forb"
 
 lifeforms <- occ2 %>%
@@ -182,7 +182,8 @@ t <- lifeforms %>%
 lifeforms %>%
   distinct(CurrentSpecies, lifegroup) %>%
   group_by(lifegroup) %>%
-  tally()
+  tally() %>%
+  arrange(desc(n))
 #looks like it is forb_annual
 
 lifeforms2 <- lifeforms %>%
@@ -202,6 +203,7 @@ lifeforms2 <- lifeforms %>%
 lifegroup <- lifeforms2 %>%
   dplyr::select(lifegroup2) %>%
   as_vector()
+lifegroup <- unname(lifegroup)
 
 #get a number for indexing in the model
 n.groups <- length(unique(lifeforms2$lifegroup2))
@@ -218,16 +220,17 @@ n.groups <- length(unique(lifeforms2$lifegroup2))
 covers <- occ2 %>%
   mutate(cover = case_when(CoverClass == 0 ~ 0,
                            CoverClass == 1 ~ 0.05,
-                           CoverClass == 2 ~ 0.5,
-                           CoverClass == 3 ~ 5,
-                           CoverClass == 4 ~ 10,
-                           CoverClass == 5 ~ 11,
-                           CoverClass == 6 ~ 12,
-                           CoverClass == 7 ~ 13,
+                           CoverClass == 2 ~ 0.3,
+                           CoverClass == 3 ~ 0.75,
+                           CoverClass == 4 ~ 1.5,
+                           CoverClass == 5 ~ 3.5,
+                           CoverClass == 6 ~ 7.5,
+                           CoverClass == 7 ~ 12.5,
                            CoverClass == 8 ~ 20,
-                           CoverClass == 9 ~ 50,
-                           CoverClass == 10 ~ 75,
-                           CoverClass == 11 ~ 100,
+                           CoverClass == 9 ~ 30,
+                           CoverClass == 10 ~ 42.5,
+                           CoverClass == 11 ~ 62.5,
+                           CoverClass == 12 ~ 87.5,
                            #double check that the NAs came from "completing"
                            #species in the pipe that created "occ2" above
                            is.na(CoverClass) ~ 0,
@@ -264,11 +267,12 @@ for(i in 1:dim(covers)[1]){ #dim[1] = n.rows
 yr <- occ2$yrID #get a yearID for each iteration of the loop
 site <- occ2$quadID #site ID for each iteration fo the loop
 spec <- occ2$SpecID #get a species ID for each iteration of the loop
-#rep <- occ2$REP #get a replicate for each iteration of the loop
+rep <- occ2$REP #get a replicate for each iteration of the loop
 
 y <- array(NA, dim = c(n.species, #rows
                        n.quads, #column
-                       n.years #first array level
+                       n.years, #first array level
+                       2
 ))
 
 #fill that array based on the values in those columns
@@ -280,7 +284,7 @@ for(i in 1:dim(occ2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i]] <- as.numeric(occ2[i,11])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(occ2[i,13])
 }
 
 
@@ -387,6 +391,7 @@ data <- list(n.species = n.species,
              n.rep = n.rep,
              cover = cover,
              lifegroup = lifegroup,
+             n.groups = n.groups,
              y = y,
              z = z)
 

@@ -31,12 +31,14 @@ data <- readRDS("/scratch/sml665/nps_plants/inputs/nps_msam_multisite.RDS")
 # Compile data ------------------------------------------------------------
 
 data_list <- list(n.species = data$n.species,
-             n.quads = data$n.quads,
-             n.yr = data$n.yr,
-             n.rep = data$n.rep,
-             y = data$y,
-             #initials
-             z = data$z)
+                  n.quads = data$n.quads,
+                  n.yr = data$n.yr,
+                  n.rep = data$n.rep,
+                  cover = data$cover,
+                  lifegroup = data$lifegroup,
+                  n.groups = data$n.groups,
+                  y = data$y,
+                  z = data$z)
 
 # Parameters to save ------------------------------------------------------
 
@@ -44,8 +46,10 @@ params <- c(
   #COMMUNITY parameters
   'psi.mean',
   'sig.lpsi',
-  'p.mean',
-  'sig.lp'
+  'mu.a0',
+  'sig.a0',
+  'a1.Cover',
+  'a2.LifeGroup'
 )
 
 
@@ -55,17 +59,14 @@ params <- c(
 #also Kiona suggested setting initials for omega based on covariance, since
 #the model will struggle with this
 
-inits <- function() list(N = data$z) 
+#inits <- function() list(N = data$z) 
 
 #model breaks with these initials...
                          #omega = data$omega.init)
 
-# inits <- list(list(N = data$z,
-#                    omega = data$omega.init1),
-#               list(N = data$z,
-#                    omega = data$omega.init2),
-#               list(N = data$z,
-#                    omega = data$omega.init3))
+inits <- list(list(N = data$z),
+              list(N = data$z),
+              list(N = data$z))
 
 # JAGS model --------------------------------------------------------------
 
@@ -76,7 +77,7 @@ mod <- jagsUI::jags(data = data_list,
                         parameters.to.save = params,
                         parallel = TRUE,
                         n.chains = 3,
-                        n.iter = 4000,
+                        n.iter = 6000,
                         DIC = TRUE)
 
 #save as an R data object
@@ -94,8 +95,10 @@ parms <- c(
   #COMMUNITY parameters
   'psi.mean',
   'sig.lpsi',
-  'p.mean',
-  'sig.lp'
+  'mu.a0',
+  'sig.a0',
+  'a1.Cover',
+  'a2.LifeGroup'
 )
 
 mcmcplot(mod$samples,
