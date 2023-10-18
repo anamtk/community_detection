@@ -1,13 +1,8 @@
 # Ana Miller-ter Kuile
 # January 25, 2023
-# fish MSOM data prep
+# fish MSAM data prep
 
-# this script preps a multiple sites for a dynamic occupancy model
-
-#THIS IS CURRENTLY BROKEN
-#NEED TO:
-#get all species in all transect-years and fill with 0s - right now
-#it's breaking the model
+# this script preps SBC fish data for correction model
 
 # Load packages -----------------------------------------------------------
 
@@ -649,3 +644,62 @@ raw_bray <- as.data.frame(cbind(raw_bray = bray,
 saveRDS(raw_bray, here("05_visualizations",
                        "viz_data",
                        "sbc_ABUR1_raw_bray.RDS"))
+
+
+# Uncorrected bray for all sites-years ------------------------------------
+
+#pulling out and calculating bray-curtis for all 
+#communities so we can compare to the "corrected" version
+#after the model
+
+diss_fun <- function(site){
+  
+  matrix <- fish4 %>%
+    filter(siteID == site) %>%
+    group_by(YEAR, specID) %>%
+    summarise(COUNT = max(COUNT, na.rm = T)) %>%
+    pivot_wider(names_from = YEAR,
+                values_from = COUNT) %>%
+    column_to_rownames(var = 'specID')
+  
+  a <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  b <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  c <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  for(r in 1:nrow(matrix)){
+    for(t in 2:ncol(matrix)){
+      a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+      b[r,t] <- matrix[r,t-1] - a[r,t]
+      c[r,t] <- matrix[r,t] - a[r,t]
+    }
+  }
+  
+  A <- colSums(a)
+  B <- colSums(b)
+  C <- colSums(c)
+  
+  bray <- (B + C)/(2*A+B+C)
+  
+  bray_df <- fish4 %>%
+    filter(siteID == site) %>%
+    distinct(yrID, siteID) %>%
+    cbind(bray) %>%
+    mutate(type = "observed")
+
+  return(bray_df)
+}
+
+sites <- unique(fish4$siteID)
+results <- lapply(sites, FUN = diss_fun)
+
+results_df <- do.call(rbind, results)
+
+saveRDS(results_df, here('05_visualizations',
+               'viz_data',
+               'sbc_observed_bray.RDS'))
+

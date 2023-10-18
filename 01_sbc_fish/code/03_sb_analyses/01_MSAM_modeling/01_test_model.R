@@ -65,7 +65,7 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "simple_MSAM.R")
+              "MSAM_simple.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,
@@ -155,46 +155,4 @@ inits2 <- list(list(N = data$ymax,
                    sig.a0 = sig.a0 - 0.05))
 
 
-# Run again ---------------------------------------------------------------
 
-
-(st.time <- Sys.time())
-mod2 <- jagsUI::jags(data = data,
-                    #inits = inits2,
-                    inits = inits,
-                    model.file = model,
-                    parameters.to.save = params,
-                    parallel = TRUE,
-                    n.chains = 3,
-                    n.burnin = 2000,
-                    n.iter = 6000,
-                    DIC = TRUE)
-
-end.time <- Sys.time()
-
-end.time - st.time
-
-mcmcplot(mod2$samples)
-
-gelman.diag(mod2$samples)
-
-params2 <- c("y.rep")
-
-mod3 <- update(mod,
-               parameters.to.save = params2,
-               n.iter = 100)
-
-y <- c(c(data$y))
-y.rep <- c(c(mod3$mean$y.rep))
-summary(m1 <- lm(y.rep ~ y))
-fit_df <- as.data.frame(cbind(y = y, 
-                        y.rep = y.rep)) 
-
-(notzi <- ggplot(fit_df, aes(x = y, y = y.rep)) +
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0) +
-  annotate(geom = "text", x = 50, y = 100, label = "R2 = 0.64"))
-
-ggplot() +
-  geom_histogram(data =fit_df, aes(x = y), fill = "blue", alpha = 0.5) +
-  geom_histogram(data =fit_df, aes(x = y.rep), fill = "green", alpha = 0.5)

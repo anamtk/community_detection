@@ -51,27 +51,24 @@ params <- c(
   #COMMUNITY parameters
   'a1.Effort',
   'a2.Size',
-  'lambda.mean',
-  'sig.lambda',
-  'a0.mean',
-  'sig.a0',
-  'omega')
+  'mu.llambda',
+  'sig.llambda',
+  'mu.a0',
+  'sig.a0')
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
-#also Kiona suggested setting initials for omega based on covariance, since
-#the model will struggle with this
-inits <- function() list(N = data$ymax) #,
-#model breaks with these initials...
-                         #omega = data$omega.init)
+inits <- list(list(N = data$ymax),
+              list(N = data$ymax),
+              list(N = data$ymax)) 
 
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
                         inits = inits,
                         #inits = NULL,
-                        model.file = '/scratch/atm234/konza_birds/inputs/kb_dyn_MSAM_cov.R',
+                        model.file = '/scratch/atm234/konza_birds/inputs/kb_MSAM_simple.R',
                         parameters.to.save = params,
                         parallel = TRUE,
                         n.chains = 3,
@@ -88,18 +85,7 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
-#i don't make MCMC plots of omega because it's a HUGE parameter
-parms <- c(
-  #COMMUNITY parameters
-  'a1.Effort',
-  'a2.Size',
-  'lambda.mean',
-  'sig.llambda',
-  'a0.mean',
-  'sig.a0')
-
 mcmcplot(mod$samples,
-         parms = parms,
          dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM")
 
 # Get RHat per parameter ------------------------------------------------
@@ -141,10 +127,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-# <dbl>         <dbl> <dbl>
-#   1        20717.        29211. 86112
 
 bu1 <- raf[[1]]$resmatrix[,1]
 bu2 <- raf[[2]]$resmatrix[,1]
@@ -161,7 +143,7 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#792
+
 
 
 

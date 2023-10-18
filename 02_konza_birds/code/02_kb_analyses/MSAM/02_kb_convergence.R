@@ -23,10 +23,11 @@ source(here('00_functions',
 
 # Load Data ---------------------------------------------------------------
 
-rhat <- readRDS(here('konza_birds',
+rhat <- readRDS(here('02_konza_birds',
                      'monsoon',
+                     "MSAM",
                      'outputs',
-                     'bird_MSAM_model_Rhat.RDS'))
+                     'bird_MSAM_model_Rhat2.RDS'))
 
 # Graph RHat per parameter ------------------------------------------------
 

@@ -30,7 +30,14 @@ data_list <- readRDS(here('01_sbc_fish',
 
 # Parameters to save ------------------------------------------------------
 
-params <- c('diff')
+params <- c('b0.transect',
+            'b',
+            'wA',
+            'wB',
+            'wC',
+            'sig.transect',
+            'sig.site',
+            'var.process')
 
 
 
@@ -50,7 +57,7 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 40,
+                    n.iter = 4000,
                     DIC = TRUE)
 
 Sys.time()

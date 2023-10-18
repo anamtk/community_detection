@@ -38,7 +38,18 @@ parms <- c("bray")
 
 mod2 <- update(mod,
                parameters.to.save = parms,
-               n.iter = 100)
+               n.iter = 4000)
+
+
+# I need mean and SD for all sites ----------------------------------------
+
+sum <- summary(mod2$samples)
+
+#matrix of site x year:
+stats <- sum$statistics
+
+saveRDS(stats, 
+        file = "/scratch/atm234/sbc_fish/outputs/fish_bray_meanSD.RDS")
 
 # Get samples from model --------------------------------------------------
 

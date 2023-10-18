@@ -55,23 +55,13 @@ params <- c(
   'a2.Size',
   'mu.llambda',
   'sig.llambda',
-  't.lambda',
-  "E",
   'mu.a0',
-  'sig.a0')
+  'sig.a0'
+)
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
-#also Kiona suggested setting initials for omega based on covariance, since
-#the model will struggle with this
-# inits <- list(list(N = data$ymax,
-#                    omega = data$omega.init),
-#               list(N = data$ymax,
-#                    omega = data$omega.init + 0.1),
-#               list(N = data$ymax,
-#                    omega = data$omega.init + 0.2))
-
 inits <- list(list(N = data$ymax),
               list(N = data$ymax),
               list(N = data$ymax))
@@ -81,7 +71,7 @@ inits <- list(list(N = data$ymax),
 mod <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/sbc_fish/inputs/dyn_MSAM_multisite_KO.R',
+                    model.file = '/scratch/atm234/sbc_fish/inputs/MSAM_simple.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
@@ -98,19 +88,7 @@ saveRDS(mod,
 (tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
-parms <- c(
-  #COMMUNITY parameters
-  'a1.Vis',
-  'a2.Size',
-  'mu.llambda',
-  'sig.llambda',
-  "E",
-  'mu.a0',
-  'sig.a0',
-  'deviance')
-
 mcmcplot(mod$samples,
-         parms = parms,
          dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM")
 
 # Get RHat per parameter ------------------------------------------------

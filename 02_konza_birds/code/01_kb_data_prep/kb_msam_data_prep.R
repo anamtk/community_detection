@@ -28,21 +28,21 @@ birds <- read.csv(here("02_konza_birds",
 str(birds)
 #for body size
 #Supplementary Data 1 here: https://figshare.com/s/b990722d72a26b5bfead
-avonet <- read.csv(here('konza_birds',
+avonet <- read.csv(here('02_konza_birds',
                         'data_raw',
                         'AVONET_BirdLife.csv'))
 
-avonet2 <- read.csv(here('konza_birds',
+avonet2 <- read.csv(here('02_konza_birds',
                          'data_raw',
                         'AVONET_BirdTree.csv'))
 
-avonet3 <- read.csv(here('konza_birds',
+avonet3 <- read.csv(here('02_konza_birds',
                          'data_raw',
                          'AVONET_eBird.csv'))
 
 #to link the konza birds via codes and scientific names to the avonet data
 #from here: https://www.birdpop.org/pages/birdSpeciesCodes.php
-codes <- read.csv(here('konza_birds',
+codes <- read.csv(here('02_konza_birds',
                        'data_raw',
                        'IBP-AOS-LIST23.csv'))
 
@@ -258,6 +258,9 @@ yr <- survey2$yrID
 site <- survey2$TransID  
 rep <- survey2$REP
 
+survey3 <- survey2 %>%
+  mutate(effort = scale(DURATION))
+
 #make a blank array with dims of sites x years x reps
 effort <- array(NA, dim = c(n.transects, #rows
                          n.years, #columns
@@ -272,7 +275,7 @@ for(i in 1:dim(survey2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the scaled vis data
   # for that sitexyearxreplicate combo
-  effort[site[i], yr[i], rep[i]] <- as.numeric(survey2[i,6])
+  effort[site[i], yr[i], rep[i]] <- as.numeric(survey3[i,10])
 }
 
 #now, generate IDs for the for loop where 
@@ -366,9 +369,9 @@ t <- birds5 %>%
   column_to_rownames(var = "site_year") %>%
   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
-
-ggcorrplot(cor(t), type = "lower",
-           lab = FALSE)
+# 
+# ggcorrplot(cor(t), type = "lower",
+#            lab = FALSE)
 
 #set omega init to this - not sure if it will work with the NA values
 #or if i will need to define those as a value?? we can try it...
@@ -393,7 +396,78 @@ data <- list(n.species = n.species,
 
 
 #export that for using with the model
-saveRDS(data, here('konza_birds',
+saveRDS(data, here('02_konza_birds',
                    "data_outputs",
+                   "MSAM",
                    "model_inputs",
                    "bird_msam_dynmultisite.RDS"))
+
+# Uncorrected bray for all sites-years ------------------------------------
+
+#pulling out and calculating bray-curtis for all 
+#communities so we can compare to the "corrected" version
+#after the model
+
+diss_fun <- function(site){
+  
+  matrix <- birds5 %>%
+    filter(TransID == site) %>%
+    group_by(yrID, SpecID) %>%
+    summarise(COUNT = max(NOBS, na.rm = T)) %>%
+    pivot_wider(names_from = yrID,
+                values_from = COUNT) %>%
+    column_to_rownames(var = 'SpecID')
+  
+  a <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  b <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  c <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  for(r in 1:nrow(matrix)){
+    for(t in 2:ncol(matrix)){
+      a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+      b[r,t] <- matrix[r,t-1] - a[r,t]
+      c[r,t] <- matrix[r,t] - a[r,t]
+    }
+  }
+  
+  A <- colSums(a)
+  B <- colSums(b)
+  C <- colSums(c)
+  
+  bray <- (B + C)/(2*A+B+C)
+  
+  bray_df <- birds5 %>%
+    filter(TransID == site) %>%
+    distinct(yrID, TransID) %>%
+    cbind(bray) %>%
+    mutate(type = "observed")
+  
+  return(bray_df)
+}
+
+sites <- unique(birds5$TransID)
+results <- lapply(sites, FUN = diss_fun)
+
+results_df <- do.call(rbind, results)
+
+saveRDS(results_df, here('05_visualizations',
+                         'viz_data',
+                         'konza_observed_bray.RDS'))
+
+
+# Export metadata ---------------------------------------------------------
+
+sites <- birds5 %>%
+  distinct(RECYEAR, TRANSNUM,
+           WATERSHED,
+           TransID, yrID)
+
+write.csv(sites, here('02_konza_birds',
+               'data_outputs',
+               'metadata',
+               'site_year_IDs.csv'))

@@ -37,6 +37,18 @@ npp <- read.csv(here('02_konza_birds',
                      'PAB011.csv'))
 
 
+#to get the sites and transects we need for the other 
+  #two datasets
+data <- readRDS(here("02_konza_birds",
+                     "monsoon",
+                     "MSAM",
+                     "outputs",
+                     "bird_bray_meanSD.RDS"))
+
+IDs <- read.csv(here('02_konza_birds',
+                     "data_outputs",
+                     "metadata",
+                     "site_year_IDs.csv"))
 
 # Summarize monthly climate values ----------------------------------------
 
