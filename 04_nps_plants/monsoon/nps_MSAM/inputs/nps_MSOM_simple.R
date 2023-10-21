@@ -26,24 +26,24 @@ model{
         
         #Detection model:
         #with no covariates for detection:
-        y[k,i,t] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
+        # y[k,i,t] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
         #y is 1 if that species was ever observed in any repeat survey for that quad-year
         #y is 0 if that species was never observed in any repeat survey for that quad-year
 
-        
-        #if we add covariates for detection, which I'll ask Megan abaout:
-        #or add in cover classes here?
-        # for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
-        #   # Observation model
-        #   logit(p[k,i,t,r]) <- a0[k]  #species-level intercept
-        #   
-        #   #presence is binomial based on detection probability conditioned
-        #     #on true abundance and the total number of reps as trials 
-        #   
-        #   #in this case, y is dependent on repeat survey because of the
-        #   # dependence of p on survey period
-        #     y[k,i,t,r] ~ dbin(p[k,i,t,r] * z[k,i,t], n.rep[i,t])
-        # } #reps
+        for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
+          # Observation model
+          logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
+            a1.Cover*cover[k,i,t,r] + #proxy for abundance
+            (lifegroup[k]!=1)*a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
+          #this is a categorical combination of the lifegroup and duration values
+
+          #presence is binomial based on detection probability conditioned
+            #on true abundance and the total number of reps as trials
+
+          #in this case, y is dependent on repeat survey because of the
+          # dependence of p on survey period
+            y[k,i,t,r] ~ dbin(p[k,i,t,r] * z[k,i,t], n.rep[i,t])
+        } #reps
         
         #SPECIES-LEVEL PRIORS:
         
@@ -57,12 +57,12 @@ model{
     
     #SPECIES-LEVEL PRIORS:
     #Detection hierarchy
-    lp[k] ~ dnorm(mu.lp, tau.lp)
-    p[k] <- ilogit(lp[k])
+    # lp[k] ~ dnorm(mu.lp, tau.lp)
+    # p[k] <- ilogit(lp[k])
     
     #if we add in detection covariates
     # #Detection intercept
-    # a0[k] ~ dnorm(mu.a0, tau.a0)
+    a0[k] ~ dnorm(mu.a0, tau.a0)
     
   }
   
@@ -78,21 +78,32 @@ model{
   tau.lpsi <- pow(sig.lpsi, -2)
   
   #Detection community means
-  p.mean ~ dbeta(1, 1)
-  mu.lp <- logit(p.mean)
-  sig.lp ~ dunif(0, 5)
-  tau.lp <- pow(sig.lp, -2)
+  # p.mean ~ dbeta(1, 1)
+  # mu.lp <- logit(p.mean)
+  # sig.lp ~ dunif(0, 5)
+  # tau.lp <- pow(sig.lp, -2)
   
   #If we add detection covariates:
   # #Detection intercept
-  # a0.mean ~ dbeta(1,1)
-  # mu.a0 <- logit(a0.mean)
-  # tau.a0 <- pow(sig.a0, -2)
-  # sig.a0 ~ dunif(0, 50)
+  mu.a0 ~ dnorm(0, 0.001)
+  tau.a0 <- pow(sig.a0, -2)
+  sig.a0 ~ dunif(0, 50)
   
   #covariate means
-  # a1.Effort ~ dnorm(0, 1E-3)
-  # a2.Size ~ dnorm(0, 1E-3)
+  a1.Cover ~ dnorm(0, 1E-3)
+  
+  #categorical covariate of lifegroup
+  #this is cell-referenced - so each level other than the first
+  #gets a prior that looks like any other a prior, but the 
+  #first level is set to 0, thus, all other level values are
+  #in comparison to this baseline value. 
+  #we set the baseline to be the group with the most observations because
+  #this helps the model statistically 
+  for(g in 1:n.groups){ #number of life groups
+    a2.LifeGroup[g] ~ dnorm(0, 1E-3)
+  }
+  
+  #a2.Lifegroup[1] <- 0
   
   # #DERIVED PARAMETERS##
   
