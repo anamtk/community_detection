@@ -234,7 +234,7 @@ covers <- occ2 %>%
                            #double check that the NAs came from "completing"
                            #species in the pipe that created "occ2" above
                            is.na(CoverClass) ~ 0,
-                           TRUE ~ NA_real_)) %>%
+                           TRUE ~ 0)) %>% #NA_real_)) %>%
   mutate(cover = scale(cover))
 
 
@@ -258,6 +258,8 @@ for(i in 1:dim(covers)[1]){ #dim[1] = n.rows
   #(NEED TO UPDATE - probably to median %cover for the cover class)
   cover[spec[i], site[i], yr[i], rep[i]] <- as.numeric(covers[i,18])
 }
+cover[is.na(cover)] <-0
+
 # Get response data  ------------------------------------------------------
 
 
@@ -272,8 +274,7 @@ rep <- occ2$REP #get a replicate for each iteration of the loop
 y <- array(NA, dim = c(n.species, #rows
                        n.quads, #column
                        n.years, #first array level
-                       2
-))
+                       2))
 
 #fill that array based on the values in those columns
 # for [occupancy] presence

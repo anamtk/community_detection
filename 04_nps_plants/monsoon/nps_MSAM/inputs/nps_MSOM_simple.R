@@ -32,9 +32,9 @@ model{
 
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
           # Observation model
-          logit(p[k,i,t,r]) <- a0[k] +#species-level intercept
+          logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
             a1.Cover*cover[k,i,t,r] + #proxy for abundance
-            a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
+            (lifegroup[k]!=1)*a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
           #this is a categorical combination of the lifegroup and duration values
 
           #presence is binomial based on detection probability conditioned
@@ -99,11 +99,11 @@ model{
   #in comparison to this baseline value. 
   #we set the baseline to be the group with the most observations because
   #this helps the model statistically 
-  for(g in 2:n.groups){ #number of life groups
+  for(g in 1:n.groups){ #number of life groups
     a2.LifeGroup[g] ~ dnorm(0, 1E-3)
   }
   
-  a2.Lifegroup[1] <- 0
+  #a2.Lifegroup[1] <- 0
   
   # #DERIVED PARAMETERS##
   
