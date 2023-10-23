@@ -44,8 +44,9 @@ model{
     
     #SPECIES-LEVEL PRIORS:
     #Detection intercept and slopes
-    la0[k] ~ dnorm(mu.a0, tau.a0)
-    a0[k] <- ilogit(la0[k])
+    a0[k] ~ dnorm(mu.a0, tau.a0)
+    #"baseline" detection at covariates = 0
+    p0[k] <- ilogit(a0[k])
     
     for(t in 1:n.years){
       llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean

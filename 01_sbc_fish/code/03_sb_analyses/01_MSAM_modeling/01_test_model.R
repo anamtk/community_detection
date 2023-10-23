@@ -76,7 +76,7 @@ mod <- jagsUI::jags(data = data,
                     parallel = TRUE,
                     n.chains = 3,
                     #n.burnin = 2000,
-                    n.iter = 4000,
+                    n.iter = 1,
                     DIC = TRUE)
 
 end.time <- Sys.time()

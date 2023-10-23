@@ -5,9 +5,6 @@ model{
       for(t in n.start[i]:n.end[i]){
         
         #biological process model
-        # z[k,i,t] ~ dbern(omega[k,t])
-        # N[k,i,t] ~ dpois(lambda[k,t]*z[k,i,t])
-        # 
         N[k,i,t] ~ dpois(lambda[k,t])
         
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
@@ -30,8 +27,11 @@ model{
     
     #SPECIES-LEVEL PRIORS:
     #Detection intercept and slopes
-    la0[k] ~ dnorm(mu.a0, tau.a0)
-    a0[k] <- ilogit(la0[k])
+    a0[k] ~ dnorm(mu.a0,tau.a0)
+    
+    #"baseline" detection at vis = 0 and size = 0 
+    #on standardized scale
+    p0[k] <- ilogit(a0[k])
     
     for(t in 1:n.years){
     llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
@@ -52,7 +52,7 @@ model{
   tau.a0 <- pow(sig.a0, -2)
   sig.a0 ~ dunif(0, 50)
   
-  #covariate means
+  #covariate effect priors
   a1.Vis ~ dnorm(0, 0.001)
   a2.Size ~ dnorm(0, 0.001)
   
