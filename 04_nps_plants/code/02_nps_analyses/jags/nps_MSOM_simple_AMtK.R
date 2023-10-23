@@ -34,7 +34,7 @@ model{
           # Observation model
           logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
             a1.Cover*cover[k,i,t,r] + #proxy for abundance
-            (lifegroup[k]!=1)*a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
+            a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
           #this is a categorical combination of the lifegroup and duration values
 
           #presence is binomial based on detection probability conditioned
@@ -103,14 +103,14 @@ model{
   #in comparison to this baseline value. 
   #we set the baseline to be the group with the most observations because
   #this helps the model statistically 
-  for(g in 1:n.groups){ #number of life groups
+  for(g in 2:n.groups){ #number of life groups
     a2.LifeGroup[g] ~ dnorm(0, 1E-3)
   }
   
   # SL: error with running when this is set to 0
   # added condition in regression for logit(p) so this is 0 when lifegroup = 1
   # but will have a value other than 0 in the posterior results
-  #a2.Lifegroup[1] <- 0
+  a2.LifeGroup[1] <- 0
   
   #PRIORS FOR IMPUTING MISSING DATA
   #Priors for mean and tau of missing covariates in the model
