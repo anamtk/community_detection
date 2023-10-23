@@ -59,15 +59,7 @@ params <- c(
   'mu.a0',
   'sig.a0',
   'a1.Cover',
-  'a2.LifeGroup[2]',
-  'a2.LifeGroup[3]',
-  'a2.LifeGroup[4]',
-  'a2.LifeGroup[5]',
-  'a2.LifeGroup[6]',
-  'a2.LifeGroup[7]',
-  'a2.LifeGroup[8]',
-  'a2.LifeGroup[9]',
-  'a2.LifeGroup[10]'
+  'a2.LifeGroup'
 )
 
 
@@ -77,7 +69,7 @@ model <- here("04_nps_plants",
               'code',
               '02_nps_analyses',
               'jags',
-              "nps_MSOM_simple.R")
+              "nps_MSOM_simple_AMtK.R")
 
 Sys.time()
 start<-proc.time()

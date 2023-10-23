@@ -217,6 +217,28 @@ n.groups <- length(unique(lifeforms2$lifegroup2))
 #then use the scale function to get the scaled value of this
 #code that should work for this (thoough you'll have to change all the numbers
 #after the ~s in the case_when:
+# covers <- occ2 %>%
+#   mutate(cover = case_when(CoverClass == 0 ~ 0,
+#                            CoverClass == 1 ~ 0.05,
+#                            CoverClass == 2 ~ 0.3,
+#                            CoverClass == 3 ~ 0.75,
+#                            CoverClass == 4 ~ 1.5,
+#                            CoverClass == 5 ~ 3.5,
+#                            CoverClass == 6 ~ 7.5,
+#                            CoverClass == 7 ~ 12.5,
+#                            CoverClass == 8 ~ 20,
+#                            CoverClass == 9 ~ 30,
+#                            CoverClass == 10 ~ 42.5,
+#                            CoverClass == 11 ~ 62.5,
+#                            CoverClass == 12 ~ 87.5,
+#                            #double check that the NAs came from "completing"
+#                            #species in the pipe that created "occ2" above
+##AMtK - did you change this because the NA's were actually 0s above?
+## I changed back, but left this here just in case I misunderstood
+#                            is.na(CoverClass) ~ 0,
+#                            TRUE ~ 0)) %>% #NA_real_)) %>%
+#   mutate(cover = scale(cover))
+
 covers <- occ2 %>%
   mutate(cover = case_when(CoverClass == 0 ~ 0,
                            CoverClass == 1 ~ 0.05,
@@ -231,12 +253,8 @@ covers <- occ2 %>%
                            CoverClass == 10 ~ 42.5,
                            CoverClass == 11 ~ 62.5,
                            CoverClass == 12 ~ 87.5,
-                           #double check that the NAs came from "completing"
-                           #species in the pipe that created "occ2" above
-                           is.na(CoverClass) ~ 0,
-                           TRUE ~ 0)) %>% #NA_real_)) %>%
+                           TRUE ~ NA_real_)) %>%
   mutate(cover = scale(cover))
-
 
 yr <- covers$yrID #get a yearID for each iteration of the loop
 site <- covers$quadID #site ID for each iteration fo the loop
@@ -258,7 +276,9 @@ for(i in 1:dim(covers)[1]){ #dim[1] = n.rows
   #(NEED TO UPDATE - probably to median %cover for the cover class)
   cover[spec[i], site[i], yr[i], rep[i]] <- as.numeric(covers[i,18])
 }
-cover[is.na(cover)] <-0
+
+##AMtK - with imputing code in model - you shouldn't need to do this
+#cover[is.na(cover)] <-0
 
 # Get response data  ------------------------------------------------------
 
