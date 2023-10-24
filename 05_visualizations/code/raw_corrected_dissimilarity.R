@@ -41,6 +41,27 @@ posterior <- readRDS(here("05_visualizations",
                           "ABUR1_bray_summary.RDS"))
 
 
+# plot --------------------------------------------------------------------
+
+modeled_col <- "#E88C23"
+observed_col <- "#438AA8"
+
+ggplot() +
+  geom_line(data = samples,
+            aes(x = year, y = bray, group = iter),
+            color = modeled_col, alpha = 0.05) +
+  theme(panel.grid = element_blank()) +
+  geom_ribbon(data = posterior,
+              aes(x = year, y = mean_bray, ymax = mean_bray + sd_bray, ymin = mean_bray - sd_bray), 
+              fill = modeled_col, alpha = 0.3) +
+  geom_line(data = posterior,
+            aes(x = year, y = mean_bray),
+            color = modeled_col, linewidth = 1) +
+  geom_line(data = raw, 
+            aes(x = year, y = raw_bray),
+            color = observed_col, linewidth = 1)
+
+
 # Figure thoughts ---------------------------------------------------------
 
 #I really like your original figure. I wonder if ew could add in 
