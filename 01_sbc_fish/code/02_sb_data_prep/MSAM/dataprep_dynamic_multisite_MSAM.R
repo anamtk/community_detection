@@ -113,6 +113,9 @@ fish2 <- fish1 %>%
   #get rid of NA counts and set to 0
   mutate(COUNT = case_when(COUNT == -99999 ~ 0,
                             TRUE ~ COUNT)) %>%
+  #filter out "unidentified" species codes
+  filter(!SP_CODE %in% c("SYNG", "COTT", "BOTH",
+                         "EMBI", "SCSP")) %>%
   #factor species code so we can fill in all species
   #for all surveys
   mutate(SP_CODE = as.factor(SP_CODE)) %>%
@@ -204,7 +207,7 @@ fish4 %>%
   filter(COUNT >0) %>%
   tally()
 
-11764/87006
+79643/(11297+79643)
 
 # Get covariates in order -------------------------------------------------
 
@@ -703,3 +706,23 @@ saveRDS(results_df, here('05_visualizations',
                'viz_data',
                'sbc_observed_bray.RDS'))
 
+
+# Summary stats -----------------------------------------------------------
+
+colnames(fish4)
+
+fish4 %>%
+  separate(col = SITE_TRANS, 
+           into = c("site", "transect"),
+           sep= "_") %>%
+  distinct(site) 
+
+bs %>%
+  distinct(SCIENTIFIC_NAME, COMMON_NAME)
+
+ad <- bs %>%
+  distinct(SP_CODE, SCIENTIFIC_NAME, COMMON_NAME)
+
+t <- fish4 %>%
+  distinct(SP_CODE) %>%
+  full_join(ad, by = "SP_CODE")

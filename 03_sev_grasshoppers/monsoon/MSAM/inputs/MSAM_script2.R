@@ -70,7 +70,7 @@ mu.llambda <- as.vector(samp_df2$mu.llambda)
 sig.llambda <- as.vector(samp_df2$sig.llambda)
 mu.a0 <- as.vector(samp_df2$mu.a0)
 sig.a0 <- as.vector(samp_df2$sig.a0)
-a1.Rep <- c(NA, -3, -3.5)
+a1.Rep <- c(NA, 1.5, 0)
 
 mu.llambda
 sig.llambda
@@ -125,15 +125,15 @@ inits <- list(list(N = data$ymax,
                          list(N = data$ymax,
                               mu.llambda = mu.llambda + 0.5,
                               sig.llambda = sig.llambda + 0.4,
-                              mu.a0 = mu.a0 + 5,
-                              sig.a0 = sig.a0 + 0.5,
-                              a1.Rep = a1.Rep + 0.5),
+                              mu.a0 = mu.a0 + 0.5,
+                              sig.a0 = sig.a0 + 0.05,
+                              a1.Rep = a1.Rep + 0.05),
                          list(N = data$ymax,
                               mu.llambda = mu.llambda - 0.5,
                               sig.llambda = sig.llambda + 0.8,
-                              mu.a0 = mu.a0 -5,
-                              sig.a0 = sig.a0 + 1,
-                              a1.Rep = a1.Rep - 0.5)
+                              mu.a0 = mu.a0 -0.5,
+                              sig.a0 = sig.a0 + 0.08,
+                              a1.Rep = a1.Rep - 0.05)
                          )
 
 # JAGS model --------------------------------------------------------------
@@ -145,9 +145,9 @@ mod2 <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 50000,
-                    n.burnin = 5000,
-                    n.thin = 10,
+                    n.iter = 100000,
+                    n.burnin = 10000,
+                    n.thin = 20,
                     DIC = TRUE)
 
 #save as an R data object

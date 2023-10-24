@@ -18,18 +18,16 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-source(here("00_functions",
+source(here('00_functions',
             'plot_functions.R'))
 
 # Load Data ---------------------------------------------------------------
 
-rhat <- readRDS(here('01_sbc_fish',
+rhat <- readRDS(here('03_sev_grasshoppers',
                      'monsoon',
-                     'fish_MSAM',
+                     "MSAM",
                      'outputs',
-                     'fish_MSAM_model_Rhat.RDS'))
-
-
+                     'sev_MSAM_model_Rhat.RDS'))
 
 # Graph RHat per parameter ------------------------------------------------
 
