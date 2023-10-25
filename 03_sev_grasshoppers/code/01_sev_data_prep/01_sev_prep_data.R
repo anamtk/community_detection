@@ -38,9 +38,9 @@ hopper <- read.csv(here('03_sev_grasshoppers',
                         'data_raw',
                         'sev106_grasshopper_counts.csv'))
 
-life <- read_xlsx(here('03_sev_grasshoppers',
+life <- read.csv(here('03_sev_grasshoppers',
                       'data_raw',
-                      'SEV_grasshopper_species_list2020.xlsx'))
+                      'SEV_grasshopper_species_list2020.csv'))
 
 # Subset data -------------------------------------------------------------
 
