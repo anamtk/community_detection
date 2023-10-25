@@ -1,18 +1,19 @@
-#Monsoon script - fish MSAM
-# Ana Miller-ter Kuile
-# July 27, 2023
+#Getting initials for next model run
+#Shelby Lamm
+#October 24, 2023
 
-#this script runs the fish MSOM raftery
+#this script pulls out the last values from the chain with the lowest deviance
+#to use as initials in a follow-up model run
 
 # Load packages ---------------------------------------------------------------
-Sys.time()
+(start.time <- Sys.time())
 
 
 # Load packages,
 package.list <- c("jagsUI", "coda",
                   'dplyr', 'stringr',
                   'magrittr', 'tidyr',
-                  'mcmcplots', 'ggplot2') 
+                  'mcmcplots','ggplot2') 
 
 
 ## Installing them if they aren't already on the computer
@@ -23,10 +24,24 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-# Load Model ---------------------------------------------------------------
 
-#load the model
-mod <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model.RDS")
+# Load model --------------------------------------------------------------
+
+mod <- readRDS(file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model_subset.RDS")
+
+
+# Check convergence -------------------------------------------------------
+
+mcmcplot(mod$samples,
+         dir = "/scratch/sml665/nps_plants/outputs/mcmcplots/MSAM")
+
+
+# Get RHat per parameter ------------------------------------------------
+
+Rhat <- mod$Rhat
+
+saveRDS(Rhat, "/scratch/sml665/nps_plants/outputs/nps_MSAM_model_Rhat.RDS")
+
 
 # Get Raftery diag --------------------------------------------------------
 
@@ -56,10 +71,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-# <dbl>         <dbl> <dbl>
-#   1        20717.        29211. 86112
 
 bu1 <- raf[[1]]$resmatrix[,1]
 bu2 <- raf[[2]]$resmatrix[,1]
@@ -76,7 +87,6 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#792
 
 
 

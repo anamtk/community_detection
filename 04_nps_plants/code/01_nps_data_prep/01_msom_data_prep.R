@@ -60,6 +60,16 @@ plants <- plants %>%
                                 'PEFO20101001_1',
                                 'PEFO20111012_1',
                                 'UnknownForb'))
+  
+plots <- plants %>%
+  distinct(Plot)
+# randomly choose 10 of 30 plots
+samp_plots = sort(sample(1:30, 10, replace=FALSE))
+plots <- plots[c(samp_plots),]
+
+plants <- plants %>%
+  filter(Plot %in% c(plots))
+
 
 # Manipulate data structure ----------------------------------
 
@@ -361,48 +371,48 @@ z[z == 0] <- NA
 #R needs to be positive definite,
 
 #trying shelby's code from Kiona/Jessica - need to ask what this means
-R<-diag(x=0.1, n.species, n.species)
+#R<-diag(x=0.1, n.species, n.species)
 
 #omega also needs priors, which I'm going to attempt to define using
 #covariance among species abundances, we'll see how it goes
 
-t <- occ2 %>%
-  group_by(yrID, quadID, SpecID) %>%
-  summarise(presence = mean(presence, na.rm = T)) %>%
-  ungroup() %>%
-  unite("site_year", c("yrID", "quadID"),
-        sep = "_") %>%
-  dplyr::select(SpecID, presence, site_year) %>%
-  pivot_wider(names_from = SpecID,
-              values_from = presence,
-              values_fill = 0) %>%
-  column_to_rownames(var = "site_year") %>%
-  mutate(across(everything(), ~replace_na(.x, 0)))
+# t <- occ2 %>%
+#   group_by(yrID, quadID, SpecID) %>%
+#   summarise(presence = mean(presence, na.rm = T)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "quadID"),
+#         sep = "_") %>%
+#   dplyr::select(SpecID, presence, site_year) %>%
+#   pivot_wider(names_from = SpecID,
+#               values_from = presence,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# # 
 # 
-
-ggcorrplot(cov(t), type = "lower",
-           lab = FALSE)
-
-t[colSums(t, na.rm = T) == 0]
-t[rowSums(t, na.rm = T) == 0]
-
-#set omega init to this - not sure if it will work with the NA values
-#or if i will need to define those as a value?? we can try it...
-t1 <- t[1:770,]
-t1[colSums(t1, na.rm = T) == 0]
-t2 <- t[771:1540,]
-t3 <- t[1541:2310,]
-
-cov1 <- cov(t1, use = "complete.obs")
-cov1[cov1 == 0] <- 0.001
-cov2 <- cov(t2, use = "complete.obs")
-cov2[cov2 == 0] <- 0.001
-cov3 <- cov(t3, use = "complete.obs")
-cov3[cov3 == 0] <- 0.001
-
-omega.init1 <- ginv(cov1)
-omega.init2 <- ginv(cov2)
-omega.init3 <- ginv(cov3)
+# ggcorrplot(cov(t), type = "lower",
+#            lab = FALSE)
+# 
+# t[colSums(t, na.rm = T) == 0]
+# t[rowSums(t, na.rm = T) == 0]
+# 
+# #set omega init to this - not sure if it will work with the NA values
+# #or if i will need to define those as a value?? we can try it...
+# t1 <- t[1:770,]
+# t1[colSums(t1, na.rm = T) == 0]
+# t2 <- t[771:1540,]
+# t3 <- t[1541:2310,]
+# 
+# cov1 <- cov(t1, use = "complete.obs")
+# cov1[cov1 == 0] <- 0.001
+# cov2 <- cov(t2, use = "complete.obs")
+# cov2[cov2 == 0] <- 0.001
+# cov3 <- cov(t3, use = "complete.obs")
+# cov3[cov3 == 0] <- 0.001
+# 
+# omega.init1 <- ginv(cov1)
+# omega.init2 <- ginv(cov2)
+# omega.init3 <- ginv(cov3)
 
 # Prep list for JAGS ------------------------------------------------------
 
@@ -420,5 +430,5 @@ saveRDS(data, here('04_nps_plants',
                    'data_outputs',
                    'MSAM',
                    'model_inputs',
-                   'nps_msam_multisite.RDS'))
+                   'nps_msam_multisite_subset.RDS'))
 

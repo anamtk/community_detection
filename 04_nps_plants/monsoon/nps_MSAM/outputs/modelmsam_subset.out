@@ -1,0 +1,49 @@
+[1] "2023-10-24 22:38:31 MST"
+
+Attaching package: ‘coda’
+
+The following object is masked from ‘package:jagsUI’:
+
+    traceplot
+
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:magrittr’:
+
+    extract
+
+
+Processing function input....... 
+
+Done. 
+ 
+Beginning parallel processing using 3 cores. Console output will be suppressed.
+
+Parallel processing completed.
+
+Calculating statistics....... 
+Warning in doTryCatch(return(expr), name, parentenv, handler) :
+  At least one Rhat value could not be calculated.
+
+Done. 
+[1] "2023-10-25 00:38:45 MST"
+Error in file(file, ifelse(append, "a", "w")) : 
+  cannot open the connection
+Calls: mcmcplot -> .html.begin -> cat -> file
+In addition: Warning message:
+In file(file, ifelse(append, "a", "w")) :
+  cannot open file '/scratch/sml665/nps_plants/outputs/mcmcplots/MSAM_subset/MCMCoutput.html': No such file or directory
+Execution halted
+srun: error: cn52: task 0: Exited with exit code 1

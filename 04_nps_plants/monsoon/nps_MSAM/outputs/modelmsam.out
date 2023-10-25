@@ -1,48 +1,0 @@
-[1] "2023-10-12 11:58:04 MST"
-
-Attaching package: ‘coda’
-
-The following object is masked from ‘package:jagsUI’:
-
-    traceplot
-
-
-Attaching package: ‘dplyr’
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union
-
-
-Attaching package: ‘tidyr’
-
-The following object is masked from ‘package:magrittr’:
-
-    extract
-
-
-Processing function input....... 
-
-Done. 
- 
-Beginning parallel processing using 3 cores. Console output will be suppressed.
-
-Parallel processing completed.
-
-Calculating statistics....... 
-
-Done. 
-[1] "2023-10-13 06:16:40 MST"
-sh: /usr/bin/firefox: No such file or directory
-                                                                                Preparing plots for psi.mean.  25% complete.                                                                                Preparing plots for sig.lpsi.  50% complete.                                                                                Preparing plots for p.mean.  75% complete.                                                                                Preparing plots for sig.lp.  100% complete.                                                                                # A tibble: 1 × 3
-  iterations_90 iterations_95    max
-          <dbl>         <dbl>  <dbl>
-1        55401.       174966. 436938
-# A tibble: 1 × 1
-  `max(iterations, na.rm = T)`
-                         <dbl>
-1                          688
