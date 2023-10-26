@@ -60,15 +60,26 @@ plants <- plants %>%
                                 'PEFO20101001_1',
                                 'PEFO20111012_1',
                                 'UnknownForb'))
-  
-plots <- plants %>%
-  distinct(Plot)
-# randomly choose 10 of 30 plots
-samp_plots = sort(sample(1:30, 10, replace=FALSE))
-plots <- plots[c(samp_plots),]
+
+# want to subset the data by grabbing 10 of the 30 plots
+# prioritizing plots with repeated measurements
+subsample <- plants %>%
+  distinct(Plot, Obs_type) %>%
+  mutate(REP = case_when(Obs_type == "Regular" ~ 1,
+                         TRUE ~ 2)) %>%
+  filter(REP == 2) %>%
+  # separate letter and number in plot column
+  mutate(across(c('Plot'), substr, 2, nchar(Plot)))
+
+
+subset_plots = as.numeric(sort(subsample$Plot))
+# randomly choose 10 plots
+samp_plots = sort(sample(1:14, 10, replace=FALSE))
+subset_plots <- sort(subset_plots[c(samp_plots)])
+subset_plots <- sub("^","S",subset_plots)
 
 plants <- plants %>%
-  filter(Plot %in% c(plots))
+  filter(Plot %in% c(subset_plots))
 
 
 # Manipulate data structure ----------------------------------

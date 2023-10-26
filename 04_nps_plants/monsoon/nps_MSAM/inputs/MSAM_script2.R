@@ -106,24 +106,21 @@ params <- c(
 
 #we found z to set initials, since otherwise the model will hate us
 inits <- list(list(N = data$z,
-                   psi.mean = psi.mean,
                    sig.lpsi = samp_df2$sig.lpsi,
                    mu.a0 = samp_df2$mu.a0,
                    sig.a0 = samp_df2$sig.a0,
                    a1.Cover = samp_df2$a1.Cover,
                    a2.Lifegroup = a2.Lifegroup),
               list(N = data$z,
-                   psi.mean = psi.mean + 0.05,
                    sig.lpsi = samp_df2$sig.lpsi + 0.25,
                    mu.a0 = samp_df2$mu.a0 + 0.5,
-                   sig.a0 = samp_df2$sig.a0 - 0.25,
+                   sig.a0 = samp_df2$sig.a0 + 0.25,
                    a1.Cover = samp_df2$a1.Cover + 0.02,
                    a2.Lifegroup = a2.Lifegroup + 0.4),
               list(N = data$z,
-                   psi.mean = psi.mean - 0.05,
-                   sig.lpsi = samp_df2$sig.lpsi - 0.25,
+                   sig.lpsi = samp_df2$sig.lpsi + 0.5,
                    mu.a0 = samp_df2$mu.a0 - 0.5,
-                   sig.a0 = samp_df2$sig.a0 + 0.25,
+                   sig.a0 = samp_df2$sig.a0 + 0.5,
                    a1.Cover = samp_df2$a1.Cover - 0.02,
                    a2.Lifegroup = a2.Lifegroup - 0.4))
 
