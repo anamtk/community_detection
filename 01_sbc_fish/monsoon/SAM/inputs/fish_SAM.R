@@ -6,19 +6,40 @@ model{
     # Likelihood ###
     #-------------------------------------##
     
-      gain[i] ~ dbeta(alpha[i], beta[i])
+    #bray is proportional, so beta distribution works here
+    bray[i] ~ dbeta(alpha[i], beta[i])
       
-      alpha[i] <- mu[i] * phi
-      beta[i]  <- (1-mu[i]) * phi
-    #add in: transect within site crossed with yearly
-    #random effects
+    #var.process is scalar but could be made dependent on site/other variables
+    #phi incorporates mu (mean estimate), var.estimate (which is from
+    #"data" on standard deviation (squared) from the original detection 
+    #correction model) 
+    #and var.process is something we're tryign to estimate,
+    #basically, the rest of the variation not accounted for
+    phi[i] <- (((1-mu[i])*mu[i])/(var.estimate[i] + var.process))-1
+
+    #alpha and beta are based on mu and phi values
+    #sometimes these values send alpha and beta outside
+    #the domain, so we have extra code below to get them to
+    #stay where they belong
+    alphaX[i] <- mu[i] * phi[i]
+    betaX[i] <- (1 - mu[i]) * phi[i]
+    
+    #here is where we get alpha and beta to stay in their
+    #domain
+    alpha[i] <- max(0.01, alphaX[i])
+    beta[i] <- max(0.01, betaX[i])
+    
+    #to get a good estimate of a prior for var.process, we
+    #track the difference between these two values for each
+    #data point
+    diff[i] <- (1-mu[i])*mu[i] - var.estimate[i]
+
+    #Regression of mu, which is dependent on antecedent
+    #kelp biomass, temperature, and chl-a
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
-        #b0.year[Year.ID[i]] +
         b[1]*AntKelp[i] +
         b[2]*AntTemp[i] +
-        b[3]*AntChla[i]
-      
-
+        b[3]*AntKelp[i]*AntTemp[i]
       
       #-------------------------------------## 
       # SAM summing ###
@@ -27,8 +48,7 @@ model{
       #summing the antecedent values
       AntKelp[i] <- sum(KelpTemp[i,]) #summing across the total number of antecedent years
       AntTemp[i] <- sum(TempTemp[i,]) #summing across the total num of antecedent months
-      AntChla[i] <- sum(TempChla[i,]) #summing across seasons
-      
+
       #Generating each year's weight to sum above
       for(t in 1:n.kelplag){ #number of time steps we're going back in the past
         KelpTemp[i,t] <- Kelp[i,t]*wA[t] 
@@ -40,22 +60,20 @@ model{
       #generating each month's weight to sum above
       for(t in 1:n.templag){ #number of time steps we're going back in the past
         TempTemp[i,t] <- Temp[i,t]*wB[t] 
-        TempChla[i,t] <- Chla[i,t]*wC[t]
-        
+
         #missing data
         Temp[i,t] ~ dnorm(mu.temp, tau.temp)
-        Chla[i,t] ~ dnorm(mu.chla, tau.chla)
       }
       
       #-------------------------------------## 
       # Goodness of fit parameters ###
       #-------------------------------------##
-      
-      #replicated data
-      gain.rep[i] ~ dbeta(alpha[i], beta[i])
-      
-      #residuals - is this still right?
-      resid[i] <- gain[i] - mu[i]
+      # 
+      # #replicated data
+      # beta.rep[i] ~ dbeta(alpha[i], beta[i])
+      # 
+      # #residuals - is this still right?
+      # resid[i] <- bray[i] - mu[i]
  
   }
   
@@ -78,8 +96,6 @@ model{
   
   #Sum of the weights for temp lag
   sumB <- sum(deltaB[]) #all the temp weights
-  #sum of weights for the chla lag
-  sumC <- sum(deltaC[])
   #Employing "delta trick" to give vector of weights dirichlet priors
   #this is doing the dirichlet in two steps 
   #see Ogle et al. 2015 SAM model paper in Ecology Letters
@@ -88,9 +104,6 @@ model{
     wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
     deltaB[t] ~ dgamma(1,1)
-    #the weights for chla
-    wC[t] <- deltaC[t]/sumC
-    deltaC[t] ~ dgamma(1,1)
   }
   
   #BETA PRIORS
@@ -111,15 +124,6 @@ model{
   
   b0 ~ dnorm(0, 1E-2)
   
-  #SUM TO ZERO for years
-  #for every year but the last one:
-  # for(y in 2:(n.years)){
-  #   b0.year[y] ~ dnorm( 0, tau.year)
-  # }
-  #set the last year to be the -sum of all other years so the 
-  # overall fo all year levels == 0
-  #b0.year[n.years+1] <- -sum(b0.year[2:(n.years)])
-  
   #for low # of levels, from Gellman paper - define sigma
   # as uniform and then precision in relation to this sigma
   sig.transect ~ dunif(0, 10)
@@ -134,9 +138,12 @@ model{
     b[i] ~ dnorm(0, 1E-2)
   }
   
-  #overall phi value
-  phi ~ dgamma(.1,.1)
-  
+  #PRior for overall process error
+  # sig.process ~ dunif(0, 10)
+  # var.process <- pow(sig.process, 2)
+
+  var.process ~ dunif(0, min(diff[]))
+
   #MISSING DATA PRIORS
   mu.kelp ~ dunif(-10, 10)
   sig.kelp ~ dunif(0, 20)
@@ -144,8 +151,5 @@ model{
   mu.temp ~ dunif(-10, 10)
   sig.temp ~ dunif(0, 20)
   tau.temp <- pow(sig.temp, -2)
-  mu.chla ~ dunif(-10, 10)
-  sig.chla ~ dunif(0, 20)
-  tau.chla <- pow(sig.chla, -2)
   
 }
