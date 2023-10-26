@@ -10,8 +10,11 @@ raw_bray <- readRDS(here("05_visualizations",
                        "viz_data",
                        "sbc_ABUR1_raw_bray.RDS"))
 
+modeled_col <- "#E88C23"
+observed_col <- "#438AA8"
+
 ggplot() +
-  geom_line(data = subsamples, aes(x = year, y = bray, group = iter), color = "blue", alpha = 0.1) +
-  geom_line(data = raw_bray, aes(x = year, y= raw_bray), color = "yellow") +
-  geom_line(data = summary, aes(x = year, y = mean_bray), color = "darkblue") +
+  geom_line(data = subsamples, aes(x = year, y = bray, group = iter), color = "#E88C23", alpha = 0.1) +
+  geom_line(data = raw_bray, aes(x = year, y= raw_bray), color = "#438AA8") +
+  geom_line(data = summary, aes(x = year, y = mean_bray), color = "#E88C23") +
   theme_bw()
