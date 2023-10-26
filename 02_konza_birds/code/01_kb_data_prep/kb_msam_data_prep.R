@@ -402,6 +402,56 @@ saveRDS(data, here('02_konza_birds',
                    "model_inputs",
                    "bird_msam_dynmultisite.RDS"))
 
+
+
+# Bray for site 1 ---------------------------------------------------------
+
+#Just for visualization purposes to compare "raw" vs "corrected" bray
+#we will want to get a community matrix for one site across years
+
+#we'll do site one, and do whta folks used to do and just take the 
+#maximum number of individuals observed per species per year across
+#repeat surveys
+
+matrix <- birds5 %>%
+  filter(WATERSHED == "004B") %>%
+  group_by(RECYEAR, SpecID) %>%
+  summarise(COUNT = max(NOBS, na.rm = T)) %>%
+  pivot_wider(names_from = RECYEAR,
+              values_from = COUNT) %>%
+  column_to_rownames(var = 'SpecID')
+
+a <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+b <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+c <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+for(r in 1:nrow(matrix)){
+  for(t in 2:ncol(matrix)){
+    a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+    b[r,t] <- matrix[r,t-1] - a[r,t]
+    c[r,t] <- matrix[r,t] - a[r,t]
+  }
+}
+
+A <- colSums(a)
+B <- colSums(b)
+C <- colSums(c)
+
+bray <- (B + C)/(2*A+B+C)
+years <- 1981:2009
+
+raw_bray <- as.data.frame(cbind(raw_bray = bray,
+                                year = years))
+
+saveRDS(raw_bray, here("05_visualizations",
+                       "viz_data",
+                       "knz_004B_raw_bray.RDS"))
+
 # Uncorrected bray for all sites-years ------------------------------------
 
 #pulling out and calculating bray-curtis for all 

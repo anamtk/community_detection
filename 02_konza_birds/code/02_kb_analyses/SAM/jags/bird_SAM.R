@@ -39,7 +39,7 @@ model{
     logit(mu[i]) <- b0 +
       b[1]*AntTemp[i] +
       b[2]*AntPPT[i] +
-      b[3]*AntNPP[i]
+      b[3]*AntNPP[i] 
     
     #-------------------------------------## 
     # SAM summing ###
@@ -62,7 +62,7 @@ model{
     
     #Generating each lag's weight to sum above
     for(t in 1:n.npplag){ #number of time steps we're going back in the past
-      TempNPP[i,t] <- Kelp[i,t]*wC[t] 
+      TempNPP[i,t] <- NPP[i,t]*wC[t] 
       
       #missing data
       NPP[i,t] ~ dnorm(mu.npp, tau.npp)
