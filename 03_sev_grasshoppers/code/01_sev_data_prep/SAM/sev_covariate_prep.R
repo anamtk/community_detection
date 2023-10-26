@@ -114,7 +114,7 @@ npp2 <- npp %>%
   filter(site %in% c("core_black", "core_blue"))
 
 npp3 <- npp2 %>%
-  group_by(site, year, season) %>%
+  group_by(site, web, year, season) %>%
   summarise(NPP = mean(biomass, na.rm = T)) %>%
   ungroup() %>%
   mutate(seasonnum = case_when(season == "spring" ~ 1,
@@ -147,7 +147,13 @@ ppt_lags <- ppt %>%
 npp_lags <- npp3 %>%
   group_by(site) %>%
   arrange(year, seasonnum)  %>%
-  #this creates a column for every lag this year to 5 years ago
-  do(data.frame(., setNames(shift(.$NPP, 1:5), c("NPP_l1", 'NPP_l2', "NPP_l3",
-                                                 "NPP_l4", "NPP_l5")))) %>%
-  ungroup()
+  #this creates a column for every lag this year to 10 seasons ago
+  do(data.frame(., setNames(shift(.$NPP, 1:10), c("NPP_l1", 'NPP_l2', "NPP_l3",
+                                                 "NPP_l4", "NPP_l5", "NPP_l6",
+                                                 "NPP_l7", "NPP_l8", "NPP_l9",
+                                                 "NPP_l10")))) %>%
+  ungroup() %>%
+  #consider "this season" e.g. fall - and then previous seasons from
+  #that for each web
+  filter(seasonnum == 2) %>%
+  dplyr::select(-seasonnum)
