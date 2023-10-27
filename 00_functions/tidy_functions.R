@@ -95,3 +95,40 @@ t_cov[t_cov == 0] <- odiag_mean
 omega.init <- ginv(t_cov)
 
 }
+
+
+# Scaled-unscaled dataframe for predictive graphing -----------------------
+
+
+#get a dataframe to predict onto that includes
+# the original scale of the variable 
+# the scaled variable, and the "level"
+# of the scaled variable. You can
+# specify different "lengths", but 20 is a good
+# length to choose from 
+
+#x =the original variable
+#length = the lenght of the scale (how many values to predict onto)
+# name = the name of the variable that you want to attach to the final df
+scale_df <- function(x, length, name){
+  
+  #get the sequenceo f the variable
+  var1 <- seq(min(x, na.rm = T),
+              max(x, na.rm = T),
+              #set the length you want
+              length.out = length)
+  
+  #scale that variable
+  varS <- (var1 - mean(x, na.rm = T))/sd(x, na.rm = T)
+  
+  #make the OG and scaled a DF with appropriate 
+  # names and a "level" for graphing later
+  final_df <- var1 %>%
+    cbind(varS) %>%
+    as.data.frame() %>%
+    dplyr::rename(!!name := ".") %>%
+    dplyr::mutate(level = row_number())
+  
+  #get the final DF back from the function
+  return(final_df)
+}
