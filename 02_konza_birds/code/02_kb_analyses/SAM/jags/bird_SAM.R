@@ -39,7 +39,8 @@ model{
     logit(mu[i]) <- b0 +
       b[1]*AntTemp[i] +
       b[2]*AntPPT[i] +
-      b[3]*AntNPP[i] 
+      b[3]*AntNPP[i] +
+      b[4]*AntTemp[i]*AntPPT[i] 
     
     #-------------------------------------## 
     # SAM summing ###
@@ -121,7 +122,7 @@ model{
   #any site-level hierarchies for now - but could??
   b0 ~ dnorm(0, 1E-2)
   
-  for(i in 1:3){
+  for(i in 1:4){
     b[i] ~ dnorm(0, 1E-2)
   }
   

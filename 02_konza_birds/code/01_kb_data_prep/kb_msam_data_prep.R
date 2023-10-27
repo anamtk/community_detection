@@ -51,10 +51,15 @@ codes <- read.csv(here('02_konza_birds',
 #only going to do watersheds where we also have NPP data
 #which are 001D, 004B, and 020B
 
+#going to do all watersheds for now and can subset these other 
+#ones with only NPP later - maybe do a SAM with and a SAM without NPP data
+
+
+# birds1 <- birds %>%
+#   filter(WATERSHED %in% c("001D", "004B", "020B"))
+
 birds1 <- birds %>%
-  filter(WATERSHED %in% c("001D", "004B", "020B"))
-
-
+  filter(COMMONNAME !=  "Transect not run" )
 # Match up species codes to scientific names ------------------------------
 
 #bird size
@@ -90,12 +95,20 @@ bird_id2 <- birds2 %>%
   left_join(codes1, by = c("COMMONNAME")) %>%
   #American Goldfinch is acting up and I don't know why....!!! GAH
   mutate(SPEC = case_when(COMMONNAME == "American Goldfinch" ~ "AGOL",
+                          COMMONNAME == "Barred Owl" ~ "BADO",
+                          COMMONNAME == "Greater Prairie-chicken" ~ 'GRPC',
+                          COMMONNAME == "Black-and-White Warbler" ~ "BAWW",
+                          COMMONNAME == "Canada Goose" ~ "CANG",
                           TRUE ~ SPEC)) %>%
   mutate(SCINAME = case_when(COMMONNAME == "American Goldfinch" ~ "Spinus tristis",
+                             COMMONNAME == "Barred Owl" ~ 'Strix varia',
+                             COMMONNAME == "Greater Prairie-chicken" ~ 'Tympanuchus cupido',
+                             COMMONNAME == "Black-and-White Warbler" ~ "Mniotilta varia",
+                             COMMONNAME == "Canada Goose" ~ "Branta canadensis",
                              TRUE ~ SCINAME)) %>%
   filter(SPECNAME != "NONE") %>%
   distinct(COMMONNAME, SPEC, SCINAME) 
-#71 total bird species
+#132 total bird species
 
 
 # Manupulate data to abundance structure ----------------------------------
@@ -165,7 +178,7 @@ survey_meta <- birds4 %>%
 
 #survey length
 survey <- birds %>%
-  filter(WATERSHED %in% c("001D", "004B", "020B")) %>%
+  #filter(WATERSHED %in% c("001D", "004B", "020B")) %>%
   distinct(RECYEAR, RECMONTH, RECDAY, TRANSNUM, 
            WATERSHED, DURATION) %>%
   filter(!is.na(DURATION)) %>%
@@ -404,7 +417,7 @@ saveRDS(data, here('02_konza_birds',
 
 
 
-# Bray for site 1 ---------------------------------------------------------
+# Bray for 1 site ---------------------------------------------------------
 
 #Just for visualization purposes to compare "raw" vs "corrected" bray
 #we will want to get a community matrix for one site across years
@@ -412,6 +425,8 @@ saveRDS(data, here('02_konza_birds',
 #we'll do site one, and do whta folks used to do and just take the 
 #maximum number of individuals observed per species per year across
 #repeat surveys
+
+#this correspondes to TransID == 3
 
 matrix <- birds5 %>%
   filter(WATERSHED == "004B") %>%
@@ -521,3 +536,18 @@ write.csv(sites, here('02_konza_birds',
                'data_outputs',
                'metadata',
                'site_year_IDs.csv'))
+
+
+# Summaries ---------------------------------------------------------------
+
+birds5 %>%
+  distinct(RECYEAR, RECMONTH, TRANSNUM, WATERSHED, DURATION, REP) %>%
+  summarise(dur = mean(DURATION, na.rm = T),
+            min = min(DURATION, na.rm = T),
+            max = max(DURATION, na.rm = T))
+
+sizes %>%
+  summarise(mean = mean(Mass),
+            min = min(Mass),
+            max = max(Mass))
+  

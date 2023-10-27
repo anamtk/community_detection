@@ -29,7 +29,13 @@ all_data <- read.csv(here('02_konza_birds',
                           "data_prep",
                           "stability_metrics_with_covariates.csv"))
 
+
+# Remove years before 1984 ------------------------------------------------
+all_data <- all_data %>%
+  filter(RECYEAR >1983)
 # Prep data for jags ------------------------------------------------------
+
+
 
 n.data <- nrow(all_data)
 
@@ -86,6 +92,7 @@ NPP <- all_data %>%
 sum(is.na(NPP))/(sum(is.na(NPP)) + sum(!is.na(NPP)))
 
 #16% missing data for NPP
+#with subset data, 10% missing
 
 # Make data list ----------------------------------------------------------
 

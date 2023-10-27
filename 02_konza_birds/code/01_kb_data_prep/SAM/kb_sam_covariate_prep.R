@@ -8,7 +8,7 @@
 
 
 package.list <- c("here", "tidyverse",
-                  'data.table')
+                  'data.table', 'ggcorrplot')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -205,6 +205,19 @@ all_data <- stability2 %>%
                              "WATERSHED")) %>%
   left_join(temp_lags, by = c("RECYEAR")) %>%
   left_join(ppt_lags, by = c("RECYEAR")) 
+
+
+# Check for correlation in predictors -------------------------------------
+
+corr_check <- all_data %>%
+  dplyr::select(NPP:PPT_l5) %>%
+  filter(if_all(everything(), ~!is.na(.))) 
+  
+corr_check2 <- cor(corr_check)
+ggcorrplot(cor(corr_check), type = "lower", lab = T)
+
+# Export ------------------------------------------------------------------
+
 
 
 write.csv(all_data, here("02_konza_birds",

@@ -87,32 +87,32 @@ med <- as.data.frame(sum$quantiles) %>%
 # Quick plots -------------------------------------------------------------
 
 med2 <- med %>%
-  filter(parameter %in% c("b[1]", 'b[2]', 'b[3]'))
+  filter(parameter %in% c("b[1]", 'b[2]', 'b[3]', 'b[4]'))
 
 ggplot(med2, aes(x = parameter, y= `50%`)) +
   geom_hline(yintercept = 0, linetype = 2) +
   geom_point() +
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
   labs(y = "Median (and 95% BCI)", x = "Covariate") +
-  scale_x_discrete(labels = c("Temperature", "Precipitation", "NPP")) +
+  scale_x_discrete(labels = c("Temperature", "Precipitation", "NPP",
+                              "Temperature*Precipitation")) +
   coord_flip()
 
 weights <- med %>%
-  filter(str_detect(parameter, "wB|wA")) %>%
+  filter(str_detect(parameter, "wB|wA|wC")) %>%
   mutate(type = case_when(str_detect(parameter, "wA") ~ "wA",
-                          str_detect(parameter, "wB") ~ "wB")) %>%
+                          str_detect(parameter, "wB") ~ "wB",
+                          str_detect(parameter, "wC") ~ "wC")) %>%
   mutate(parameter = factor(parameter, levels = c("wA[1]", "wA[2]", "wA[3]",
                                                   "wA[4]", "wA[5]", "wA[6]",
-                                                  "wA[7]", "wA[8]", "wA[9]",
-                                                  "wA[10]", "wA[11]", "wA[12]",
                                                   "wB[1]", "wB[2]", "wB[3]",
                                                   "wB[4]", "wB[5]", "wB[6]",
-                                                  "wB[7]", "wB[8]", "wB[9]",
-                                                  "wB[10]", "wB[11]", "wB[12]")))
+                                                  "wC[1]", "wC[2]", "wC[3]",
+                                                  "wC[4]", "wC[5]", "wC[6]")))
 
-1/12
+1/6
 ggplot(weights, aes(x = parameter, y = `50%`)) +
-  geom_hline(yintercept = 1/12, linetype = 2) +
+  geom_hline(yintercept = 1/6, linetype = 2) +
   geom_point() +
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
   theme(axis.text.x = element_text(angle = 45, hjust =1)) +
