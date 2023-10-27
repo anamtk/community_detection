@@ -197,7 +197,8 @@ fish4 <- fish3 %>%
   mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
                          TRUE ~ VIS)) %>%
   #scale visibility covaraite
-  mutate(VIS = scale(VIS))  
+  mutate(VIS2 = VIS,
+         VIS = scale(VIS))  
 
 fish4 %>%
   filter(COUNT ==0) %>%
@@ -276,6 +277,27 @@ sizes <- fish %>%
   #make this variable a vector
   as_vector()
 
+size_df <- fish %>%
+  #remove the missing values for size
+  filter(SIZE != -99999) %>%
+  #select only variables of interest
+  dplyr::select(SIZE, SP_CODE, COUNT) %>%
+  #add in the yearly surveys (They seem like
+  # they're on different days)
+  bind_rows(sizesa) %>%
+  #group by species ID
+  group_by(SP_CODE) %>%
+  #get a weighted average based on the distributions
+  # of sizes of individuals observed in taht size
+  # class
+  summarise(AVG_SIZE = weighted.mean(SIZE, COUNT)) %>%
+  #select only the species in the species codes in the dataset
+  filter(SP_CODE %in% species) 
+
+write.csv(size_df, here('01_sbc_fish',
+                        'data_outputs',
+                        'MSAM',
+                        'all_fish_size_data.csv'))
 #look at that variable's distribution
 hist(sizes)
 
@@ -579,6 +601,11 @@ saveRDS(data, here('01_sbc_fish',
 
 
 # Export metadata for post summaries --------------------------------------
+
+write.csv(fish4, here('01_sbc_fish',
+                      'data_outputs',
+                      'MSAM',
+                      'all_fish_data.csv'))
 
 fish5 <- fish4 %>%
   ungroup() %>%

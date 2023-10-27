@@ -38,8 +38,7 @@ model{
     #kelp biomass, temperature, and chl-a
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         b[1]*AntKelp[i] +
-        b[2]*AntTemp[i] +
-        b[3]*AntKelp[i]*AntTemp[i]
+        b[2]*AntTemp[i] 
       
       #-------------------------------------## 
       # SAM summing ###
@@ -134,7 +133,7 @@ model{
   tau.site <- 1/pow(sig.site,2)
   #tau.year <- 1/pow(sig.year, 2)
   
-  for(i in 1:3){
+  for(i in 1:2){
     b[i] ~ dnorm(0, 1E-2)
   }
   
