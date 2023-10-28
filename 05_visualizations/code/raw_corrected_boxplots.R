@@ -168,7 +168,7 @@ ggplot(all_bray, aes(x = type, y = bray)) +
   scale_fill_manual(values = c(modeled = modeled_col, observed = observed_col)) +
   facet_wrap(~ dataset)
 
-plot_function <- function(dataset) {
+boxplot_function <- function(dataset) {
   
   if(dataset == "birds"){
     df <- all_bray %>% 
@@ -194,7 +194,7 @@ plot_function <- function(dataset) {
     ggplot(aes(x = type, y = bray, fill = type)) +
     geom_violin() +
     scale_fill_manual(values = c(modeled = modeled_col, observed = observed_col)) +
-    geom_boxplot(width = 0.2) +
+    geom_boxplot(width = 0.1) +
     labs(x = "Type", y = "Bray-Curtis dissimilarity", title = title) +
     scale_y_continuous(limits = c(0, 1)) +
     theme(legend.position = "none",
@@ -203,16 +203,16 @@ plot_function <- function(dataset) {
   
 }
 
-birds <- plot_function("birds") +
+knz_boxplot <- boxplot_function("birds") +
   annotate(geom = "text", x = 0.75, y = 1, label = "More different") +
   annotate(geom = "text", x = 0.75, y = 0, label = "More similar") 
-birds
+knz_boxplot
 
-fish <- plot_function("fish")
-fish  
+sbc_boxplot <- boxplot_function("fish")
+sbc_boxplot
 
-together <- birds | fish
-together
+all_boxplot <- knz_boxplot | sbc_boxplot
+all_boxplot
 
 m1 <- glmmTMB(bray ~ type*dataset + (1|site_year),
               data = all_bray,
