@@ -280,6 +280,21 @@ saveRDS(data, here('sev_grasshopper',
                    "sev_msam_dynmultisite.RDS"))
 
 
+# Extract info on sites and years -----------------------------------------
+
+str(hopper4)
+
+ids <- hopper4 %>%
+  distinct(YEAR, site_web_trans, yrID, siteID) %>%
+  separate(site_web_trans,
+           into = c('site', 'web', 'transect'),
+           remove = F)
+
+write.csv(ids, here('03_sev_grasshoppers',
+               'data_outputs',
+               'metadata',
+               'sev_site_year_IDs.csv'))
+
 # Get bray for site one ---------------------------------------------------
 
 #get bray for site 1 

@@ -72,6 +72,36 @@ npp <- read.csv(here('03_sev_grasshoppers',
                      'environmental',
                      'sev331_quadrat_plant_species_biomass.csv'))
 
+#to get the sites and transects we need for the other 
+#two datasets
+stability <- readRDS(here("03_sev_grasshoppers",
+                          "monsoon",
+                          "MSAM",
+                          "outputs",
+                          "sev_bray_meanSD.RDS"))
+
+IDs <- read.csv(here('03_sev_grasshoppers',
+                     'data_outputs',
+                     'metadata',
+                     'sev_site_year_IDs.csv'))
+
+
+# Get response data in order ----------------------------------------------
+
+stability2 <- as.data.frame(stability) %>%
+  rownames_to_column(var = "var") %>%
+  filter(var != "deviance") %>%
+  separate(var,
+           into = c('siteID', 'yrID'),
+           sep = ",") %>%
+  mutate(siteID = str_sub(siteID, 6, nchar(siteID))) %>%
+  mutate(yrID = str_sub(yrID, 1, (nchar(yrID)-1))) %>%
+  rename("bray" = "Mean") %>%
+  dplyr::select(yrID, siteID, bray, SD) %>%
+  mutate(yrID = as.numeric(yrID),
+         siteID = as.numeric(siteID)) %>%
+  left_join(IDs, by = c("siteID", "yrID"))
+
 # Combine all climate datasets --------------------------------------------
 
 #combine and select only the weather station we want
@@ -111,7 +141,7 @@ npp2 <- npp %>%
   group_by(site, year, season,web, plot, quad ) %>%
   summarise(biomass = sum(biomass.BM, na.rm = T)) %>%
   ungroup() %>%
-  filter(site %in% c("core_black", "core_blue"))
+  filter(site %in% c("core_black", "core_creosote"))
 
 npp3 <- npp2 %>%
   group_by(site, web, year, season) %>%
@@ -123,6 +153,8 @@ npp3 <- npp2 %>%
 
 # Get lags ----------------------------------------------------------------
 
+#remove all months except the last survey month. which either SEptember or OCtober
+#depending on year and site. Let's just go ahead and set October
 temp_lags <- temp %>%
   arrange(Year, Month) %>%
   #this creates a column for every lag this month to 11 months ago
@@ -131,7 +163,10 @@ temp_lags <- temp %>%
                                                  'Temp_l6', 'Temp_l7',
                                                  'Temp_l8', 'Temp_l9',
                                                  'Temp_l10', "Temp_l11")))) %>%
-  ungroup()
+  ungroup() %>%
+  #start in october, which is when sampling ended
+  filter(Month == 10) %>%
+  dplyr::select(-Month)
 
 ppt_lags <- ppt %>%
   arrange(Year, Month) %>%
@@ -141,7 +176,10 @@ ppt_lags <- ppt %>%
                                                    'PPT_l6', 'PPT_l7',
                                                    'PPT_l8', 'PPT_l9',
                                                    'PPT_l10', "PPT_l11")))) %>%
-  ungroup()
+  ungroup() %>%
+  #start in october, which is when sampling ended
+  filter(Month == 10) %>%
+  dplyr::select(-Month)
 
 #get npp lags:
 npp_lags <- npp3 %>%
@@ -156,4 +194,31 @@ npp_lags <- npp3 %>%
   #consider "this season" e.g. fall - and then previous seasons from
   #that for each web
   filter(seasonnum == 2) %>%
-  dplyr::select(-seasonnum)
+  dplyr::select(-seasonnum) %>%
+  rename("ecosystem" = "site") %>%
+  mutate(site = case_when(ecosystem == "core_black" ~ "BOER",
+                          ecosystem == "core_creosote" ~ "LATR"))
+
+
+# Combine datasets --------------------------------------------------------
+
+all_data <- stability2 %>%
+  left_join(temp_lags, by = c("YEAR" = "Year")) %>%
+  left_join(ppt_lags, by = c("YEAR" = "Year")) %>%
+  left_join(npp_lags, by = c("site", "web", "YEAR" = "year"))
+
+
+
+# Export ------------------------------------------------------------------
+
+write.csv(all_data,
+          here("03_sev_grasshoppers",
+               "data_outputs",
+               'SAM',
+               'data_prep',
+               "sev_stability_metrics_with_covariates.csv"))
+
+
+
+
+
