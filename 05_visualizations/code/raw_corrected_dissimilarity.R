@@ -64,8 +64,7 @@ posterior_knz <- readRDS(here("05_visualizations",
                                "viz_data",
                                "knz_004B_bray_summary.RDS"))
 
-
-# Grasshoppers ------------------------------------------------------------
+# ⊣ grasshoppers ----------------------------------------------------------
 
 raw_sev <- readRDS(here('05_visualizations',
                         'viz_data',
@@ -95,6 +94,10 @@ timeseries_function <- function(dataset) {
     samples_df <- samples_sbc
     posterior_df <- posterior_sbc
     raw_df <- raw_sbc
+  } else if(dataset == "grasshoppers") {
+    samples_df <- samples_sev
+    posterior_df <- posterior_sev
+    raw_df <- raw_sev
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -104,6 +107,8 @@ timeseries_function <- function(dataset) {
     title = "KNZ birds"
   } else if(dataset == "fish") {
     title = "SBC fish"
+  } else if(dataset == "grasshoppers") {
+    title = "SEV grasshoppers"
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -113,6 +118,8 @@ timeseries_function <- function(dataset) {
     breaks = seq(from = 1982, to = 2010, by = 5)
   } else if(dataset == "fish") {
     breaks = seq(from = 2003, to = 2023, by = 4)
+  } else if(dataset == "grasshoppers") {
+    breaks = seq(from = 1993, to = 2019, by = 5)
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -144,8 +151,10 @@ timeseries_sbc <- timeseries_function(dataset = "fish") +
   coord_cartesian(xlim = c(2003, 2022))
 timeseries_knz <- timeseries_function(dataset = "birds") +
   coord_cartesian(xlim = c(1982, 2009))
+timeseries_sev <- timeseries_function(dataset = "grasshoppers") +
+  coord_cartesian(xlim = c(1993, 2019))
 
-timeseries_together <- timeseries_sbc | timeseries_knz
+timeseries_together <- timeseries_sbc / timeseries_knz / timeseries_sev
 timeseries_together
 
 

@@ -218,6 +218,9 @@ boxplot_function <- function(dataset) {
   } else if(dataset == "fish") {
     df <- all_bray %>% 
       filter(dataset == "sbc_fish")
+  } else if(dataset == "grasshoppers"){
+    df <- all_bray %>% 
+      filter(dataset == "sev_hoppers")
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -227,7 +230,9 @@ boxplot_function <- function(dataset) {
     title = "KNZ birds"
   } else if(dataset == "fish") {
     title = "SBC fish"
-  } else {
+  } else if(dataset == "grasshoppers") {
+    title = "SEV grasshoppers"
+  }else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
   }
@@ -253,7 +258,11 @@ knz_boxplot
 sbc_boxplot <- boxplot_function("fish")
 sbc_boxplot
 
-all_boxplot <- knz_boxplot | sbc_boxplot
+sev_boxplot <- boxplot_function("grasshoppers")
+sev_boxplot
+
+all_boxplot <- (knz_boxplot | sbc_boxplot) /
+               (sev_boxplot | plot_spacer())
 all_boxplot
 
 
