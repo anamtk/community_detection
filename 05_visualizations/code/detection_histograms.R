@@ -36,13 +36,30 @@ fish_detect <- readRDS(here('01_sbc_fish',
                             'outputs',
                             'fish_p0_summary.RDS'))
 
+hopper_detect <- readRDS(here('03_sev_grasshoppers',
+                              'monsoon',
+                              'MSAM',
+                              'outputs',
+                              'grasshopper_p_summary.RDS'))
 
-# Create histograms -------------------------------------------------------
+# Prep for plotting -------------------------------------------------------
 
 fish_det2 <- as.data.frame(fish_detect$quantiles) %>%
   rownames_to_column(var = "parm") %>%
-  filter(parm != "deviance") 
+  filter(parm != "deviance")%>%
+  mutate(dataset = "fish")
 
-ggplot(fish_det2, aes(x = `50%`)) +
-  geom_histogram()
+hop_det2 <- as.data.frame(hopper_detect$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(parm != "deviance") %>%
+  mutate(dataset = "hoppers")
+
+detect_df <- fish_det2 %>%
+  rbind(hop_det2)
+
+# Create histograms -------------------------------------------------------
+
+ggplot(detect_df, aes(x = `50%`)) +
+  geom_histogram() +
+  facet_grid(dataset~.)
 
