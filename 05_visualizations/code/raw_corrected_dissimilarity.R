@@ -65,6 +65,21 @@ posterior_knz <- readRDS(here("05_visualizations",
                                "knz_004B_bray_summary.RDS"))
 
 
+# Grasshoppers ------------------------------------------------------------
+
+raw_sev <- readRDS(here('05_visualizations',
+                        'viz_data',
+                        'sev_BOER_1_108_raw_bray.RDS'))
+
+samples_sev <- readRDS(here('05_visualizations',
+                            'viz_data',
+                            'sev_BOER_1_108_bray_samples.RDS'))
+
+posterior_sev <- readRDS(here('05_visualizations',
+                              'viz_data',
+                              'sev_BOER_1_108_bray_summary.RDS'))
+
+
 # plot --------------------------------------------------------------------
 
 modeled_col <- "#E88C23"
@@ -133,18 +148,4 @@ timeseries_knz <- timeseries_function(dataset = "birds") +
 timeseries_together <- timeseries_sbc | timeseries_knz
 timeseries_together
 
-# Figure thoughts ---------------------------------------------------------
-
-#I really like your original figure. I wonder if ew could add in 
-#what you already had (raw vs 100 iterations) and then the 
-#mean and standard deviation of the posterior as another line 
-#(with error bars or a shaded ribbon?) 
-
-#anyway, those are my thoughts - I'm sure you'll create something
-#beautiful!
-
-#Ideally, we will be generating some version of this figure for 
-#all the other datasets as well, so if you can create the code to
-#be somewhat transferrable among datasets with slightly different
-#structures, that could be great!
 

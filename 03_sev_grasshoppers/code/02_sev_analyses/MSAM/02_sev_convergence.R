@@ -27,7 +27,7 @@ rhat <- readRDS(here('03_sev_grasshoppers',
                      'monsoon',
                      "MSAM",
                      'outputs',
-                     'sev_MSAMnocov_model_Rhat.RDS'))
+                     'sev_MSAMnocov_model_Rhat2.RDS'))
 
 # Graph RHat per parameter ------------------------------------------------
 
