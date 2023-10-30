@@ -38,8 +38,7 @@ model{
     #temperature, precipitation and npp
     logit(mu[i]) <- b0.web[Web.ID[i]] +
       b[1]*AntTemp[i] +
-      b[2]*AntPPT[i] +
-      b[3]*AntNPP[i]
+      b[2]*AntNPP[i]
     
     #-------------------------------------## 
     # SAM summing ###
@@ -47,17 +46,17 @@ model{
     
     #summing the antecedent values
     AntTemp[i] <- sum(TempTemp[i,]) #summing across the total number of antecedent months
-    AntPPT[i] <- sum(TempPPT[i,]) #summing across the total num of antecedent months
+    #AntPPT[i] <- sum(TempPPT[i,]) #summing across the total num of antecedent months
     AntNPP[i] <- sum(TempNPP[i,]) #summing across total num of antecedent years
     
     #generating each month's weight to sum above
     for(t in 1:n.templag){ #number of time steps we're going back in the past
       TempTemp[i,t] <- Temp[i,t]*wA[t] 
-      TempPPT[i,t] <- PPT[i,t]*wB[t]
+      #TempPPT[i,t] <- PPT[i,t]*wB[t]
       
       #missing data
       Temp[i,t] ~ dnorm(mu.temp, tau.temp)
-      PPT[i,t] ~ dnorm(mu.ppt, tau.ppt)
+      #PPT[i,t] ~ dnorm(mu.ppt, tau.ppt)
     }
     
     #Generating each lag's weight to sum above
@@ -88,7 +87,7 @@ model{
   #Sum of the weights for temp and ppt lags
   sumA <- sum(deltaA[]) #all the temp weights
   
-  sumB <- sum(deltaB[]) #all the ppt weights
+  #sumB <- sum(deltaB[]) #all the ppt weights
   #Employing "delta trick" to give vector of weights dirichlet priors
   #this is doing the dirichlet in two steps 
   #see Ogle et al. 2015 SAM model paper in Ecology Letters
@@ -99,9 +98,9 @@ model{
     deltaA[t] ~ dgamma(1,1)
     
     #the weights for ppt - getting the weights to sum to 1
-    wB[t] <- deltaB[t]/sumB
+    #wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
-    deltaB[t] ~ dgamma(1,1)
+    #deltaB[t] ~ dgamma(1,1)
   }
   
   #sum of weights for the npp lag
@@ -126,7 +125,7 @@ model{
 
   b0 ~ dnorm(0, 1E-2)
   
-  for(i in 1:3){
+  for(i in 1:2){
     b[i] ~ dnorm(0, 1E-2)
   }
   
@@ -140,9 +139,9 @@ model{
   mu.temp ~ dunif(-10, 10)
   sig.temp ~ dunif(0, 20)
   tau.temp <- pow(sig.temp, -2)
-  mu.ppt ~ dunif(-10, 10)
-  sig.ppt ~ dunif(0, 20)
-  tau.ppt <- pow(sig.ppt, -2)
+  # mu.ppt ~ dunif(-10, 10)
+  # sig.ppt ~ dunif(0, 20)
+  # tau.ppt <- pow(sig.ppt, -2)
   mu.npp ~ dunif(-10, 10)
   sig.npp ~ dunif(0, 20)
   tau.npp <- pow(sig.npp, -2)

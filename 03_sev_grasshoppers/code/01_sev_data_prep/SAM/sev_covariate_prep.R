@@ -208,7 +208,27 @@ all_data <- stability2 %>%
   left_join(npp_lags, by = c("site", "web", "YEAR" = "year"))
 
 
+# Check for correlation ---------------------------------------------------
 
+library(ggcorrplot)
+
+dat1 <- all_data %>%
+  dplyr::select(Temp:Temp_l11, PPT:PPT_l11)
+
+ggcorrplot(cor(dat1, use = "complete.obs"), 
+           type = "upper", lab= TRUE)
+
+dat2 <- all_data %>%
+  dplyr::select(Temp:Temp_l11, NPP:NPP_l10)
+
+ggcorrplot(cor(dat2, use = "complete.obs"), 
+           type = "upper", lab= TRUE)
+
+dat3 <- all_data %>%
+  dplyr::select(PPT:PPT_l11, NPP:NPP_l10)
+
+ggcorrplot(cor(dat3, use = "complete.obs"), 
+           type = "upper", lab = TRUE)
 # Export ------------------------------------------------------------------
 
 write.csv(all_data,
