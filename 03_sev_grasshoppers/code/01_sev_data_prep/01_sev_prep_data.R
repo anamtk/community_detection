@@ -38,9 +38,9 @@ hopper <- read.csv(here('03_sev_grasshoppers',
                         'data_raw',
                         'sev106_grasshopper_counts.csv'))
 
-life <- read_xlsx(here('03_sev_grasshoppers',
+life <- read.csv(here('03_sev_grasshoppers',
                       'data_raw',
-                      'SEV_grasshopper_species_list2020.xlsx'))
+                      'SEV_grasshopper_species_list2020.csv'))
 
 # Subset data -------------------------------------------------------------
 
@@ -278,4 +278,130 @@ saveRDS(data, here('sev_grasshopper',
                    "data_outputs",
                    "model_inputs",
                    "sev_msam_dynmultisite.RDS"))
+
+
+# Extract info on sites and years -----------------------------------------
+
+str(hopper4)
+
+ids <- hopper4 %>%
+  distinct(YEAR, site_web_trans, yrID, siteID) %>%
+  separate(site_web_trans,
+           into = c('site', 'web', 'transect'),
+           remove = F)
+
+write.csv(ids, here('03_sev_grasshoppers',
+               'data_outputs',
+               'metadata',
+               'sev_site_year_IDs.csv'))
+
+# Get bray for site one ---------------------------------------------------
+
+#get bray for site 1 
+# BOER_1_108 is SiteID 1, so I'll just use it for now
+
+#Just for visualization purposes to compare "raw" vs "corrected" bray
+#we will want to get a community matrix for one site across years
+
+#we'll do site one, and do whta folks used to do and just take the 
+#maximum number of individuals observed per species per year across
+#repeat surveys
+
+matrix <- hopper4 %>%
+  filter(site_web_trans == "BOER_1_108") %>%
+  group_by(YEAR, speciesID) %>%
+  summarise(COUNT = max(CNT, na.rm = T)) %>%
+  pivot_wider(names_from = YEAR,
+              values_from = COUNT) %>%
+  column_to_rownames(var = 'speciesID')
+
+a <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+b <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+c <- matrix(NA, nrow = nrow(matrix),
+            ncol = ncol(matrix))
+
+for(r in 1:nrow(matrix)){
+  for(t in 2:ncol(matrix)){
+    a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+    b[r,t] <- matrix[r,t-1] - a[r,t]
+    c[r,t] <- matrix[r,t] - a[r,t]
+  }
+}
+
+A <- colSums(a)
+B <- colSums(b)
+C <- colSums(c)
+
+bray <- (B + C)/(2*A+B+C)
+years <- 1992:2019
+
+raw_bray <- as.data.frame(cbind(raw_bray = bray,
+                                year = years))
+
+saveRDS(raw_bray, here("05_visualizations",
+                       "viz_data",
+                       "sev_BOER_1_108_raw_bray.RDS"))
+
+
+# Uncorrected bray for all sites-years ------------------------------------
+
+#pulling out and calculating bray-curtis for all 
+#communities so we can compare to the "corrected" version
+#after the model
+
+diss_fun <- function(site){
+  
+  matrix <- hopper4 %>%
+    filter(siteID == site) %>%
+    group_by(YEAR, speciesID) %>%
+    summarise(COUNT = max(CNT, na.rm = T)) %>%
+    pivot_wider(names_from = YEAR,
+                values_from = COUNT) %>%
+    column_to_rownames(var = 'speciesID')
+  
+  a <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  b <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  c <- matrix(NA, nrow = nrow(matrix),
+              ncol = ncol(matrix))
+  
+  for(r in 1:nrow(matrix)){
+    for(t in 2:ncol(matrix)){
+      a[r, t] <- min(c(matrix[r,t-1], matrix[r,t]))
+      b[r,t] <- matrix[r,t-1] - a[r,t]
+      c[r,t] <- matrix[r,t] - a[r,t]
+    }
+  }
+  
+  A <- colSums(a)
+  B <- colSums(b)
+  C <- colSums(c)
+  
+  bray <- (B + C)/(2*A+B+C)
+  
+  bray_df <- hopper4 %>%
+    filter(siteID == site) %>%
+    distinct(yrID, siteID) %>%
+    cbind(bray) %>%
+    mutate(type = "observed")
+  
+  return(bray_df)
+}
+
+sites <- unique(hopper4$siteID)
+results <- lapply(sites, FUN = diss_fun)
+
+results_df <- do.call(rbind, results)
+
+saveRDS(results_df, here('05_visualizations',
+                         'viz_data',
+                         'sev_observed_bray.RDS'))
+
 

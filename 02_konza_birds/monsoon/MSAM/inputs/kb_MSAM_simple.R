@@ -57,6 +57,23 @@ model{
   a1.Effort ~ dnorm(0, 0.001)
   a2.Size ~ dnorm(0, 0.001)
   
+  #missing data 
+  #SOme data for effort are missing, so we're imputing them
+  for(i in 1:n.transects){
+    for(t in n.start[i]:n.end[i]){
+      for(r in 1:n.rep[i,t]){
+        #missing data in the effort column
+        effort[i,t,r] ~ dnorm(mu.missingeffort, tau.missingeffort)
+      }
+    }
+  }
+  
+  #PRIORS FOR IMPUTING MISSING DATA
+  #Priors for mean and tau of missing covariates in the model
+  mu.missingeffort ~ dunif(-10, 10)
+  sig.missingeffort ~ dunif(0, 20)
+  tau.missingeffort <- pow(sig.missingeffort, -2)
+  
   
   #BRAY CURTIS DERIVED QUANTIIES
   #lots of ways to calculate this, but I did this way

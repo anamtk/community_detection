@@ -35,9 +35,8 @@ params <- c(
             #COMMUNITY parameters
             'mu.llambda',
             'sig.llambda',
-            'mu.a0',
-            'sig.a0',
-            'a1.Rep')
+            'p.mean',
+            'sig.lp')
 
 
 #we found ymax to set initials, since otherwise the model will hate us
@@ -50,7 +49,7 @@ model <- here('03_sev_grasshoppers',
               '02_sev_analyses',
               "MSAM",
               'jags',
-              'sev_MSAM_simple.R')
+              'sev_MSAM_simple_nocov.R')
 
 start.time <- Sys.time()
 mod <- jagsUI::jags(data = data,

@@ -41,7 +41,7 @@ params <- c(
             'sig.a0'
             )
 
-#params <- c("N")
+#params <- c("bray")
 
 #we found ymax to set initials, since otherwise the model will hate us
 # inits <- list(list(N = data$ymax,

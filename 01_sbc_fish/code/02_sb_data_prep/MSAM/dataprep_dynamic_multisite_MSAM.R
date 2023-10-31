@@ -113,6 +113,9 @@ fish2 <- fish1 %>%
   #get rid of NA counts and set to 0
   mutate(COUNT = case_when(COUNT == -99999 ~ 0,
                             TRUE ~ COUNT)) %>%
+  #filter out "unidentified" species codes
+  filter(!SP_CODE %in% c("SYNG", "COTT", "BOTH",
+                         "EMBI", "SCSP")) %>%
   #factor species code so we can fill in all species
   #for all surveys
   mutate(SP_CODE = as.factor(SP_CODE)) %>%
@@ -194,7 +197,8 @@ fish4 <- fish3 %>%
   mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
                          TRUE ~ VIS)) %>%
   #scale visibility covaraite
-  mutate(VIS = scale(VIS))  
+  mutate(VIS2 = VIS,
+         VIS = scale(VIS))  
 
 fish4 %>%
   filter(COUNT ==0) %>%
@@ -204,7 +208,7 @@ fish4 %>%
   filter(COUNT >0) %>%
   tally()
 
-11764/87006
+79643/(11297+79643)
 
 # Get covariates in order -------------------------------------------------
 
@@ -273,6 +277,27 @@ sizes <- fish %>%
   #make this variable a vector
   as_vector()
 
+size_df <- fish %>%
+  #remove the missing values for size
+  filter(SIZE != -99999) %>%
+  #select only variables of interest
+  dplyr::select(SIZE, SP_CODE, COUNT) %>%
+  #add in the yearly surveys (They seem like
+  # they're on different days)
+  bind_rows(sizesa) %>%
+  #group by species ID
+  group_by(SP_CODE) %>%
+  #get a weighted average based on the distributions
+  # of sizes of individuals observed in taht size
+  # class
+  summarise(AVG_SIZE = weighted.mean(SIZE, COUNT)) %>%
+  #select only the species in the species codes in the dataset
+  filter(SP_CODE %in% species) 
+
+write.csv(size_df, here('01_sbc_fish',
+                        'data_outputs',
+                        'MSAM',
+                        'all_fish_size_data.csv'))
 #look at that variable's distribution
 hist(sizes)
 
@@ -577,6 +602,11 @@ saveRDS(data, here('01_sbc_fish',
 
 # Export metadata for post summaries --------------------------------------
 
+write.csv(fish4, here('01_sbc_fish',
+                      'data_outputs',
+                      'MSAM',
+                      'all_fish_data.csv'))
+
 fish5 <- fish4 %>%
   ungroup() %>%
   distinct(SITE_TRANS, YEAR, siteID, yrID)
@@ -703,3 +733,23 @@ saveRDS(results_df, here('05_visualizations',
                'viz_data',
                'sbc_observed_bray.RDS'))
 
+
+# Summary stats -----------------------------------------------------------
+
+colnames(fish4)
+
+fish4 %>%
+  separate(col = SITE_TRANS, 
+           into = c("site", "transect"),
+           sep= "_") %>%
+  distinct(site) 
+
+bs %>%
+  distinct(SCIENTIFIC_NAME, COMMON_NAME)
+
+ad <- bs %>%
+  distinct(SP_CODE, SCIENTIFIC_NAME, COMMON_NAME)
+
+t <- fish4 %>%
+  distinct(SP_CODE) %>%
+  full_join(ad, by = "SP_CODE")
