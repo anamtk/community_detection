@@ -48,18 +48,29 @@ codes <- read.csv(here('02_konza_birds',
 
 # Filter out watersheds of interest ---------------------------------------
 
-#only going to do watersheds where we also have NPP data
+birds %>%
+  distinct(WATERSHED)
+#OG: only going to do watersheds where we also have NPP data
 #which are 001D, 004B, and 020B
 
 #going to do all watersheds for now and can subset these other 
 #ones with only NPP later - maybe do a SAM with and a SAM without NPP data
 
-
-# birds1 <- birds %>%
-#   filter(WATERSHED %in% c("001D", "004B", "020B"))
+#update: now going to only do watersheds in the burning+grazing experiment
+#4 yr burn, grazed: N04D, N04B
+#4 yr burn, ungrazed: 004A, 004B
+#1 year burn, grazed: 001D, 001A
+#no burn, grazed: N20B
+#no burn, ungrazed: 020B, 020C, 020D
 
 birds1 <- birds %>%
+  filter(WATERSHED %in% c("N04D", "N04B",
+                          "004A", "004B",
+                          "001D", "R20A", #001A became R20A
+                          "N20B",
+                          "020B", "020C", "020D")) %>%
   filter(COMMONNAME !=  "Transect not run" )
+
 # Match up species codes to scientific names ------------------------------
 
 #bird size
