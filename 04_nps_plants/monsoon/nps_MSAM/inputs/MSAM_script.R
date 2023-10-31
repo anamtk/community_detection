@@ -45,12 +45,15 @@ data_list <- list(n.species = data$n.species,
 
 params <- c(
   #COMMUNITY parameters
-  'psi.mean',
+  'mu.lpsi',
   'sig.lpsi',
   'mu.a0',
   'sig.a0',
   'a1.Cover',
-  'a2.LifeGroup'
+  'a2.LifeGroup',
+  'p0',
+  'mu.missingcover',
+  'sig.missingcover'
 )
 
 
@@ -91,19 +94,7 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
-#i don't make MCMC plots of omega because it's a HUGE parameter
-parms <- c(
-  #COMMUNITY parameters
-  'psi.mean',
-  'sig.lpsi',
-  'mu.a0',
-  'sig.a0',
-  'a1.Cover',
-  'a2.LifeGroup'
-)
-
 mcmcplot(mod$samples,
-         parms = parms,
          dir = "/scratch/sml665/nps_plants/outputs/mcmcplots/MSAM")
 
 # Get RHat per parameter ------------------------------------------------

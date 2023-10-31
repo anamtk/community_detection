@@ -68,6 +68,9 @@ model{
     # #Detection intercept
     a0[k] ~ dnorm(mu.a0, tau.a0)
     
+    #"baseline" detection at all covariates == 0
+    p0[k] <- ilogit(a0[k])
+    
   }
   
   
@@ -75,9 +78,8 @@ model{
   #All species-level priors are centered around hyperpriors for 
   # the community for that variaable
   
-  #initial abundance
-  psi.mean ~ dbeta(1,1)
-  mu.lpsi <- logit(psi.mean)
+  #occupancy probability
+  mu.lpsi ~ dnorm(0, 0.00001)
   sig.lpsi ~ dunif(0, 10)
   tau.lpsi <- pow(sig.lpsi, -2)
   

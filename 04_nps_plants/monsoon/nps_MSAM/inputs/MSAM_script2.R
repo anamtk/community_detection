@@ -28,7 +28,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS(file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model_subset.RDS")
+mod <- readRDS(file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model.RDS")
 
 # Get initials from previous model ----------------------------------------
 

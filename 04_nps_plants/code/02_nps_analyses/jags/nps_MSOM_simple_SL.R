@@ -33,8 +33,8 @@ model{
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
           # Observation model
           logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-            a1.Cover*cover[k,i,t,r] + #proxy for abundance
-            (lifegroup[k]!=1)*a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
+            a1.Cover*cover[k,i,t,r] #+ #proxy for abundance
+            #a2.LifeGroup[lifegroup[k]] #also potentially a proxy for abundance,
           #this is a categorical combination of the lifegroup and duration values
 
           #presence is binomial based on detection probability conditioned
@@ -43,6 +43,10 @@ model{
           #in this case, y is dependent on repeat survey because of the
           # dependence of p on survey period
             y[k,i,t,r] ~ dbin(p[k,i,t,r] * z[k,i,t], n.rep[i,t])
+            
+            
+            #MISSING DATA for cover imputation
+            cover[k,i,t,r] ~ dnorm(mu.missingcover, tau.missingcover)
         } #reps
         
         #SPECIES-LEVEL PRIORS:
@@ -64,6 +68,9 @@ model{
     # #Detection intercept
     a0[k] ~ dnorm(mu.a0, tau.a0)
     
+    #"baseline" detection at all covariates == 0
+    p0[k] <- ilogit(a0[k])
+    
   }
   
   
@@ -72,8 +79,7 @@ model{
   # the community for that variaable
   
   #initial abundance
-  psi.mean ~ dbeta(1,1)
-  mu.lpsi <- logit(psi.mean)
+  mu.lpsi ~ dnorm(0, 0.00001)
   sig.lpsi ~ dunif(0, 10)
   tau.lpsi <- pow(sig.lpsi, -2)
   
@@ -99,11 +105,21 @@ model{
   #in comparison to this baseline value. 
   #we set the baseline to be the group with the most observations because
   #this helps the model statistically 
-  for(g in 1:n.groups){ #number of life groups
-    a2.LifeGroup[g] ~ dnorm(0, 1E-3)
-  }
+  # for(g in 2:n.groups){ #number of life groups
+  #   a2.LifeGroup[g] ~ dnorm(0, 1E-3)
+  # }
   
-  #a2.Lifegroup[1] <- 0
+  # SL: error with running when this is set to 0
+  # added condition in regression for logit(p) so this is 0 when lifegroup = 1
+  # but will have a value other than 0 in the posterior results
+  #a2.LifeGroup[1] <- 0
+  
+  #PRIORS FOR IMPUTING MISSING DATA
+  #Priors for mean and tau of missing covariates in the model
+  mu.missingcover ~ dunif(-10, 10)
+  sig.missingcover ~ dunif(0, 20)
+  tau.missingcover <- pow(sig.missingcover, -2)
+  
   
   # #DERIVED PARAMETERS##
   
