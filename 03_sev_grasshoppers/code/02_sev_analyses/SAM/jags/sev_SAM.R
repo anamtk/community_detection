@@ -127,7 +127,7 @@ model{
   b0 ~ dnorm(0, 1E-2)
   
   for(i in 1:3){
-    b[i] ~ dnorm(0, 1E-2)
+    b[i] ~ dnorm(0, 1E-3)
   }
   
   sig.web ~ dunif(0, 10)

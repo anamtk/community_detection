@@ -56,7 +56,7 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 1,
+                    n.iter = 1335,
                     DIC = TRUE)
 
 Sys.time()
