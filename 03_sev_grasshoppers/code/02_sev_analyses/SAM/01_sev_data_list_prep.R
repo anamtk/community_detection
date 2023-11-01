@@ -85,18 +85,18 @@ sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
 #<1% missing data
 
 n.npplag <- all_data2 %>%
-  dplyr::select(NPP:NPP_l5) %>%
+  dplyr::select(NPP:NPP_l10) %>%
   ncol()
 
 NPP <- all_data2 %>%
-  dplyr::select(site_web_trans, YEAR, NPP:NPP_l5) %>%
-  pivot_longer(NPP:NPP_l5,
+  dplyr::select(site_web_trans, YEAR, NPP:NPP_l10) %>%
+  pivot_longer(NPP:NPP_l10,
                names_to = 'lag',
                values_to = 'npp') %>%
   mutate(npp = scale(npp)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "npp") %>%
-  dplyr::select(NPP:NPP_l5) %>%
+  dplyr::select(NPP:NPP_l10) %>%
   as.matrix()
   
 sum(is.na(NPP))/(sum(is.na(NPP)) + sum(!is.na(NPP)))

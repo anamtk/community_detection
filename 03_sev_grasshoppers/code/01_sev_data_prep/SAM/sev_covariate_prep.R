@@ -256,8 +256,10 @@ npp_lags <- npp3 %>%
   group_by(site) %>%
   arrange(year, seasonnum)  %>%
   #this creates a column for every lag this year to 5 seasons ago
-  do(data.frame(., setNames(shift(.$NPP, 1:5), c("NPP_l1", 'NPP_l2', "NPP_l3",
-                                                 "NPP_l4", "NPP_l5")))) %>%
+  do(data.frame(., setNames(shift(.$NPP, 1:10), c("NPP_l1", 'NPP_l2', "NPP_l3",
+                                                 "NPP_l4", "NPP_l5",
+                                                 "NPP_l6", 'NPP_l7', "NPP_l8",
+                                                 "NPP_l9", "NPP_l10")))) %>%
   ungroup() %>%
   #consider "this season" e.g. fall - and then previous seasons from
   #that for each web
