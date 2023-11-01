@@ -1,8 +1,8 @@
-#Monsoon script - fish MSAM
+#Monsoon script - bird MSAM
 # Ana Miller-ter Kuile
 # July 27, 2023
 
-#this script runs the fish MSOM
+#this script runs the bird MSOM
 
 # Load packages ---------------------------------------------------------------
 Sys.time()

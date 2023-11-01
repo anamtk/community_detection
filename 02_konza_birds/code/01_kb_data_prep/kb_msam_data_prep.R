@@ -59,16 +59,18 @@ birds %>%
 #update: now going to only do watersheds in the burning+grazing experiment
 #4 yr burn, grazed: N04D, N04B
 #4 yr burn, ungrazed: 004A, 004B
-#1 year burn, grazed: 001D, 001A
+#1 year burn, grazed: N01B (two transects)
+#1 year burn, ungrazed: 001D, 001A/R20A
 #no burn, grazed: N20B
-#no burn, ungrazed: 020B, 020C, 020D
+#no burn, ungrazed: 020B, 020C, 020D (can't find on map - removing)
 
 birds1 <- birds %>%
   filter(WATERSHED %in% c("N04D", "N04B",
                           "004A", "004B",
+                          "N01B",
                           "001D", "R20A", #001A became R20A
                           "N20B",
-                          "020B", "020C", "020D")) %>%
+                          "020B", "020C")) %>%
   filter(COMMONNAME !=  "Transect not run" )
 
 # Match up species codes to scientific names ------------------------------
@@ -119,7 +121,7 @@ bird_id2 <- birds2 %>%
                              TRUE ~ SCINAME)) %>%
   filter(SPECNAME != "NONE") %>%
   distinct(COMMONNAME, SPEC, SCINAME) 
-#132 total bird species
+#106 species
 
 
 # Manupulate data to abundance structure ----------------------------------
@@ -164,7 +166,7 @@ birds4 %>%
   distinct(RECYEAR, TRANSNUM) %>%
   group_by(TRANSNUM) %>%
   tally()
-
+#transect 18 started in 1982
 
 
 # Covariates for detection ------------------------------------------------
@@ -181,6 +183,7 @@ sizes <- bird_id2 %>%
   #get species ID for modeling
   left_join(size_meta, by = "COMMONNAME")
 
+hist(sizes$Mass)
 #get info from bird dataset on ids of different surveys to blend to
 #survey dataset
 survey_meta <- birds4 %>%
