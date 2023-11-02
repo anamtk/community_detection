@@ -64,14 +64,22 @@ birds %>%
 #no burn, grazed: N20B
 #no burn, ungrazed: 020B, 020C, 020D (can't find on map - removing)
 
+#update update:
+#going to pick one transect in each treatment that has higher detections,
+#and or primary productivity datae??
+#code below to figure this out:
+#N04D, 004B, N01B-10, 001D, N20B, 020B
+
 birds1 <- birds %>%
-  filter(WATERSHED %in% c("N04D", "N04B",
-                          "004A", "004B",
+  filter(WATERSHED %in% c("N04D", 
+                          "004B",
                           "N01B",
-                          "001D", "R20A", #001A became R20A
+                          "001D", 
                           "N20B",
-                          "020B", "020C")) %>%
+                          "020B")) %>%
+  filter(TRANSNUM != 6) %>%
   filter(COMMONNAME !=  "Transect not run" )
+
 
 # Match up species codes to scientific names ------------------------------
 
@@ -92,6 +100,9 @@ bird_id <- birds1 %>%
 
 #some things not IDed to species, so we want to remove those
 #either / or Empidonax
+#sparrow sp.
+#Spotted/Eastern Towhee
+#Western/Eastern Meadowlark
 #unique ID is actually common name, not SPECNAME
 
 #clean up so that things will mesh well
@@ -564,4 +575,21 @@ sizes %>%
   summarise(mean = mean(Mass),
             min = min(Mass),
             max = max(Mass))
+
+
+# Transect selection based on number of birds observed --------------------
+
+birds5 %>%
+  ungroup() %>%
+  group_by(RECYEAR, TRANSNUM, WATERSHED) %>%
+  summarise(mean = mean(NOBS, na.rm =T)) %>%
+  mutate(TRANSNUM = as.factor(TRANSNUM)) %>%
+  ggplot(aes(x = TRANSNUM, y = mean)) +
+  geom_boxplot()
+
+birds5 %>%
+  distinct(WATERSHED, TRANSNUM) %>%
+  arrange(TRANSNUM)
+
+#from this - N04D, 004B, N01B-10, 001D, N20B, 020B
   
