@@ -134,17 +134,23 @@ inits <- list(list(N = data$ymax,
 
 # JAGS model --------------------------------------------------------------
 
-mod2 <- jagsUI::jags(data = data_list,
-                    inits = inits,
-                    #inits = NULL,
-                    model.file = '/scratch/atm234/konza_birds/inputs/kb_MSAM_simple.R',
-                    parameters.to.save = params,
-                    parallel = TRUE,
-                    n.chains = 3,
-                    n.iter = 100000,
-                    n.burnin = 20000,
-                    n.thin = 20,
-                    DIC = TRUE)
+# mod2 <- jagsUI::jags(data = data_list,
+#                     inits = inits,
+#                     #inits = NULL,
+#                     model.file = '/scratch/atm234/konza_birds/inputs/kb_MSAM_simple.R',
+#                     parameters.to.save = params,
+#                     parallel = TRUE,
+#                     n.chains = 3,
+#                     n.iter = 100000,
+#                     n.burnin = 20000,
+#                     n.thin = 20,
+#                     DIC = TRUE)
+
+mod2 <- update(mod,
+               parallel = TRUE,
+               n.iter = 100000,
+               n.burnin = 10000,
+               n.thin = 20,)
 
 #save as an R data object
 saveRDS(mod2, 
