@@ -38,7 +38,9 @@ model{
     #kelp biomass, temperature, and chl-a
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         b[1]*AntKelp[i] +
-        b[2]*AntTemp[i] 
+        b[2]*AntTemp[i]# +
+        #removed due to overfitting:
+      # b[3]*AntKelp[i]*AntTemp[i]
       
       #-------------------------------------## 
       # SAM summing ###
