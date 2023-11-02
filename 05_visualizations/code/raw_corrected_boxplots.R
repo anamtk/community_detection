@@ -265,6 +265,15 @@ all_boxplot <- (knz_boxplot | sbc_boxplot) /
                (sev_boxplot | plot_spacer())
 all_boxplot
 
+sev_boxplot + sbc_boxplot
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "observed_modeled_violin.jpg"),
+       height = 5,
+       width = 8,
+       units = "in")
 
 # Looking at differences across datasets ----------------------------------
 

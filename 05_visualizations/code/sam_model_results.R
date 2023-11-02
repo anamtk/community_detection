@@ -38,6 +38,17 @@ fish_bray <- read.csv(here("01_sbc_fish",
                           'data_prep',
                           "stability_metrics_with_covariates.csv"))
 
+sev_sam <- readRDS(here('03_sev_grasshoppers',
+                        'monsoon',
+                        'SAM',
+                        'outputs',
+                        'sev_SAM_summary.RDS'))
+
+sev_bray <- read.csv(here("03_sev_grasshoppers",
+                          "data_outputs",
+                          "SAM",
+                          'data_prep',
+                          'sev_stability_metrics_with_covariates.csv'))
 
 # Partial plots -----------------------------------------------------------
 
@@ -125,7 +136,7 @@ regT <- regT %>%
 
 fisht <- ggplot(regT) +
   geom_point(aes(x = Temp, y = bray), alpha = 0.5) +
-  geom_line(aes(x = Temp, y = plogisreg), linewidth = 1) +
+  geom_line(aes(x = Temp, y = plogisreg), size = 1) +
   labs(x = "Temperature",
        y = "Bray-Curtis Dissimilarity") +
   annotate(geom = "text", x = 13.25, y = 0.4, label = "More similar") + 

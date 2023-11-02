@@ -59,7 +59,23 @@ detect_df <- fish_det2 %>%
 
 # Create histograms -------------------------------------------------------
 
-ggplot(detect_df, aes(x = `50%`)) +
-  geom_histogram() +
-  facet_grid(dataset~.)
+labs <- c("SBC fish", "SEV grasshoppers")
+names(labs) <- c("fish", "hoppers")
 
+detect_df %>%
+  mutate(dataset = factor(dataset, levels = c("hoppers", "fish"))) %>%
+ggplot(aes(x = `50%`)) +
+  geom_histogram() +
+  facet_grid(dataset~.,
+             labeller = labeller(dataset = labs)) +
+  labs(x = "Species-level detectoin probability",
+       y = "Count") +
+  theme(strip.background = element_rect(fill = "white"))
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "species_detection_probabilities.jpg"),
+       height = 7,
+       width = 8,
+       units = "in")

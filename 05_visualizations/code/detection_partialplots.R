@@ -74,10 +74,11 @@ regvis <- vis %>%
   mutate(reg = b0 + bvis*varS,
          plogis_reg = plogis(reg))
 
-ggplot() +
-  geom_line(data = regvis, aes(x = vis, y = plogis_reg)) +
+(fishvis <- ggplot() +
+  geom_line(data = regvis, aes(x = vis, y = plogis_reg), size = 1) +
   labs(x = "Dive visibility (m)",
-       y = "Detection probability")
+       y = "Detection probability") + 
+    ylim(0, 0.5) )
   
 
 ##### BODYSIZE
@@ -95,7 +96,41 @@ regfsz <- fishsz %>%
   mutate(reg = b0 + bfishsz*varS,
          plogis_reg = plogis(reg))
 
-ggplot() +
-  geom_line(data = regfsz, aes(x = size, y = plogis_reg)) +
+(fishsize <- ggplot() +
+  geom_line(data = regfsz, aes(x = size, y = plogis_reg), size = 1) +
   labs(x = "Body size (cm)",
-       y = "Detection probability")
+       y = "Detection probability") +
+    ylim(0, 0.5) +
+    theme(axis.title.y = element_blank()))
+
+fishvis + fishsize
+
+
+# Effect plots ------------------------------------------------------------
+
+fish_effects <- as.data.frame(fish_sum$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(parm %in% c("a1.Vis", "a2.Size"))
+
+(fishdetect <- ggplot(fish_effects, aes(x = parm, y = `50%`)) +
+  geom_hline(yintercept = 0, linetype = 2, size = 0.75) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), size = 0.75, width = 0.2) +
+  labs(x = "Detection covariate",
+       y = "Covariate effect \n (Median and 95% BCI)",
+       title = "SBC fish") +
+  scale_x_discrete(labels = c("Dive visibility", "Fish size")) + 
+  coord_flip() +
+  theme(axis.text = element_text(size = 12),
+        axis.title= element_text(size = 15),
+        plot.title.position = "panel",
+        plot.title = element_text(hjust = 0.5)))
+
+ggsave(plot = fishdetect,
+       filename = here('pictures',
+                       'detection_models',
+                       'detection_covariate_effects.jpg'),
+       height = 5, 
+       width = 7,
+       units = "in")
+
