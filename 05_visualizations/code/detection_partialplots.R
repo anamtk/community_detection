@@ -115,7 +115,7 @@ fish_effects <- as.data.frame(fish_sum$quantiles) %>%
 (fishdetect <- ggplot(fish_effects, aes(x = parm, y = `50%`)) +
   geom_hline(yintercept = 0, linetype = 2, size = 0.75) +
   geom_point(size = 2) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), size = 0.75, width = 0.2) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), size = 0.75, width = 0) +
   labs(x = "Detection covariate",
        y = "Covariate effect \n (Median and 95% BCI)",
        title = "SBC fish") +
@@ -130,7 +130,7 @@ ggsave(plot = fishdetect,
        filename = here('pictures',
                        'detection_models',
                        'detection_covariate_effects.jpg'),
-       height = 5, 
-       width = 7,
+       height = 4, 
+       width = 6,
        units = "in")
 
