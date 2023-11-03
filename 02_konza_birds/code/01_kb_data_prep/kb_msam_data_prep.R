@@ -71,13 +71,13 @@ birds %>%
 #N04D, 004B, N01B-10, 001D, N20B, 020B
 
 birds1 <- birds %>%
-  filter(WATERSHED %in% c("N04D", 
-                          "004B",
+  filter(WATERSHED %in% c("N04D", "N04B",
+                          "004A", "004B",
                           "N01B",
-                          "001D", 
+                          "001D", "R20A",
                           "N20B",
-                          "020B")) %>%
-  filter(TRANSNUM != 6) %>%
+                          "020B", "020C")) %>%
+  #filter(TRANSNUM != 6) %>%
   filter(COMMONNAME !=  "Transect not run" )
 
 
@@ -108,7 +108,11 @@ bird_id <- birds1 %>%
 #clean up so that things will mesh well
 birds2 <- birds1 %>%
   mutate(COMMONNAME = case_when(COMMONNAME == "Le Conte's Sparrow" ~ "LeConte's Sparrow",
+                                COMMONNAME == "Greater Prairie-Chicken" ~ "Greater Prairie-chicken",
                               TRUE ~ COMMONNAME)) %>%
+  mutate(AOUCODE = case_when(AOUCODE == "eawp" ~ "EAWP",
+                             AOUCODE == "CAGO" ~ "CANG",
+                             TRUE ~ AOUCODE)) %>%
   filter(COMMONNAME != "Empidonax sp.") %>%
   filter(!str_detect(COMMONNAME, "/"))  %>%
   filter(COMMONNAME != "sparrow sp.")
@@ -131,8 +135,22 @@ bird_id2 <- birds2 %>%
                              COMMONNAME == "Canada Goose" ~ "Branta canadensis",
                              TRUE ~ SCINAME)) %>%
   filter(SPECNAME != "NONE") %>%
+  #and remove birds of prey, shorebirds, and gamebirds as a test
+  filter(!AOUCODE %in% c(#birds of prey and shorebirds
+    "AMKE", "BEKI", "CANG",
+    "CONI", "COHA", "GOEA",
+    "GBHE", "GHOW", "GRHE",
+    "KILL", "NOHA", "RTHA",
+    "RLHA", "SEOW", "SWHA",
+    "UPSA", "WODU", "TUVU",
+    #gamebirds
+    "COPO", "GRPC", "NOBO", 
+    "RNEP", "WITU",
+    #woodpeckers
+    "DOWO", "HAWO", "RBWO",
+    "RHWO")) %>%
   distinct(COMMONNAME, SPEC, SCINAME) 
-#106 species
+#78 species
 
 
 # Manupulate data to abundance structure ----------------------------------
@@ -143,8 +161,22 @@ bird_id2 <- birds2 %>%
 #period in each year for each species
 
 birds3 <- birds2 %>%
+  #and remove birds of prey, shorebirds, and gamebirds as a test
+  filter(!AOUCODE %in% c(#birds of prey and shorebirds
+    "AMKE", "BEKI", "CANG",
+    "CONI", "COHA", "GOEA",
+    "GBHE", "GHOW", "GRHE",
+    "KILL", "NOHA", "RTHA",
+    "RLHA", "SEOW", "SWHA",
+    "UPSA", "WODU", "TUVU",
+    #gamebirds
+    "COPO", "GRPC", "NOBO", 
+    "RNEP", "WITU",
+    #woodpeckers
+    "DOWO", "HAWO", "RBWO",
+    "RHWO")) %>%
   group_by(RECYEAR, RECMONTH, RECDAY, TRANSNUM,
-           WATERSHED, COMMONNAME) %>%
+           WATERSHED, COMMONNAME, AOUCODE) %>%
   #get number observed
   summarise(NOBS = sum(COUNT)) %>%
   ungroup()
@@ -159,6 +191,9 @@ birds4 <- birds3 %>%
   group_by(RECYEAR, RECMONTH, RECDAY, TRANSNUM, WATERSHED) %>%
   #make sure each species is in each survey
   complete(COMMONNAME) %>%
+  ungroup() %>%
+  group_by(COMMONNAME) %>%
+  fill(AOUCODE, .direction = "updown") %>%
   ungroup() %>%
   #get rid of "NONE" species category
   filter(COMMONNAME != "No birds detected") %>%
@@ -228,7 +263,7 @@ survey2 <- birds4 %>%
 birds5 <- birds4 %>%
   left_join(survey2, by = c("RECYEAR", "RECMONTH", "RECDAY", 
                             "TRANSNUM", "WATERSHED", "TransID",
-                            "yrID"))
+                            "yrID")) 
 
 # Prep data structure for JAGS --------------------------------------------
 
@@ -338,7 +373,7 @@ for(i in 1:dim(birds5)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(birds5[i,7])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(birds5[i,8])
 }
 
 

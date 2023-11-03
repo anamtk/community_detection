@@ -73,7 +73,7 @@ model{
   mu.missingeffort ~ dunif(-10, 10)
   sig.missingeffort ~ dunif(0, 20)
   tau.missingeffort <- pow(sig.missingeffort, -2)
-  
+
   
   #BRAY CURTIS DERIVED QUANTIIES
   #lots of ways to calculate this, but I did this way

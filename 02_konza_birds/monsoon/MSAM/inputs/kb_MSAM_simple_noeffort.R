@@ -13,7 +13,7 @@ model{
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
           # Observation model
           logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-            a1.Effort*effort[i,t,r] + #visibility effect, not species dependent
+            #a1.Effort*effort[i,t,r] + #visibility effect, not species dependent
             a2.Size*size[k] #size effect, not species dependent
             
             #abundance is binomial based on detection probability
@@ -54,25 +54,25 @@ model{
   sig.a0 ~ dunif(0, 50)
   
   #covariate means
-  a1.Effort ~ dnorm(0, 0.001)
+  #a1.Effort ~ dnorm(0, 0.001)
   a2.Size ~ dnorm(0, 0.001)
   
   #missing data 
   #SOme data for effort are missing, so we're imputing them
-  for(i in 1:n.transects){
-    for(t in n.start[i]:n.end[i]){
-      for(r in 1:n.rep[i,t]){
-        #missing data in the effort column
-        effort[i,t,r] ~ dnorm(mu.missingeffort, tau.missingeffort)
-      }
-    }
-  }
-  
+  # for(i in 1:n.transects){
+  #   for(t in n.start[i]:n.end[i]){
+  #     for(r in 1:n.rep[i,t]){
+  #       #missing data in the effort column
+  #       effort[i,t,r] ~ dnorm(mu.missingeffort, tau.missingeffort)
+  #     }
+  #   }
+  # }
+  # 
   #PRIORS FOR IMPUTING MISSING DATA
   #Priors for mean and tau of missing covariates in the model
-  mu.missingeffort ~ dunif(-10, 10)
-  sig.missingeffort ~ dunif(0, 20)
-  tau.missingeffort <- pow(sig.missingeffort, -2)
+  # mu.missingeffort ~ dunif(-10, 10)
+  # sig.missingeffort ~ dunif(0, 20)
+  # tau.missingeffort <- pow(sig.missingeffort, -2)
 
   
   #BRAY CURTIS DERIVED QUANTIIES
