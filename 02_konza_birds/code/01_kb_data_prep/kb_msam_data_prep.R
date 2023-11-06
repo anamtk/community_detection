@@ -80,6 +80,10 @@ birds1 <- birds %>%
   #filter(TRANSNUM != 6) %>%
   filter(COMMONNAME !=  "Transect not run" )
 
+birds1 <- birds %>% 
+  filter(WATERSHED %in% c('001D', '004B','020B'))%>%
+  filter(COMMONNAME !=  "Transect not run" )
+
 
 # Match up species codes to scientific names ------------------------------
 
