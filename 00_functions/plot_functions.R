@@ -40,3 +40,111 @@ rhat_graph_fun <- function(list){
   
   return(plot)
 }
+
+
+# SAM covariate effects plot function -------------------------------------
+
+
+effects_plot_fun <- function(model){
+  b0 <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parm") %>%
+    filter(parm == "b0") %>%
+    dplyr::select(`50%`) %>%
+    as_vector()
+  
+  betas <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parm") %>%
+    filter(str_detect(parm, "b")) %>%
+    filter(!str_detect(parm, "b0")) %>%
+    filter(!str_detect(parm, 'sig.web'))
+  
+  beta_plot <- ggplot(betas, aes(x = parm, y= `50%`)) +
+    geom_hline(yintercept = 0, linetype = 2) +
+    geom_point() +
+    labs(x = "Covariate", y = "Covariate effect \n (Median and 95% BCI)") +
+    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0) +
+    coord_flip() +
+    theme(axis.text = element_text(size = 12),
+          axis.title= element_text(size = 15))
+  
+  return(beta_plot)
+  
+}
+
+
+# SAM partial plot funciton -----------------------------------------------
+
+
+
+partial_plot_fun <- function(model, covariate, df, ID, yearID, start, end, weight, diss){
+  
+  beta <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parm") %>%
+    filter(parm == covariate) %>%
+    dplyr::select(`50%`) %>%
+    as_vector()
+  
+  b0 <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parm") %>%
+    filter(str_detect(parm, "b0")) %>%
+    dplyr::select(`50%`) %>%
+    summarise(b0 = mean(`50%`, na.rm = T)) %>%
+    as_vector()
+  
+  temp <- df %>%
+    dplyr::select(ID, yearID, start:end) %>% #adjust if needed
+    pivot_longer(start:end,
+                 names_to = "lag",
+                 values_to = "var") %>%
+    mutate(var = scale(var)) %>%
+    pivot_wider(names_from = "lag",
+                values_from = "var") %>%
+    dplyr::select(-ID, -yearID) %>%
+    as.matrix()
+  
+  #make scaled data long format to get mean and sd
+  scale <- df %>%
+    dplyr::select(ID, yearID, start:end) %>% #adjust if needed
+    pivot_longer(start:end,
+                 names_to = "lag",
+                 values_to = "var") 
+  
+  #get mean and SD of OG data to back-transform stuff
+  mean <- mean(scale$var, na.rm = T)
+  sd <- sd(scale$var, na.rm = T)
+  
+  #get weights per lag
+  wt <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parameter") %>%
+    filter(str_detect(parameter, weight)) %>%
+    dplyr::select(`50%`) %>%
+    as_vector()
+  
+  #get tmax dataset
+  regT <- df %>%
+    dplyr::select(ID, yearID, diss, start:end)
+  
+  #multiply months by their weights
+  regT$Ant <- apply(temp, MARGIN = 1, FUN = function(x){sum(x*wt)})
+  
+  #revert Tmax to OG data scale
+  regT <- regT %>%
+    dplyr::select(Ant, diss) %>%
+    mutate(Var = Ant*sd + mean)
+  
+  #regression prediction for Temperature
+  regT <- regT %>%
+    mutate(reg = b0 + beta*Ant,
+           plogisreg = plogis(reg))
+  
+  plot <- ggplot(regT) +
+    geom_point(aes(x = Var, y = .data[[diss]]), alpha = 0.5,
+               position = position_jitter()) +
+    geom_line(aes(x = Var, y = plogisreg), size = 1) 
+  
+  return(plot)
+  
+}  
+
+
+
