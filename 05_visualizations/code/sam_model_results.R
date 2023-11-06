@@ -24,6 +24,9 @@ theme_set(theme_bw())
 
 source(here('00_functions',
             'tidy_functions.R'))
+
+source(here('00_functions',
+            'plot_functions.R'))
 # Load data ---------------------------------------------------------------
 
 fish_sam <- readRDS(here('01_sbc_fish',
@@ -50,61 +53,38 @@ sev_bray <- read.csv(here("03_sev_grasshoppers",
                           'data_prep',
                           'sev_stability_metrics_with_covariates.csv'))
 
+bird_sam <- readRDS(here('02_konza_birds',
+                         'data_outputs',
+                         'SAM',
+                         'model_outputs',
+                         'sev_SAM_summary.RDS'))
+
+bird_bray <- read.csv(here('02_konza_birds',
+                           'data_outputs',
+                           "SAM",
+                           'data_prep',
+                           'stability_metrics_with_covariates.csv'))
+
 
 # Effect plots ------------------------------------------------------------
 
-#fish
-b0 <- as.data.frame(fish_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(parm == "b0") %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-bs <- as.data.frame(fish_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "b")) %>%
-  filter(!str_detect(parm, "b0"))
-
-beta_sbc <- ggplot(bs, aes(x = parm, y = `50%`)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  geom_point() +
-  labs(x = "Covariate", y = "Covariate effect \n (Median and 95% BCI)",
-       title = "SBC fish") +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0) +
+fisheffectsplot <- effects_plot_fun(fish_sam) +
+  labs(title = "SBC fish") +
   scale_x_discrete(labels = c("Kelp Biomass", "Temperature")) +
-  coord_flip() +
-  theme(axis.text = element_text(size = 12),
-        axis.title= element_text(size = 15),
-        plot.title.position = "panel",
+  theme(plot.title.position = "panel",
         plot.title = element_text(hjust = 0.5))
 
-#grasshoppers
-b0sev <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(parm == "b0") %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-bsev <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "b")) %>%
-  filter(!str_detect(parm, "b0")) %>%
-  filter(parm != "sig.web")
-
-beta_sev <- ggplot(bsev, aes(x = parm, y = `50%`)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  geom_point() +
-  labs(x = "Covariate", y = "Covariate effect \n (Median and 95% BCI)",
-       title = "SEV grasshoppers") +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0) +
+seveffectsplot <- effects_plot_fun(sev_sam)  +
+  labs(title = "SEV grasshoppers") +
   scale_x_discrete(labels = c("Temperature", "Plant biomass")) +
-  coord_flip()+
-  theme(axis.text = element_text(size = 12),
-        axis.title= element_text(size = 15),
-        plot.title.position = "panel",
+  theme(plot.title.position = "panel",
         plot.title = element_text(hjust = 0.5))
 
-beta_sev / beta_sbc
+(birdeffectsplot <- effects_plot_fun(bird_sam) + 
+  labs(title = "KNZ birds") +
+  scale_x_discrete(labels = c("Temperature", "Precipitation", "Plant biomass")) +
+  theme(plot.title.position = "panel",
+        plot.title = element_text(hjust = 0.5)))
 
 ggsave(plot = last_plot(),
        filename = here('pictures',
@@ -118,80 +98,24 @@ ggsave(plot = last_plot(),
 
 # Fish partial plots ------------------------------------------------------
 
-### temperature
-blT <- as.data.frame(fish_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(parm == "b[2]") %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-b0 <- as.data.frame(fish_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "b0")) %>%
-  dplyr::select(`50%`) %>%
-  summarise(b0 = mean(`50%`, na.rm = T)) %>%
-  as_vector()
-
-#get temparutres on scaled scale
-temp_temp <- fish_bray %>%
-  dplyr::select(SITE_TRANS, YEAR, TEMP_C:TEMP_C_l5) %>% #adjust if needed
-  pivot_longer(TEMP_C:TEMP_C_l5,
-               names_to = "lag",
-               values_to = "temp") %>%
-  mutate(temp = scale(temp)) %>%
-  pivot_wider(names_from = "lag",
-              values_from = "temp") %>%
-  dplyr::select(-SITE_TRANS, -YEAR) %>%
-  as.matrix()
-
-#make scaled data long format to get mean and sd
-tmaxscale <- fish_bray %>%
-  dplyr::select(SITE_TRANS, YEAR, TEMP_C:TEMP_C_l5) %>% #adjust if needed
-  pivot_longer(TEMP_C:TEMP_C_l5,
-               names_to = "lag",
-               values_to = "temp") 
-
-#get mean and SD of OG data to back-transform stuff
-mean <- mean(tmaxscale$temp, na.rm = T)
-sd <- sd(tmaxscale$temp, na.rm = T)
-
-#get weights per month
-t_wt <- as.data.frame(fish_sam$quantiles) %>%
-  rownames_to_column(var = "parameter") %>%
-  filter(str_detect(parameter, "wB")) %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-#get tmax dataset
-regT <- fish_bray %>%
-  dplyr::select(SITE_TRANS, YEAR, bray, TEMP_C:TEMP_C_l5)
-
-#multiply months by their weights
-regT$TAnt <- apply(temp_temp, MARGIN = 1, FUN = function(x){sum(x*t_wt)})
-
-#revert Tmax to OG data scale
-regT <- regT %>%
-  dplyr::select(TAnt, bray) %>%
-  mutate(Temp = TAnt*sd + mean)
-
-#regression prediction for Temperature
-regT <- regT %>%
-  mutate(reg = b0 + blT*TAnt,
-         plogisreg = plogis(reg))
-
-(fisht <- ggplot(regT) +
-  geom_point(aes(x = Temp, y = bray), alpha = 0.5) +
-  geom_line(aes(x = Temp, y = plogisreg), size = 1) +
+#temperature
+fisht <- partial_plot_fun(model = fish_sam, 
+                 covariate = 'b[2]', 
+                 df = fish_bray, 
+                 ID= 'SITE_TRANS', 
+                 yearID = 'YEAR', 
+                 start = 'TEMP_C', 
+                 end = 'TEMP_C_l5',
+                 weight = "wB",
+                 diss = as.name('bray')) +
   labs(x = "Temperature",
        y = "Bray-Curtis Dissimilarity",
-       title = "SBC fish") +
-  #annotate(geom = "text", x = 13.25, y = 0.4, label = "More similar") + 
-  #annotate(geom = "text", x = 13.25, y = 0.8, label = "More different") +
+       title = "SBC fish") + 
   theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5)))
-  
+        plot.title = element_text(hjust = 0.5))
+
 ###WEIGHTS
-tweights <- as.data.frame(fish_sam$quantiles) %>%
+fish_tweights <- as.data.frame(fish_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
   filter(str_detect(parm, "wB")) %>%
   mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Warm",
@@ -204,7 +128,7 @@ tweights <- as.data.frame(fish_sam$quantiles) %>%
 warmcol <- '#d8b365'
 coldcol <- '#5ab4ac'
 
-(fish_tweights <- tweights %>%
+(fish_tweights_plot <- fish_tweights %>%
   ggplot(aes(x = year, y= `50%`, shape = season)) +
   geom_hline(yintercept = 1/6, linetype = 2) +
   geom_point(position = position_dodge(width = 0.5), size = 3) +
@@ -215,7 +139,158 @@ coldcol <- '#5ab4ac'
   labs(x = "Years into the past",
        y = "Importance weight\n(median and 95% BCI)"))
 
-fishtgraphs <- fisht + fish_tweights
+(fishtgraphs <- fisht + fish_tweights_plot)
+
+# Grasshopper partial plots -----------------------------------------------
+
+#temperature
+(hoppert <- partial_plot_fun(model = sev_sam, 
+                          covariate = 'b[1]', 
+                          df = sev_bray, 
+                          ID= 'site_web_trans', 
+                          yearID = 'YEAR', 
+                          start = 'Temp', 
+                          end = 'Temp_l5',
+                          weight = "wA",
+                          diss = as.name('bray')) +
+  labs(x = "Temperature",
+       y = "Bray-Curtis Dissimilarity",
+       title = "SEV grasshoppers") + 
+  theme(plot.title.position = "panel",
+        plot.title = element_text(hjust = 0.5)))
+
+###WEIGHTS
+hopper_tweights <- as.data.frame(sev_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wA")) %>%
+  mutate(season = case_when(parm %in% c("wA[1]", "wA[3]", "wA[5]") ~ "Cold",
+                            parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
+  mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
+                          parm %in% c('wA[3]', 'wA[4]') ~ 1,
+                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
+
+warmcol <- '#d8b365'
+coldcol <- '#5ab4ac'
+
+(hopper_tweights_plot <- hopper_tweights %>%
+    ggplot(aes(x = year, y= `50%`, shape = season)) +
+    geom_hline(yintercept = 1/6, linetype = 2) +
+    geom_point(position = position_dodge(width = 0.5), size = 3) +
+    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                  position = position_dodge(width = 0.5),
+                  width = 0) +
+    scale_x_continuous(breaks = c(0, 1, 2)) +
+    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+    labs(x = "Years into the past",
+         y = "Importance weight\n(median and 95% BCI)"))
+
+(hoppertgraphs <- hoppert + hopper_tweights_plot)
+
+#NPP
+
+(hoppernpp <- partial_plot_fun(model = sev_sam, 
+                             covariate = 'b[2]', 
+                             df = sev_bray, 
+                             ID= 'site_web_trans', 
+                             yearID = 'YEAR', 
+                             start = 'NPP', 
+                             end = 'NPP_l10',
+                             weight = "wC",
+                             diss = as.name('bray')) +
+    labs(x = "Plant biomass",
+         y = "Bray-Curtis Dissimilarity",
+         title = "SEV grasshoppers") + 
+    theme(plot.title.position = "panel",
+          plot.title = element_text(hjust = 0.5)))
+
+###WEIGHTS
+hopper_npp_weights <- as.data.frame(sev_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wC")) %>%
+  mutate(season = case_when(parm %in% c("wC[1]", "wC[3]", "wC[5]", "wC[7]",
+                                        'wC[9]', 'wC[11]') ~ "Fall",
+                            parm %in% c("wC[2]", "wC[4]", "wC[6]",
+                                        'wC[8]', 'wC[10]') ~ "Spring")) %>%
+  mutate(year = case_when(parm %in% c("wC[1]", "wC[2]") ~ 0,
+                          parm %in% c('wC[3]', 'wC[4]') ~ 1,
+                          parm %in% c('wC[5]', 'wC[6]') ~ 2,
+                          parm %in% c('wC[7]', 'wC[8]') ~ 3,
+                          parm %in% c('wC[9]', 'wC[10]') ~ 4,
+                          parm %in% c('wC[11]') ~ 5))
+
+warmcol <- '#d8b365'
+coldcol <- '#5ab4ac'
+
+(hopper_npp_weights_plot <- hopper_npp_weights %>%
+    ggplot(aes(x = year, y= `50%`, shape = season)) +
+    geom_hline(yintercept = 1/12, linetype = 2) +
+    geom_point(position = position_dodge(width = 0.5), size = 3) +
+    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                  position = position_dodge(width = 0.5),
+                  width = 0) +
+    scale_x_continuous(breaks = c(0, 1,2,3,4,5)) +
+    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+    labs(x = "Years into the past",
+         y = "Importance weight\n(median and 95% BCI)"))
+
+(hoppernppgraphs <- hoppernpp + hopper_npp_weights_plot)
+
+
+# ggsave(filename = here('pictures',
+#                        'sam_models',
+#                        'sam_partial_plots.jpg'),
+#        height = 7, 
+#        width = 8,
+#        units = "in")
+
+
+# Bird partial pluts ------------------------------------------------------
+
+
+#temperature
+(birdt <- partial_plot_fun(model = bird_sam, 
+                             covariate = 'b[1]', 
+                             df = bird_bray, 
+                             ID= 'WATERSHED', 
+                             yearID = 'RECYEAR', 
+                             start = 'TAVE', 
+                             end = 'TAVE_l5',
+                             weight = "wA",
+                             diss = as.name('bray')) +
+   labs(x = "Temperature",
+        y = "Bray-Curtis Dissimilarity",
+        title = "KNZ birds") + 
+   theme(plot.title.position = "panel",
+         plot.title = element_text(hjust = 0.5)))
+
+###WEIGHTS
+bird_tweights <- as.data.frame(bird_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wA")) %>%
+  mutate(season = case_when(parm %in% c("wA[1]", "wA[3]", "wA[5]") ~ "Cold",
+                            parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
+  mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
+                          parm %in% c('wA[3]', 'wA[4]') ~ 1,
+                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
+
+warmcol <- '#d8b365'
+coldcol <- '#5ab4ac'
+
+(bird_tweights_plot <- bird_tweights %>%
+    ggplot(aes(x = year, y= `50%`, shape = season)) +
+    geom_hline(yintercept = 1/6, linetype = 2) +
+    geom_point(position = position_dodge(width = 0.5), size = 3) +
+    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                  position = position_dodge(width = 0.5),
+                  width = 0) +
+    scale_x_continuous(breaks = c(0, 1, 2)) +
+    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+    labs(x = "Years into the past",
+         y = "Importance weight\n(median and 95% BCI)"))
+
+(birdtgraphs <- birdt + bird_tweights_plot)
+
+
 # Interaction -------------------------------------------------------------
 
 #this interaction is overfitting the data, so i removed it from the model
@@ -363,218 +438,6 @@ fishtgraphs <- fisht + fish_tweights
 # (b + a)/(plot_spacer() + c) +
 #   plot_layout(widths = c(1, 3),
 #               heights = c(3, 1))
-
-
-# Grasshopper partial plots -----------------------------------------------
-
-#temperature
-### temperature
-blTs <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(parm == "b[1]") %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-b0s <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "b0")) %>%
-  dplyr::select(`50%`) %>%
-  summarise(b0 = mean(`50%`, na.rm = T)) %>%
-  as_vector()
-
-#get temparutres on scaled scale
-temp_temps <- sev_bray %>%
-  dplyr::select(site_web_trans, YEAR, Temp:Temp_l5) %>% #adjust if needed
-  pivot_longer(Temp:Temp_l5,
-               names_to = "lag",
-               values_to = "temp") %>%
-  mutate(temp = scale(temp)) %>%
-  pivot_wider(names_from = "lag",
-              values_from = "temp") %>%
-  dplyr::select(-site_web_trans, -YEAR) %>%
-  as.matrix()
-
-#make scaled data long format to get mean and sd
-tscalesev <- sev_bray %>%
-  dplyr::select(site_web_trans, YEAR, Temp:Temp_l5) %>% #adjust if needed
-  pivot_longer(Temp:Temp_l5,
-               names_to = "lag",
-               values_to = "temp") 
-
-#get mean and SD of OG data to back-transform stuff
-means <- mean(tscalesev$temp, na.rm = T)
-sds <- sd(tscalesev$temp, na.rm = T)
-
-#get weights per month
-t_wts <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parameter") %>%
-  filter(str_detect(parameter, "wA")) %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-#get tmax dataset
-regTs <- sev_bray %>%
-  dplyr::select(site_web_trans, YEAR, bray, Temp:Temp_l5)
-
-#multiply months by their weights
-regTs$TAnt <- apply(temp_temps, MARGIN = 1, FUN = function(x){sum(x*t_wts)})
-
-#revert Tmax to OG data scale
-regTs <- regTs %>%
-  dplyr::select(TAnt, bray) %>%
-  mutate(Temp = TAnt*sds + means)
-
-#regression prediction for Temperature
-regTs <- regTs %>%
-  mutate(reg = b0s + blTs*TAnt,
-         plogisreg = plogis(reg))
-
-(hoppert <- ggplot(regTs) +
-  geom_point(aes(x = Temp, y = bray), 
-             position = position_jitter(width = 0.2),
-             alpha = 0.5) +
-  geom_line(aes(x = Temp, y = plogisreg), size = 1) +
-  labs(x = "Temperature",
-       y = "Bray-Curtis Dissimilarity",
-       title = "SEV grasshoppers") +
-  annotate(geom = "text", x = 12.75, y = 0.3, label = "More similar") + 
-  annotate(geom = "text", x = 12.75, y = 0.7, label = "More different")+
-    theme(plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)))
-
-###WEIGHTS
-tweightss <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wA")) %>%
-  mutate(season = case_when(parm %in% c("wA[1]", "wA[3]", "wA[5]") ~ "Cold",
-                            parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
-  mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
-                          parm %in% c('wA[3]', 'wA[4]') ~ 1,
-                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
-
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
-
-(hopper_tweights <- tweightss %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/6, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1, 2)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
-
-hoppertgraphs <- hoppert + hopper_tweights
-
-#NPP
-blNs <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(parm == "b[2]") %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-#get temparutres on scaled scale
-temp_npp <- sev_bray %>%
-  dplyr::select(site_web_trans, YEAR, NPP:NPP_l10) %>% #adjust if needed
-  pivot_longer(NPP:NPP_l10,
-               names_to = "lag",
-               values_to = "npp") %>%
-  mutate(npp = scale(npp)) %>%
-  pivot_wider(names_from = "lag",
-              values_from = "npp") %>%
-  dplyr::select(-site_web_trans, -YEAR) %>%
-  as.matrix()
-
-#make scaled data long format to get mean and sd
-nscale <- sev_bray %>%
-  dplyr::select(site_web_trans, YEAR, NPP:NPP_l10) %>% #adjust if needed
-  pivot_longer(NPP:NPP_l10,
-               names_to = "lag",
-               values_to = "npp") 
-
-#get mean and SD of OG data to back-transform stuff
-meannpp <- mean(nscale$npp, na.rm = T)
-sdnpp <- sd(nscale$npp, na.rm = T)
-
-#get weights per month
-n_wts <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parameter") %>%
-  filter(str_detect(parameter, "wC")) %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-#get tmax dataset
-regNs <- sev_bray %>%
-  dplyr::select(site_web_trans, YEAR, bray, NPP:NPP_l10)
-
-#multiply months by their weights
-regNs$NAnt <- apply(temp_npp, MARGIN = 1, FUN = function(x){sum(x*n_wts)})
-
-#revert Tmax to OG data scale
-regNs <- regNs %>%
-  dplyr::select(NAnt, bray) %>%
-  mutate(NPP = NAnt*sdnpp + meannpp)
-
-#regression prediction for Temperature
-regNs <- regNs %>%
-  mutate(reg = b0s + blNs*NAnt,
-         plogisreg = plogis(reg))
-
-(hoppern <- ggplot(regNs) +
-    geom_point(aes(x = NPP, y = bray), 
-               position = position_jitter(width = 0.2),
-               alpha = 0.5) +
-    geom_line(aes(x = NPP, y = plogisreg), size = 1) +
-    labs(x = "Plant biomass",
-         y = "Bray-Curtis Dissimilarity") )
-    #annotate(geom = "text", x = 11.25, y = 0.3, label = "More similar") + 
-    #annotate(geom = "text", x = 11.25, y = 0.7, label = "More different"))
-
-###WEIGHTS
-nweights <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wC")) %>%
-  mutate(season = case_when(parm %in% c("wC[1]", "wC[3]", "wC[5]", "wC[7]",
-                                        'wC[9]', 'wC[11]') ~ "Fall",
-                            parm %in% c("wC[2]", "wC[4]", "wC[6]",
-                                        'wC[8]', 'wC[10]') ~ "Spring")) %>%
-  mutate(year = case_when(parm %in% c("wC[1]", "wC[2]") ~ 0,
-                          parm %in% c('wC[3]', 'wC[4]') ~ 1,
-                          parm %in% c('wC[5]', 'wC[6]') ~ 2,
-                          parm %in% c('wC[7]', 'wC[8]') ~ 3,
-                          parm %in% c('wC[9]', 'wC[10]') ~ 4,
-                          parm %in% c('wC[11]') ~ 5))
-
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
-
-(hopper_nweights <- nweights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/12, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1,2,3,4,5)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
-
-hoppernppgraphs <- hoppern + hopper_nweights
-
-
-hoppertgraphs / hoppernppgraphs / fishtgraphs
-
-
-ggsave(filename = here('pictures',
-                       'sam_models',
-                       'sam_partial_plots.jpg'),
-       height = 7, 
-       width = 8,
-       units = "in")
 
 
 

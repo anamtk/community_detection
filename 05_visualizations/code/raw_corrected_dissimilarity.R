@@ -157,8 +157,6 @@ timeseries_sev <- timeseries_function(dataset = "grasshoppers") +
 timeseries_together <- timeseries_sbc / timeseries_knz / timeseries_sev
 timeseries_together
 
-timeseries_sev / timeseries_sbc
-
 ggsave(plot = last_plot(),
        filename = here("pictures",
                        "detection_models",
