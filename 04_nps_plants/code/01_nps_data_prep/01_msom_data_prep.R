@@ -63,26 +63,57 @@ plants <- plants %>%
 
 # want to subset the data by grabbing 10 of the 30 plots
 # prioritizing plots with repeated measurements
+# subsample <- plants %>%
+#   distinct(Plot, Obs_type) %>%
+#   mutate(REP = case_when(Obs_type == "Regular" ~ 1,
+#                          TRUE ~ 2)) %>%
+#   filter(REP == 2) %>%
+#   # separate letter and number in plot column
+#   mutate(across(c('Plot'), substr, 2, nchar(Plot)))
+
+#only select quadrats with repeat measurements - instead
+# of at the plot level
 subsample <- plants %>%
-  distinct(Plot, Obs_type) %>%
+  distinct(Plot, Transect, Quadrat, Obs_type) %>%
   mutate(REP = case_when(Obs_type == "Regular" ~ 1,
                          TRUE ~ 2)) %>%
   filter(REP == 2) %>%
-  # separate letter and number in plot column
-  mutate(across(c('Plot'), substr, 2, nchar(Plot)))
+  dplyr::select(Plot, Transect, Quadrat)
 
 
-subset_plots = as.numeric(sort(subsample$Plot))
-# randomly choose 10 plots
-#samp_plots = sort(sample(1:14, 10, replace=FALSE))
-samp_plots = c(1,3,5,6,7,8,10,12,13,14)
-subset_plots <- sort(subset_plots[c(samp_plots)])
-subset_plots <- sub("^","S",subset_plots)
+# subset_plots = as.numeric(sort(subsample$Plot))
+# # randomly choose 10 plots
+# #samp_plots = sort(sample(1:14, 10, replace=FALSE))
+# samp_plots = c(1,3,5,6,7,8,10,12,13,14)
+# subset_plots <- sort(subset_plots[c(samp_plots)])
+# subset_plots <- sub("^","S",subset_plots)
+
+# plants <- plants %>%
+#   filter(Plot %in% c(subset_plots))
+
+#filter only quadrats that had two surveys - should be very few
+#quadrats
+plants <- subsample %>%
+  left_join(plants, by = c("Plot", "Transect", "Quadrat"))
+
+
+# Remove always 0 plants from subset --------------------------------------
+
+#trying this - but there are a set of species that are never observed
+#in this subset - and I'm wondering if this is making the model struggle
+#we'll see
+
+zerospecies <- plants %>%
+  group_by(CurrentSpecies) %>%
+  #this looks for where there are greater than 1 value, and
+  #that those values are all the same - and it turns out
+  #these are all species that are always 0 across the subset
+  filter(n()>1, n_distinct(CoverClass) == 1) %>%
+  distinct(CurrentSpecies) %>%
+  as_vector()
 
 plants <- plants %>%
-  filter(Plot %in% c(subset_plots))
-
-
+  filter(!CurrentSpecies %in% zerospecies)
 # Manipulate data structure ----------------------------------
 
 # ignoring species:
@@ -172,6 +203,7 @@ n.yr <- unname(n.yr)
 
 n.rep <- rep %>%
   group_by(quadID, yrID) %>%
+  arrange(quadID, yrID) %>%
   pivot_wider(names_from = yrID, 
               values_from = REP,
               values_fn = length) %>%
@@ -301,7 +333,7 @@ for(i in 1:dim(covers)[1]){ #dim[1] = n.rows
 }
 
 ##AMtK - with imputing code in model - you shouldn't need to do this
-#cover[is.na(cover)] <-0
+cover[is.na(cover)] <-0
 
 # Get response data  ------------------------------------------------------
 
