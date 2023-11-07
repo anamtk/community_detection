@@ -27,14 +27,14 @@ data <- readRDS(here('04_nps_plants',
                      'data_outputs',
                      'MSAM',
                      'model_inputs',
-                     'nps_msam_multisite.RDS'))
+                     'nps_msam_multisite_subset1.RDS'))
 
 data <- list(n.species = data$n.species,
              n.quads = data$n.quads,
              n.yr = data$n.yr,
              n.rep = data$n.rep,
              cover = data$cover,
-             lifegroup = data$lifegroup,
+             #lifegroup = data$lifegroup,
              n.groups = data$n.groups,
              y = data$y,
              z = data$z)
@@ -58,8 +58,8 @@ params <- c(
   'sig.lpsi',
   'mu.a0',
   'sig.a0',
-  'a1.Cover',
-  'a2.LifeGroup'
+  'a1.Cover'#,
+  #'a2.LifeGroup'
 )
 
 
@@ -69,7 +69,8 @@ model <- here("04_nps_plants",
               'code',
               '02_nps_analyses',
               'jags',
-              "nps_MSOM_simple_AMtK.R")
+              "nps_MSOM_simple_SL.R")
+              #"nps_MSOM_simple_AMtK.R")
 
 Sys.time()
 start<-proc.time()

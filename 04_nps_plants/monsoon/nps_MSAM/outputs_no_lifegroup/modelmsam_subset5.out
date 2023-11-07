@@ -1,0 +1,90 @@
+[1] "2023-11-03 15:41:29 MST"
+
+Attaching package: ‘coda’
+
+The following object is masked from ‘package:jagsUI’:
+
+    traceplot
+
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:magrittr’:
+
+    extract
+
+
+Processing function input....... 
+
+Done. 
+ 
+Beginning parallel processing using 3 cores. Console output will be suppressed.
+Error in checkForRemoteErrors(val) : 
+  3 nodes produced errors; first error: RUNTIME ERROR:
+Unable to resolve the following parameters:
+cover[1,75,8,2] (line 36)
+cover[1,97,5,2] (line 36)
+cover[1,108,5,2] (line 36)
+cover[2,8,8,2] (line 36)
+cover[2,30,5,2] (line 36)
+cover[2,32,4,2] (line 36)
+cover[2,54,4,2] (line 36)
+cover[2,75,8,2] (line 36)
+cover[2,81,4,2] (line 36)
+cover[2,97,5,2] (line 36)
+cover[2,108,5,2] (line 36)
+cover[3,8,8,2] (line 36)
+cover[3,30,5,2] (line 36)
+cover[3,32,4,2] (line 36)
+cover[3,54,4,2] (line 36)
+cover[3,75,8,2] (line 36)
+cover[3,108,5,2] (line 36)
+cover[4,8,8,2] (line 36)
+cover[4,30,5,2] (line 36)
+cover[4,32,4,2] (line 36)
+cover[4,54,4,2] (line 36)
+cover[4,75,8,2] (line 36)
+cover[4,81,4,2] (line 36)
+cover[4,97,5,2] (line 36)
+cover[4,108,5,2] (line 36)
+cover[5,8,8,2] (line 36)
+cover[5,30,5,2] (line 36)
+cover[5,32,4,2] (line 36)
+cover[5,54,4,2] (line 36)
+cover[5,75,8,2] (line 36)
+cover[5,81,4,2] (line 36)
+cover[5,97,5,2] (line 36)
+cover[5,108,5,2] (line 36)
+cover[6,8,8,2] (line 36)
+cover[6,32
+Calls: <Anonymous> ... clusterApply -> staticClusterApply -> checkForRemoteErrors
+Execution halted
+srun: error: cn55: task 0: Exited with exit code 1
+
+Parallel processing completed.
+
+Calculating statistics....... 
+
+Done. 
+[1] "2023-11-03 21:10:12 MST"
+Time difference of 10.92408 hours
+                                                                                Preparing plots for mu.lpsi.  12% complete.                                                                                Preparing plots for sig.lpsi.  25% complete.                                                                                Preparing plots for mu.a0.  38% complete.                                                                                Preparing plots for sig.a0.  50% complete.                                                                                Preparing plots for a1.Cover.  62% complete.                                                                                Preparing plots for mu.missingcover.  75% complete.                                                                                Preparing plots for sig.missingcover.  88% complete.                                                                                Preparing plots for deviance.  100% complete.     sh: /usr/bin/firefox: No such file or directory
+                                                                           # A tibble: 1 × 3
+  iterations_90 iterations_95    max
+          <dbl>         <dbl>  <dbl>
+1        483656       723940. 771290
+# A tibble: 1 × 1
+  `max(iterations, na.rm = T)`
+                         <dbl>
+1                         2070
