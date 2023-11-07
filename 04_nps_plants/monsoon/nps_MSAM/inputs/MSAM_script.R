@@ -51,7 +51,7 @@ params <- c(
   'sig.a0',
   'a1.Cover',
   'a2.LifeGroup',
-  'p0',
+  #'p0',
   'mu.missingcover',
   'sig.missingcover'
 )

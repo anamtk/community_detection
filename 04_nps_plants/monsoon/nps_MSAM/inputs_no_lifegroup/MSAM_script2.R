@@ -28,7 +28,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS(file ="/scratch/sml665/nps_plants/outputs_no_lifegroup/nps_MSAM_model4.RDS")
+mod <- readRDS(file ="/scratch/sml665/nps_plants/outputs_no_lifegroup/nps_MSAM_model.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -64,12 +64,14 @@ samp_df2 <- samp_df %>%
 
 
 # for nps model root nodes:
-psi.mean <- as.vector(samp_df2$psi.mean)
+mu.lpsi <- as.vector(samp_df2$mu.lpsi)
 sig.lpsi <- as.vector(samp_df2$sig.lpsi)
 mu.a0 <- as.vector(samp_df2$mu.a0)
 sig.a0 <- as.vector(samp_df2$sig.a0)
 a1.Cover <- as.vector(samp_df2$a1.Cover)
 #a2.Lifegroup <- as.vector(samp_df2$a2.Lifegroup)
+#mu.missingcover = as.vector(samp_df2$mu.missingcover)
+#sig.missingcover = as.vector(samp_df2$sig.missingcover)
 
 
 # Load Data ---------------------------------------------------------------
@@ -93,33 +95,45 @@ data_list <- list(n.species = data$n.species,
 
 params <- c(
   #COMMUNITY parameters
-  'psi.mean',
+  'mu.lpsi',
   'sig.lpsi',
   'mu.a0',
   'sig.a0',
-  'a1.Cover'#,
-  #'a2.LifeGroup'
+  'a1.Cover' #,
+  #'a2.LifeGroup',
+  #'p0',
+  #'mu.missingcover',
+  #'sig.missingcover'
 )
 
 
-# INits -------------------------------------------------------------------
+# Inits -------------------------------------------------------------------
 
 #we found z to set initials, since otherwise the model will hate us
 inits <- list(list(N = data$z,
+                   mu.lpsi = samp_df2$mu.lpsi,
                    sig.lpsi = samp_df2$sig.lpsi,
                    mu.a0 = samp_df2$mu.a0,
                    sig.a0 = samp_df2$sig.a0,
-                   a1.Cover = samp_df2$a1.Cover),
+                   a1.Cover = samp_df2$a1.Cover), #,
+                   #mu.missingcover = samp_df2$mu.missingcover,
+                   #sig.missingcover = samp_df2$sig.missingcover),
               list(N = data$z,
+                   mu.lpsi = samp_df2$mu.lpsi + 0.25,
                    sig.lpsi = samp_df2$sig.lpsi + 0.05,
-                   mu.a0 = samp_df2$mu.a0 + 0.5,
+                   mu.a0 = samp_df2$mu.a0 + 0.25,
                    sig.a0 = samp_df2$sig.a0 + 0.05,
-                   a1.Cover = samp_df2$a1.Cover + 0.02),
+                   a1.Cover = samp_df2$a1.Cover + 0.02), #,
+                   #mu.missingcover = samp_df2$mu.missingcover + 0.003,
+                   #sig.missingcover = samp_df2$sig.missingcover + 0.003),
               list(N = data$z,
+                   mu.lpsi = samp_df2$mu.lpsi - 0.25,
                    sig.lpsi = samp_df2$sig.lpsi + 0.1,
-                   mu.a0 = samp_df2$mu.a0 - 0.5,
+                   mu.a0 = samp_df2$mu.a0 - 0.25,
                    sig.a0 = samp_df2$sig.a0 + 0.1,
-                   a1.Cover = samp_df2$a1.Cover - 0.02))
+                   a1.Cover = samp_df2$a1.Cover - 0.02)) #,
+                   #mu.missingcover = samp_df2$mu.missingcover - 0.003,
+                   #sig.missingcover = samp_df2$sig.missingcover - 0.003))
 
 # JAGS model --------------------------------------------------------------
 
@@ -137,7 +151,7 @@ mod2 <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(mod2, 
-        file ="/scratch/sml665/nps_plants/outputs_no_lifegroup/nps_MSAM_model.RDS")
+        file ="/scratch/sml665/nps_plants/outputs_no_lifegroup/nps_MSAM_model2.RDS")
 
 (end.time <- Sys.time())
 
@@ -146,13 +160,13 @@ saveRDS(mod2,
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod2$samples,
-         dir = "/scratch/sml665/nps_plants/outputs_no_lifegroup/mcmcplots/MSAM")
+         dir = "/scratch/sml665/nps_plants/outputs_no_lifegroup/mcmcplots/MSAM2")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod2$Rhat
 
-saveRDS(Rhat, "/scratch/sml665/nps_plants/outputs_no_lifegroup/nps_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/sml665/nps_plants/outputs_no_lifegroup/nps_MSAM_model_Rhat2.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

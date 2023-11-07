@@ -29,11 +29,11 @@ rhat <- readRDS(here('04_nps_plants',
                      'outputs',
                      'nps_MSAM_model_Rhat4.RDS'))
 
-# rhat <- readRDS(here('04_nps_plants',
-#                      'monsoon',
-#                      "nps_MSAM",
-#                      'outputs_no_lifegroup',
-#                      'nps_MSAM_model_Rhat.RDS'))
+rhat <- readRDS(here('04_nps_plants',
+                     'monsoon',
+                     "nps_MSAM",
+                     'outputs_no_lifegroup',
+                     'nps_MSAM_model_Rhat3.RDS'))
 
 # Graph RHat per parameter ------------------------------------------------
 

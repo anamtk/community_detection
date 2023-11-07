@@ -64,12 +64,14 @@ samp_df2 <- samp_df %>%
 
 
 # for nps model root nodes:
-psi.mean <- as.vector(samp_df2$psi.mean)
+mu.lpsi <- as.vector(samp_df2$mu.lpsi)
 sig.lpsi <- as.vector(samp_df2$sig.lpsi)
 mu.a0 <- as.vector(samp_df2$mu.a0)
 sig.a0 <- as.vector(samp_df2$sig.a0)
 a1.Cover <- as.vector(samp_df2$a1.Cover)
 a2.Lifegroup <- as.vector(samp_df2$a2.Lifegroup)
+#mu.missingcover = as.vector(samp_df2$mu.missingcover)
+#sig.missingcover = as.vector(samp_df2$sig.missingcover)
 
 
 # Load Data ---------------------------------------------------------------
@@ -93,12 +95,15 @@ data_list <- list(n.species = data$n.species,
 
 params <- c(
   #COMMUNITY parameters
-  'psi.mean',
+  'mu.lpsi',
   'sig.lpsi',
   'mu.a0',
   'sig.a0',
   'a1.Cover',
-  'a2.LifeGroup'
+  'a2.LifeGroup' #,
+  #'p0',
+  #'mu.missingcover',
+  #'sig.missingcover'
 )
 
 
@@ -106,23 +111,32 @@ params <- c(
 
 #we found z to set initials, since otherwise the model will hate us
 inits <- list(list(N = data$z,
+                   mu.lpsi = samp_df2$mu.lpsi,
                    sig.lpsi = samp_df2$sig.lpsi,
                    mu.a0 = samp_df2$mu.a0,
                    sig.a0 = samp_df2$sig.a0,
                    a1.Cover = samp_df2$a1.Cover,
                    a2.Lifegroup = a2.Lifegroup),
+                   #mu.missingcover = samp_df2$mu.missingcover,
+                   #sig.missingcover = samp_df2$sig.missingcover),
               list(N = data$z,
-                   sig.lpsi = samp_df2$sig.lpsi + 0.25,
-                   mu.a0 = samp_df2$mu.a0 + 0.5,
-                   sig.a0 = samp_df2$sig.a0 + 0.25,
+                   mu.lpsi = samp_df2$mu.lpsi + 0.25,
+                   sig.lpsi = samp_df2$sig.lpsi + 0.05,
+                   mu.a0 = samp_df2$mu.a0 + 0.25,
+                   sig.a0 = samp_df2$sig.a0 + 0.05,
                    a1.Cover = samp_df2$a1.Cover + 0.02,
                    a2.Lifegroup = a2.Lifegroup + 0.4),
+                   #mu.missingcover = samp_df2$mu.missingcover + 0.003,
+                   #sig.missingcover = samp_df2$sig.missingcover + 0.003),
               list(N = data$z,
-                   sig.lpsi = samp_df2$sig.lpsi + 0.5,
-                   mu.a0 = samp_df2$mu.a0 - 0.5,
-                   sig.a0 = samp_df2$sig.a0 + 0.5,
+                   mu.lpsi = samp_df2$mu.lpsi - 0.25,
+                   sig.lpsi = samp_df2$sig.lpsi + 0.1,
+                   mu.a0 = samp_df2$mu.a0 - 0.25,
+                   sig.a0 = samp_df2$sig.a0 + 0.1,
                    a1.Cover = samp_df2$a1.Cover - 0.02,
-                   a2.Lifegroup = a2.Lifegroup - 0.4))
+                   a2.Lifegroup = a2.Lifegroup - 0.4)) #,
+                   #mu.missingcover = samp_df2$mu.missingcover - 0.003,
+                   #sig.missingcover = samp_df2$sig.missingcover - 0.003))
 
 # JAGS model --------------------------------------------------------------
 

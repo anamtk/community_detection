@@ -46,7 +46,7 @@ model{
             
             
             #MISSING DATA for cover imputation
-            cover[k,i,t,r] ~ dnorm(mu.missingcover, tau.missingcover)
+            #cover[k,i,t,r] ~ dnorm(mu.missingcover, tau.missingcover)
         } #reps
         
         #SPECIES-LEVEL PRIORS:
@@ -116,9 +116,9 @@ model{
   
   #PRIORS FOR IMPUTING MISSING DATA
   #Priors for mean and tau of missing covariates in the model
-  mu.missingcover ~ dunif(-10, 10)
-  sig.missingcover ~ dunif(0, 20)
-  tau.missingcover <- pow(sig.missingcover, -2)
+  #mu.missingcover ~ dunif(-10, 10)
+  #sig.missingcover ~ dunif(0, 20)
+  #tau.missingcover <- pow(sig.missingcover, -2)
   
   
   # #DERIVED PARAMETERS##

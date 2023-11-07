@@ -49,7 +49,7 @@ params <- c(
   'mu.a0',
   'sig.a0',
   'a1.Cover',
-  'p0',
+  #'p0',
   'mu.missingcover',
   'sig.missingcover'
 )

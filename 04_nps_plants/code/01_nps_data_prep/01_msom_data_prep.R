@@ -74,7 +74,8 @@ subsample <- plants %>%
 
 subset_plots = as.numeric(sort(subsample$Plot))
 # randomly choose 10 plots
-samp_plots = sort(sample(1:14, 10, replace=FALSE))
+#samp_plots = sort(sample(1:14, 10, replace=FALSE))
+samp_plots = c(1,3,5,6,7,8,10,12,13,14)
 subset_plots <- sort(subset_plots[c(samp_plots)])
 subset_plots <- sub("^","S",subset_plots)
 
@@ -274,7 +275,8 @@ covers <- occ2 %>%
                            CoverClass == 10 ~ 42.5,
                            CoverClass == 11 ~ 62.5,
                            CoverClass == 12 ~ 87.5,
-                           TRUE ~ NA_real_)) %>%
+                           TRUE ~ 0)) %>%
+                           #TRUE ~ NA_real_)) %>%
   mutate(cover = scale(cover))
 
 yr <- covers$yrID #get a yearID for each iteration of the loop

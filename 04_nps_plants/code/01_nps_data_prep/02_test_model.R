@@ -27,7 +27,7 @@ data <- readRDS(here('04_nps_plants',
                      'data_outputs',
                      'MSAM',
                      'model_inputs',
-                     'nps_msam_multisite.RDS'))
+                     'nps_msam_multisite_subset1.RDS'))
 
 data <- list(n.species = data$n.species,
              n.quads = data$n.quads,
