@@ -53,32 +53,32 @@ n.webs <- length(unique(all_data2$site_web))
 Web.ID <- as.vector(all_data2$Web.ID)
 
 n.templag <- all_data2 %>%
-  dplyr::select(Temp:Temp_l11) %>%
+  dplyr::select(Temp:Temp_l5) %>%
   ncol()
 
 Temp <- all_data2  %>%
-  dplyr::select(site_web_trans, YEAR, Temp:Temp_l11) %>%
-  pivot_longer(Temp:Temp_l11,
+  dplyr::select(site_web_trans, YEAR, Temp:Temp_l5) %>%
+  pivot_longer(Temp:Temp_l5,
                names_to = 'lag',
                values_to = 'temp') %>%
   mutate(temp = scale(temp)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "temp") %>%
-  dplyr::select(Temp:Temp_l11) %>%
+  dplyr::select(Temp:Temp_l5) %>%
   as.matrix()
 
 sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
 #<1% missing data
 
 PPT <- all_data2  %>%
-  dplyr::select(site_web_trans, YEAR, PPT:PPT_l11) %>%
-  pivot_longer(PPT:PPT_l11,
+  dplyr::select(site_web_trans, YEAR, PPT:PPT_l5) %>%
+  pivot_longer(PPT:PPT_l5,
                names_to = 'lag',
                values_to = 'ppt') %>%
   mutate(ppt = scale(ppt)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "ppt") %>%
-  dplyr::select(PPT:PPT_l11) %>%
+  dplyr::select(PPT:PPT_l5) %>%
   as.matrix()
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
@@ -100,7 +100,7 @@ NPP <- all_data2 %>%
   as.matrix()
   
 sum(is.na(NPP))/(sum(is.na(NPP)) + sum(!is.na(NPP)))
-#~12% missing data
+#~10% missing data
 
 
 # Combine data into a data list -------------------------------------------

@@ -1,8 +1,8 @@
-#Monsoon script - fish MSAM
+#Monsoon script - bird MSAM
 # Ana Miller-ter Kuile
 # July 27, 2023
 
-#this script runs the fish MSOM
+#this script runs the bird MSOM
 
 # Load packages ---------------------------------------------------------------
 Sys.time()
@@ -72,7 +72,9 @@ mod <- jagsUI::jags(data = data_list,
                         parameters.to.save = params,
                         parallel = TRUE,
                         n.chains = 3,
-                        n.iter = 4000,
+                    n.iter = 50000,
+                    n.thin = 10,
+                    n.burnin = 10000,
                         DIC = TRUE)
 
 #save as an R data object

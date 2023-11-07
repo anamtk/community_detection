@@ -48,18 +48,43 @@ codes <- read.csv(here('02_konza_birds',
 
 # Filter out watersheds of interest ---------------------------------------
 
-#only going to do watersheds where we also have NPP data
+birds %>%
+  distinct(WATERSHED)
+#OG: only going to do watersheds where we also have NPP data
 #which are 001D, 004B, and 020B
 
 #going to do all watersheds for now and can subset these other 
 #ones with only NPP later - maybe do a SAM with and a SAM without NPP data
 
+#update: now going to only do watersheds in the burning+grazing experiment
+#4 yr burn, grazed: N04D, N04B
+#4 yr burn, ungrazed: 004A, 004B
+#1 year burn, grazed: N01B (two transects)
+#1 year burn, ungrazed: 001D, 001A/R20A
+#no burn, grazed: N20B
+#no burn, ungrazed: 020B, 020C, 020D (can't find on map - removing)
 
-# birds1 <- birds %>%
-#   filter(WATERSHED %in% c("001D", "004B", "020B"))
+#update update:
+#going to pick one transect in each treatment that has higher detections,
+#and or primary productivity datae??
+#code below to figure this out:
+#N04D, 004B, N01B-10, 001D, N20B, 020B
 
 birds1 <- birds %>%
+  filter(WATERSHED %in% c("N04D", "N04B",
+                          "004A", "004B",
+                          "N01B",
+                          "001D", "R20A",
+                          "N20B",
+                          "020B", "020C")) %>%
+  #filter(TRANSNUM != 6) %>%
   filter(COMMONNAME !=  "Transect not run" )
+
+birds1 <- birds %>% 
+  filter(WATERSHED %in% c('001D', '004B','020B'))%>%
+  filter(COMMONNAME !=  "Transect not run" )
+
+
 # Match up species codes to scientific names ------------------------------
 
 #bird size
@@ -79,12 +104,19 @@ bird_id <- birds1 %>%
 
 #some things not IDed to species, so we want to remove those
 #either / or Empidonax
+#sparrow sp.
+#Spotted/Eastern Towhee
+#Western/Eastern Meadowlark
 #unique ID is actually common name, not SPECNAME
 
 #clean up so that things will mesh well
 birds2 <- birds1 %>%
   mutate(COMMONNAME = case_when(COMMONNAME == "Le Conte's Sparrow" ~ "LeConte's Sparrow",
+                                COMMONNAME == "Greater Prairie-Chicken" ~ "Greater Prairie-chicken",
                               TRUE ~ COMMONNAME)) %>%
+  mutate(AOUCODE = case_when(AOUCODE == "eawp" ~ "EAWP",
+                             AOUCODE == "CAGO" ~ "CANG",
+                             TRUE ~ AOUCODE)) %>%
   filter(COMMONNAME != "Empidonax sp.") %>%
   filter(!str_detect(COMMONNAME, "/"))  %>%
   filter(COMMONNAME != "sparrow sp.")
@@ -107,8 +139,22 @@ bird_id2 <- birds2 %>%
                              COMMONNAME == "Canada Goose" ~ "Branta canadensis",
                              TRUE ~ SCINAME)) %>%
   filter(SPECNAME != "NONE") %>%
+  #and remove birds of prey, shorebirds, and gamebirds as a test
+  filter(!AOUCODE %in% c(#birds of prey and shorebirds
+    "AMKE", "BEKI", "CANG",
+    "CONI", "COHA", "GOEA",
+    "GBHE", "GHOW", "GRHE",
+    "KILL", "NOHA", "RTHA",
+    "RLHA", "SEOW", "SWHA",
+    "UPSA", "WODU", "TUVU",
+    #gamebirds
+    "COPO", "GRPC", "NOBO", 
+    "RNEP", "WITU",
+    #woodpeckers
+    "DOWO", "HAWO", "RBWO",
+    "RHWO")) %>%
   distinct(COMMONNAME, SPEC, SCINAME) 
-#132 total bird species
+#78 species
 
 
 # Manupulate data to abundance structure ----------------------------------
@@ -119,8 +165,22 @@ bird_id2 <- birds2 %>%
 #period in each year for each species
 
 birds3 <- birds2 %>%
+  #and remove birds of prey, shorebirds, and gamebirds as a test
+  filter(!AOUCODE %in% c(#birds of prey and shorebirds
+    "AMKE", "BEKI", "CANG",
+    "CONI", "COHA", "GOEA",
+    "GBHE", "GHOW", "GRHE",
+    "KILL", "NOHA", "RTHA",
+    "RLHA", "SEOW", "SWHA",
+    "UPSA", "WODU", "TUVU",
+    #gamebirds
+    "COPO", "GRPC", "NOBO", 
+    "RNEP", "WITU",
+    #woodpeckers
+    "DOWO", "HAWO", "RBWO",
+    "RHWO")) %>%
   group_by(RECYEAR, RECMONTH, RECDAY, TRANSNUM,
-           WATERSHED, COMMONNAME) %>%
+           WATERSHED, COMMONNAME, AOUCODE) %>%
   #get number observed
   summarise(NOBS = sum(COUNT)) %>%
   ungroup()
@@ -135,6 +195,9 @@ birds4 <- birds3 %>%
   group_by(RECYEAR, RECMONTH, RECDAY, TRANSNUM, WATERSHED) %>%
   #make sure each species is in each survey
   complete(COMMONNAME) %>%
+  ungroup() %>%
+  group_by(COMMONNAME) %>%
+  fill(AOUCODE, .direction = "updown") %>%
   ungroup() %>%
   #get rid of "NONE" species category
   filter(COMMONNAME != "No birds detected") %>%
@@ -153,7 +216,7 @@ birds4 %>%
   distinct(RECYEAR, TRANSNUM) %>%
   group_by(TRANSNUM) %>%
   tally()
-
+#transect 18 started in 1982
 
 
 # Covariates for detection ------------------------------------------------
@@ -170,6 +233,7 @@ sizes <- bird_id2 %>%
   #get species ID for modeling
   left_join(size_meta, by = "COMMONNAME")
 
+hist(sizes$Mass)
 #get info from bird dataset on ids of different surveys to blend to
 #survey dataset
 survey_meta <- birds4 %>%
@@ -203,7 +267,7 @@ survey2 <- birds4 %>%
 birds5 <- birds4 %>%
   left_join(survey2, by = c("RECYEAR", "RECMONTH", "RECDAY", 
                             "TRANSNUM", "WATERSHED", "TransID",
-                            "yrID"))
+                            "yrID")) 
 
 # Prep data structure for JAGS --------------------------------------------
 
@@ -313,7 +377,7 @@ for(i in 1:dim(birds5)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(birds5[i,7])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(birds5[i,8])
 }
 
 
@@ -550,4 +614,21 @@ sizes %>%
   summarise(mean = mean(Mass),
             min = min(Mass),
             max = max(Mass))
+
+
+# Transect selection based on number of birds observed --------------------
+
+birds5 %>%
+  ungroup() %>%
+  group_by(RECYEAR, TRANSNUM, WATERSHED) %>%
+  summarise(mean = mean(NOBS, na.rm =T)) %>%
+  mutate(TRANSNUM = as.factor(TRANSNUM)) %>%
+  ggplot(aes(x = TRANSNUM, y = mean)) +
+  geom_boxplot()
+
+birds5 %>%
+  distinct(WATERSHED, TRANSNUM) %>%
+  arrange(TRANSNUM)
+
+#from this - N04D, 004B, N01B-10, 001D, N20B, 020B
   

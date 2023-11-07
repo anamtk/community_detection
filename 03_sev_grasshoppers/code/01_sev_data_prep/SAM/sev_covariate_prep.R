@@ -108,16 +108,63 @@ stability2 <- as.data.frame(stability) %>%
 climate <- rbind(c1, c2, c3, c4, c5, c6) %>%
   filter(StationID == 49)
 
+
+# Temperature -------------------------------------------------------------
+
+
+#monthly temps
 temp <- climate %>%
   group_by(Month, Year) %>%
   summarise(Temp = mean(Temp_C, na.rm = T)) %>%
   ungroup()
+
+ggplot(temp, aes(x = Month, y= Temp)) +
+  geom_jitter(width = 0.2, height = 0)
+
+#which are above and below mean?
+climate %>%
+  mutate(Temp_C = scale(Temp_C)) %>%
+  group_by(Month) %>%
+  summarise(Temp = mean(Temp_C, na.rm = T)) %>%
+  ungroup()
+#1, 2, 3, 11, 12 - cold
+#4, 5, 6, 7, 8, 9, 10 - warm
+
+#seasonal temperatures - 1 is "cold", 2 is "warm"
+temp2 <- climate %>%
+  mutate(season = case_when(Month %in% c(1, 2, 3, 11, 12) ~ 1,
+                            Month %in% c(4, 5, 6, 7, 8, 9, 10) ~ 2))  %>%
+  group_by(season, Year) %>%
+  summarise(Temp = mean(Temp_C, na.rm = T)) %>%
+  ungroup()
+
+
+# Precip ------------------------------------------------------------------
 
 ppt <- climate %>%
   group_by(Month, Year) %>%
   summarise(PPT = mean(Precipitation, na.rm = T)) %>%
   ungroup()
 
+ggplot(ppt, aes(x = Month, y= PPT)) +
+  geom_jitter(width = 0.2, height = 0)
+
+climate %>%
+  mutate(PPT = scale(Precipitation)) %>%
+  group_by(Month) %>%
+  summarise(PPT = mean(PPT, na.rm = T)) %>%
+  ungroup()
+
+#1, 2, 3, 4, 5, 6, 11, 12 - dry
+#7, 8, 9, 10 - wet
+
+#seasonal ppt 1 is dry, 2 is wet
+ppt2 <- climate %>%
+  mutate(season = case_when(Month %in% c(1, 2, 3, 4, 5, 6, 11, 12) ~ 1,
+                            Month %in% c(7, 8, 9, 10) ~ 2))  %>%
+  group_by(season, Year) %>%
+  summarise(PPT = mean(Precipitation, na.rm = T)) %>%
+  ungroup()
 
 # NPP ---------------------------------------------------------------------
 
@@ -168,6 +215,18 @@ temp_lags <- temp %>%
   filter(Month == 10) %>%
   dplyr::select(-Month)
 
+#seasonal lags
+temp_lags2 <- temp2 %>%
+  arrange(Year, season) %>%
+  #this creates a column for every lag this season to 5 ago
+  do(data.frame(., setNames(shift(.$Temp, 1:5), c("Temp_l1", 'Temp_l2', "Temp_l3",
+                                                   "Temp_l4", "Temp_l5")))) %>%
+  ungroup() %>%
+  #start in cold, when surveys started
+  filter(season == 1) %>%
+  dplyr::select(-season)
+  
+
 ppt_lags <- ppt %>%
   arrange(Year, Month) %>%
   #this creates a column for every lag this month to 11 months ago
@@ -181,15 +240,26 @@ ppt_lags <- ppt %>%
   filter(Month == 10) %>%
   dplyr::select(-Month)
 
+ppt_lags2 <- ppt2 %>%
+  arrange(Year, season) %>%
+  #this creates a column for every lag this season to 5 ago
+  do(data.frame(., setNames(shift(.$PPT, 1:5), c("PPT_l1", 'PPT_l2', "PPT_l3",
+                                                  "PPT_l4", "PPT_l5")))) %>%
+  ungroup() %>%
+  #start in october, which is end of wet, 
+  #so we can start with "wet"
+  filter(season == 2) %>%
+  dplyr::select(-season)
+
 #get npp lags:
 npp_lags <- npp3 %>%
   group_by(site) %>%
   arrange(year, seasonnum)  %>%
-  #this creates a column for every lag this year to 10 seasons ago
+  #this creates a column for every lag this year to 5 seasons ago
   do(data.frame(., setNames(shift(.$NPP, 1:10), c("NPP_l1", 'NPP_l2', "NPP_l3",
-                                                 "NPP_l4", "NPP_l5", "NPP_l6",
-                                                 "NPP_l7", "NPP_l8", "NPP_l9",
-                                                 "NPP_l10")))) %>%
+                                                 "NPP_l4", "NPP_l5",
+                                                 "NPP_l6", 'NPP_l7', "NPP_l8",
+                                                 "NPP_l9", "NPP_l10")))) %>%
   ungroup() %>%
   #consider "this season" e.g. fall - and then previous seasons from
   #that for each web
@@ -203,8 +273,8 @@ npp_lags <- npp3 %>%
 # Combine datasets --------------------------------------------------------
 
 all_data <- stability2 %>%
-  left_join(temp_lags, by = c("YEAR" = "Year")) %>%
-  left_join(ppt_lags, by = c("YEAR" = "Year")) %>%
+  left_join(temp_lags2, by = c("YEAR" = "Year")) %>%
+  left_join(ppt_lags2, by = c("YEAR" = "Year")) %>%
   left_join(npp_lags, by = c("site", "web", "YEAR" = "year"))
 
 
@@ -213,19 +283,19 @@ all_data <- stability2 %>%
 library(ggcorrplot)
 
 dat1 <- all_data %>%
-  dplyr::select(Temp:Temp_l11, PPT:PPT_l11)
+  dplyr::select(Temp:Temp_l5, PPT:PPT_l5)
 
 ggcorrplot(cor(dat1, use = "complete.obs"), 
            type = "upper", lab= TRUE)
 
 dat2 <- all_data %>%
-  dplyr::select(Temp:Temp_l11, NPP:NPP_l10)
+  dplyr::select(Temp:Temp_l5, NPP:NPP_l5)
 
 ggcorrplot(cor(dat2, use = "complete.obs"), 
            type = "upper", lab= TRUE)
 
 dat3 <- all_data %>%
-  dplyr::select(PPT:PPT_l11, NPP:NPP_l10)
+  dplyr::select(PPT:PPT_l5, NPP:NPP_l5)
 
 ggcorrplot(cor(dat3, use = "complete.obs"), 
            type = "upper", lab = TRUE)

@@ -38,7 +38,10 @@ params <- c(
             'mu.llambda',
             'sig.llambda',
             'mu.a0',
-            'sig.a0')
+            'sig.a0',
+            'E',
+            'p.mean',
+            'sig.p')
 
 
 #we found ymax to set initials, since otherwise the model will hate us
@@ -56,13 +59,15 @@ model <- here("02_konza_birds",
 
 start.time <- Sys.time()
 mod <- jagsUI::jags(data = data,
-                         inits = inits,
-                         model.file = model,
-                         parameters.to.save = params,
-                         parallel = TRUE,
-                         n.chains = 3,
-                         n.iter = 1,
-                         DIC = TRUE)
+                    inits = inits,
+                    model.file = model,
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    n.thin =10,
+                    n.iter = 50000,
+                    n.burnin = 10000,
+                    DIC = TRUE)
 
 end.time <- Sys.time()
 
@@ -70,3 +75,17 @@ end.time - start.time
 
 mcmcplot(mod$samples)
 gelman.diag(mod$samples)
+
+mod3 <- update(mod,
+               parallel = TRUE,
+               n.iter = 4000)
+
+mcmcplot(mod3$samples)
+gelman.diag(mod3$samples)
+
+mod4 <- update(mod3, 
+               parallel = TRUE,
+               n.iter = 4000)
+
+mcmcplot(mod4$samples)
+gelman.diag(mod4$samples)

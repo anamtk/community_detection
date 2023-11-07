@@ -24,27 +24,27 @@ for(i in package.list){library(i, character.only = T)}
 
 theme_set(theme_bw())
 # Simulated process -------------------------------------------------------
-
-type <- c(rep("observed", 10), rep("corrected", 10))
-samp <- c(1:10, 1:10)
-dataset <- c(rep(1,3), rep(2, 3), rep(3,4),rep(1,3), rep(2, 3), rep(3,4))
-response <- c(runif(10, min = 0, max = 1), runif(10, min = 0, max = 0.7))
-
-df <- as.data.frame(cbind(type = type,
-                    samp = samp,
-                    dataset = dataset,
-                    response = response)) %>%
-  mutate(response = as.numeric(response))
-
-
-m <- glmmTMB(response ~ type*dataset + (1|samp),
-             data = df,
-             beta_family)
-
-summary(m)
-
-ggplot(df, aes(x = dataset, y = response, fill = type)) +
-  geom_boxplot()
+# 
+# type <- c(rep("observed", 10), rep("corrected", 10))
+# samp <- c(1:10, 1:10)
+# dataset <- c(rep(1,3), rep(2, 3), rep(3,4),rep(1,3), rep(2, 3), rep(3,4))
+# response <- c(runif(10, min = 0, max = 1), runif(10, min = 0, max = 0.7))
+# 
+# df <- as.data.frame(cbind(type = type,
+#                     samp = samp,
+#                     dataset = dataset,
+#                     response = response)) %>%
+#   mutate(response = as.numeric(response))
+# 
+# 
+# m <- glmmTMB(response ~ type*dataset + (1|samp),
+#              data = df,
+#              beta_family)
+# 
+# summary(m)
+# 
+# ggplot(df, aes(x = dataset, y = response, fill = type)) +
+#   geom_boxplot()
 
 #could also run this as a JAGS model - but for now this works I think
 #as a template for assessing this.
@@ -265,6 +265,14 @@ all_boxplot <- (knz_boxplot | sbc_boxplot) /
                (sev_boxplot | plot_spacer())
 all_boxplot
 
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "observed_modeled_violin.jpg"),
+       height = 5,
+       width = 8,
+       units = "in")
 
 # Looking at differences across datasets ----------------------------------
 

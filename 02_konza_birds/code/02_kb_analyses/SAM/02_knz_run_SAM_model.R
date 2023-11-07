@@ -56,7 +56,8 @@ mod <- jagsUI::jags(data = data_list,
                     parallel = TRUE,
                     n.chains = 3,
                     n.burnin = 1000,
-                    n.iter = 8000,
+                    n.iter = 10000,
+                    n.thin = 2,
                     DIC = TRUE)
 
 Sys.time()
@@ -68,52 +69,179 @@ mcmcplot(mod$samples)
 gelman.diag(mod$samples, multivariate = F)
 
 
-# Look at some plots ------------------------------------------------------
+
+# Output summary ----------------------------------------------------------
 
 sum <- summary(mod$samples)
 
-med <- as.data.frame(sum$quantiles) %>%
-  rownames_to_column(var = "parameter") %>%
-  dplyr::select(parameter, `2.5%`, `50%`, `97.5%`) %>%
-  filter(parameter != "deviance")
+saveRDS(sum, here('02_konza_birds',
+                  'data_outputs',
+                  'SAM',
+                  'model_outputs',
+                  'sev_SAM_summary.RDS'))
+# Check interaction for overfitting ---------------------------------------
+
+
+# Interaction -------------------------------------------------------------
+
+# #this interaction is overfitting the data, so i removed it from the model
+
+# bird_bray <- read.csv(here('02_konza_birds',
+#                            'data_outputs',
+#                            "SAM",
+#                            'data_prep',
+#                            'stability_metrics_with_covariates.csv'))
 # 
-# write.csv(med, here("01_sbc_fish",
-#                     "data_outputs",
-#                     "SAM",
-#                     "model_outputs",
-#                     "fish_SAM_summary.csv"))
+
+# blTP <- as.data.frame(sum$quantiles) %>%
+#   rownames_to_column(var = "parm") %>%
+#   filter(parm == "b[4]") %>%
+#   dplyr::select(`50%`) %>%
+#   as_vector()
+# 
+# blT <- as.data.frame(sum$quantiles) %>%
+#   rownames_to_column(var = "parm") %>%
+#   filter(parm == "b[1]") %>%
+#   dplyr::select(`50%`) %>%
+#   as_vector()
+# 
+# blP <- as.data.frame(sum$quantiles) %>%
+#   rownames_to_column(var = "parm") %>%
+#   filter(parm == "b[2]") %>%
+#   dplyr::select(`50%`) %>%
+#   as_vector()
+# 
+# b0 <- as.data.frame(sum$quantiles) %>%
+#   rownames_to_column(var = "parm") %>%
+#   filter(str_detect(parm, "b0")) %>%
+#   dplyr::select(`50%`) %>%
+#   as_vector()
+# 
+# #get temparutres on scaled scale
+# temp_temp <- bird_bray %>%
+#   dplyr::select(WATERSHED, RECYEAR, TAVE:TAVE_l5) %>% #adjust if needed
+#   pivot_longer(TAVE:TAVE_l5,
+#                names_to = "lag",
+#                values_to = "temp") %>%
+#   mutate(temp = scale(temp)) %>%
+#   pivot_wider(names_from = "lag",
+#               values_from = "temp") %>%
+#   dplyr::select(-WATERSHED, -RECYEAR) %>%
+#   as.matrix()
+# 
+# #make scaled data long format to get mean and sd
+# tmaxscale <- bird_bray %>%
+#   dplyr::select(WATERSHED, RECYEAR, TAVE:TAVE_l5) %>% #adjust if needed
+#   pivot_longer(TAVE:TAVE_l5,
+#                names_to = "lag",
+#                values_to = "temp")
+# 
+# #get mean and SD of OG data to back-transform stuff
+# mean <- mean(tmaxscale$temp, na.rm = T)
+# sd <- sd(tmaxscale$temp, na.rm = T)
+# 
+# #get weights per month
+# t_wt <- as.data.frame(sum$quantiles) %>%
+#   rownames_to_column(var = "parameter") %>%
+#   filter(str_detect(parameter, "wA")) %>%
+#   dplyr::select(`50%`) %>%
+#   as_vector()
+# 
+# 
+# #get kelp on scaled scale
+# ppt_temp <- bird_bray %>%
+#   dplyr::select(WATERSHED, RECYEAR, PPT:PPT_l5) %>% #adjust if needed
+#   pivot_longer(PPT:PPT_l5,
+#                names_to = "lag",
+#                values_to = "ppt") %>%
+#   mutate(ppt = scale(ppt)) %>%
+#   pivot_wider(names_from = "lag",
+#               values_from = "ppt") %>%
+#   dplyr::select(-WATERSHED, -RECYEAR) %>%
+#   as.matrix()
+# 
+# #make scaled data long format to get mean and sd
+# pptscale <- bird_bray %>%
+#   dplyr::select(WATERSHED, RECYEAR, PPT:PPT_l5) %>% #adjust if needed
+#   pivot_longer(PPT:PPT_l5,
+#                names_to = "lag",
+#                values_to = "ppt") 
+# 
+# #get mean and SD of OG data to back-transform stuff
+# meanp <- mean(pptscale$ppt, na.rm = T)
+# sdp <- sd(pptscale$ppt, na.rm = T)
+# 
+# #get weights per month
+# p_wt <- as.data.frame(sum$quantiles) %>%
+#   rownames_to_column(var = "parameter") %>%
+#   filter(str_detect(parameter, "wB")) %>%
+#   dplyr::select(`50%`) %>%
+#   as_vector()
+# 
+# #get tmax dataset
+# regT <- bird_bray %>%
+#   dplyr::select(WATERSHED, RECYEAR, bray, TAVE:TAVE_l5)
+# 
+# #multiply months by their weights
+# regT$TAnt <- apply(temp_temp, MARGIN = 1, FUN = function(x){sum(x*t_wt)})
+# 
+# #revert Tmax to OG data scale
+# regT <- regT %>%
+#   dplyr::select(TAnt, bray, WATERSHED, RECYEAR) %>%
+#   mutate(Temp = TAnt*sd + mean)
+# 
+# #kelp dataset
+# regP <- bird_bray %>%
+#   dplyr::select(WATERSHED, RECYEAR, bray, PPT:PPT_l5)
+# 
+# #multiply months by their weights
+# regP$PAnt <- apply(ppt_temp, MARGIN = 1, FUN = function(x){sum(x*p_wt)})
+# 
+# #revert Tmax to OG data scale
+# regP <- regP %>%
+#   dplyr::select(PAnt, bray, WATERSHED, RECYEAR) %>%
+#   mutate(PPT = PAnt*sd + mean)
+# 
+# #regression
+# regB <- regT %>%
+#   left_join(regP, by = c("WATERSHED", "RECYEAR", "bray"))
+# 
+# temp2 <- scale_df(x = regB$Temp,
+#                   length = 20,
+#                   name = "temp")
+# 
+# ppt2 <- scale_df(x = regB$PPT,
+#                   length = 20,
+#                   name = "ppt") %>%
+#   rename("varP" = "varS",
+#          "levelP" = "level")
+# 
+# tp <- temp2 %>%
+#   cross_join(ppt2) %>%
+#   mutate(reg = b0 + blT*varS + blP*varP + blTP*varS*varP,
+#          plogisreg = plogis(reg))
+# 
+# (a <- ggplot(tp, aes(x = temp, y = ppt, fill = plogisreg)) +
+#   geom_tile() +
+#   geom_contour(aes(z = plogisreg), color = "white") +
+#   scale_fill_viridis_c() +
+#   theme(axis.title = element_blank()))
+# 
+# (b <- ggplot(regB, aes(x = PPT)) +
+#   geom_boxplot() +
+#   coord_flip() +
+#   theme(axis.text.x = element_blank(),
+#         axis.ticks.x = element_blank()))
+# 
+# (c <- ggplot(regB, aes(x = Temp)) +
+#   geom_boxplot() +
+#   theme(axis.text.y = element_blank(),
+#         axis.ticks.y = element_blank()))
+# 
+# (b + a)/(plot_spacer() + c) +
+#   plot_layout(widths = c(1, 3),
+#               heights = c(3, 1))
+# 
 
 
-# Quick plots -------------------------------------------------------------
 
-med2 <- med %>%
-  filter(parameter %in% c("b[1]", 'b[2]', 'b[3]', 'b[4]'))
-
-ggplot(med2, aes(x = parameter, y= `50%`)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-  labs(y = "Median (and 95% BCI)", x = "Covariate") +
-  scale_x_discrete(labels = c("Temperature", "Precipitation", "NPP",
-                              "Temperature*Precipitation")) +
-  coord_flip()
-
-weights <- med %>%
-  filter(str_detect(parameter, "wB|wA|wC")) %>%
-  mutate(type = case_when(str_detect(parameter, "wA") ~ "wA",
-                          str_detect(parameter, "wB") ~ "wB",
-                          str_detect(parameter, "wC") ~ "wC")) %>%
-  mutate(parameter = factor(parameter, levels = c("wA[1]", "wA[2]", "wA[3]",
-                                                  "wA[4]", "wA[5]", "wA[6]",
-                                                  "wB[1]", "wB[2]", "wB[3]",
-                                                  "wB[4]", "wB[5]", "wB[6]",
-                                                  "wC[1]", "wC[2]", "wC[3]",
-                                                  "wC[4]", "wC[5]", "wC[6]")))
-
-1/6
-ggplot(weights, aes(x = parameter, y = `50%`)) +
-  geom_hline(yintercept = 1/6, linetype = 2) +
-  geom_point() +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-  theme(axis.text.x = element_text(angle = 45, hjust =1)) +
-  facet_wrap(~type, scales = "free")
