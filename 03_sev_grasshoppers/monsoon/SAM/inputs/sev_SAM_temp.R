@@ -38,8 +38,7 @@ model{
     #temperature, precipitation and npp
     logit(mu[i]) <- b0.transect[Transect.ID[i]] +
       b[1]*AntTemp[i] +
-      b[2]*AntNPP[i] +
-      b[3]*AntTemp[i]*AntNPP[i]
+      b[2]*AntNPP[i] 
     
     #-------------------------------------## 
     # SAM summing ###
@@ -132,7 +131,7 @@ model{
 
   b0 ~ dnorm(0, 1E-2)
   
-  for(i in 1:3){
+  for(i in 1:2){
     b[i] ~ dnorm(0, 1E-2)
   }
   
