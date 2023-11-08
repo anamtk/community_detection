@@ -32,7 +32,9 @@ data <- readRDS("/scratch/atm234/sev_hoppers/SAM/inputs/sev_bray_SAM_input_data.
 
 data_list <- list(n.data = data$n.data,
                    n.webs = data$n.webs,
+                  n.transects = data$n.transects,
                    Web.ID = data$Web.ID,
+                  Transect.ID = data$Transect.ID,
                    bray = data$bray,
                    var.estimate = data$var.estimate,
                    n.templag = data$n.templag,
@@ -44,11 +46,13 @@ data_list <- list(n.data = data$n.data,
 # Parameters to save ------------------------------------------------------
 
 params <- c('b0.web',
+            'b0.transect',
             'b',
             'wA',
             'wB',
             'wC',
             'sig.web',
+            'sig.transect',
             'var.process')
 
 # INits -------------------------------------------------------------------

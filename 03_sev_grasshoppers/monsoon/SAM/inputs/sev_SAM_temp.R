@@ -36,9 +36,10 @@ model{
     
     #Regression of mu, which is dependent on antecedent
     #temperature, precipitation and npp
-    logit(mu[i]) <- b0.web[Web.ID[i]] +
+    logit(mu[i]) <- b0.transect[Transect.ID[i]] +
       b[1]*AntTemp[i] +
-      b[2]*AntNPP[i]
+      b[2]*AntNPP[i] +
+      b[3]*AntTemp[i]*AntNPP[i]
     
     #-------------------------------------## 
     # SAM summing ###
@@ -116,21 +117,29 @@ model{
   }
   
   #PRIORS
+  #HIERARCHICAL STRUCTURE PRIORS
   #there are a set of 5 webs in each site with 6 transects each
   #i didn't use "site" since there are only two levels, but could
   #add it in if we wanted later
-  for(t in 1:n.webs){
-    b0.web[t] ~ dnorm(b0, tau.web)
+  #hierarchical centering of transects on webs on b0
+  for(t in 1:n.transects){
+    b0.transect[t] ~ dnorm(b0.web[Web.ID[t]], tau.transect)
+  }
+  
+  for(w in 1:n.webs){
+    b0.web[w] ~ dnorm(b0, tau.web)
   }
 
   b0 ~ dnorm(0, 1E-2)
   
-  for(i in 1:2){
+  for(i in 1:3){
     b[i] ~ dnorm(0, 1E-2)
   }
   
   sig.web ~ dunif(0, 10)
   tau.web <- 1/pow(sig.web,2)
+  sig.transect ~ dunif(0, 10)
+  tau.transect <- 1/pow(sig.transect,2)
   
   #PRior for overall process error
   var.process ~ dunif(0, min(diff[]))

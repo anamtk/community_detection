@@ -43,18 +43,38 @@ all_data2 <- all_data %>%
 
 # Prep data objects for model ---------------------------------------------
 
-n.data <- nrow(all_data2)
 
-bray <- as.vector(all_data2$bray)
-var.estimate <- as.vector(all_data2$SD^2)
+# Loop indexing -----------------------------------------------------------
+
+n.data <- nrow(all_data2)
 
 n.webs <- length(unique(all_data2$site_web))
 
-Web.ID <- as.vector(all_data2$Web.ID)
+n.transects <- length(unique(all_data2$site_web_trans))
 
 n.templag <- all_data2 %>%
   dplyr::select(Temp:Temp_l5) %>%
   ncol()
+
+n.npplag <- all_data2 %>%
+  dplyr::select(NPP:NPP_l10) %>%
+  ncol()
+
+# Response data -----------------------------------------------------------
+
+bray <- as.vector(all_data2$bray)
+var.estimate <- as.vector(all_data2$SD^2)
+
+# Random effects ----------------------------------------------------------
+
+Web.ID <- all_data2 %>%
+  distinct(siteID, Web.ID) %>%
+  dplyr::select(Web.ID) %>%
+  as_vector()
+
+Transect.ID <- as.vector(all_data2$siteID)
+
+# Covariates --------------------------------------------------------------
 
 Temp <- all_data2  %>%
   dplyr::select(site_web_trans, YEAR, Temp:Temp_l5) %>%
@@ -84,10 +104,6 @@ PPT <- all_data2  %>%
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
 #<1% missing data
 
-n.npplag <- all_data2 %>%
-  dplyr::select(NPP:NPP_l10) %>%
-  ncol()
-
 NPP <- all_data2 %>%
   dplyr::select(site_web_trans, YEAR, NPP:NPP_l10) %>%
   pivot_longer(NPP:NPP_l10,
@@ -108,11 +124,13 @@ sum(is.na(NPP))/(sum(is.na(NPP)) + sum(!is.na(NPP)))
 
 data <- list(n.data = n.data,
              n.webs = n.webs,
-             Web.ID = Web.ID,
-             bray = bray,
-             var.estimate = var.estimate,
              n.templag = n.templag,
              n.npplag = n.npplag,
+             n.transects = n.transects,
+             bray = bray,
+             var.estimate = var.estimate,
+             Web.ID = Web.ID,
+             Transect.ID = Transect.ID,
              Temp = Temp,
              PPT = PPT, 
              NPP = NPP)
