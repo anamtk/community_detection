@@ -36,7 +36,7 @@ model{
     
     #Regression of mu, which is dependent on antecedent
     #temperature, precipitation and npp
-    logit(mu[i]) <- b0 +
+    logit(mu[i]) <- b0.transect[Transect.ID[i]] +
       b[1]*AntTemp[i] +
       b[2]*AntPPT[i] +
       b[3]*AntNPP[i] #+
@@ -118,8 +118,18 @@ model{
   }
   
   #BETA PRIORS
-  #only three sites in this dataset, so not adding in 
-  #any site-level hierarchies for now - but could??
+  #HIERARCHICAL STRUCTURE PRIORS
+  #hierarchical centering of transects on  b0
+  for(t in 1:n.transects){
+    b0.transect[t] ~ dnorm(b0, tau.transect)
+  }
+  
+  #for low # of levels, from Gellman paper - define sigma
+  # as uniform and then precision in relation to this sigma
+  sig.transect ~ dunif(0, 10)
+  tau.transect <- 1/pow(sig.transect,2)
+
+  
   b0 ~ dnorm(0, 1E-2)
   
   for(i in 1:3){

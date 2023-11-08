@@ -36,15 +36,33 @@ all_data <- all_data %>%
 # Prep data for jags ------------------------------------------------------
 
 
+# Loop indexing -----------------------------------------------------------
 
 n.data <- nrow(all_data)
-
-bray <- as.vector(all_data$bray)
-var.estimate <- as.vector(all_data$SD^2)
 
 n.templag <- all_data %>%
   dplyr::select(TAVE:TAVE_l5) %>%
   ncol()
+
+n.npplag <- all_data %>%
+  dplyr::select(NPP:NPP_l5) %>%
+  ncol()
+
+n.transects <- length(unique(all_data$TransID))
+
+
+# Random effects ----------------------------------------------------------
+
+Transect.ID <- all_data %>%
+  dplyr::select(TransID) %>%
+  as_vector()
+
+# Response data -----------------------------------------------------------
+
+bray <- as.vector(all_data$bray)
+var.estimate <- as.vector(all_data$SD^2)
+
+# Covariates --------------------------------------------------------------
 
 Temp <- all_data %>%
   dplyr::select(yrID, TransID, TAVE:TAVE_l5) %>%
@@ -72,11 +90,7 @@ PPT <- all_data %>%
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
 
-#< 4% missing data for PPT and TEmp
-
-n.npplag <- all_data %>%
-  dplyr::select(NPP:NPP_l5) %>%
-  ncol()
+# 0% missing data for PPT and TEmp
 
 NPP <- all_data %>%
   dplyr::select(yrID, TransID, NPP:NPP_l5) %>%
@@ -91,18 +105,19 @@ NPP <- all_data %>%
 
 sum(is.na(NPP))/(sum(is.na(NPP)) + sum(!is.na(NPP)))
 
-#16% missing data for NPP
 #with subset data, 10% missing
 
 # Make data list ----------------------------------------------------------
 
 data <- list(n.data = n.data,
+             n.templag = n.templag,
+             n.npplag = n.npplag,
+             n.transects = n.transects,
              bray = bray,
              var.estimate = var.estimate,
-             n.templag = n.templag,
+             Transect.ID = Transect.ID,
              Temp = Temp,
              PPT = PPT,
-             n.npplag = n.npplag,
              NPP = NPP)
 
 saveRDS(data, here('02_konza_birds',
