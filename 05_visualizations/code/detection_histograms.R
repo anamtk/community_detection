@@ -90,3 +90,6 @@ ggsave(plot = last_plot(),
        height = 7,
        width = 8,
        units = "in")
+
+ggplot(bird_det2, aes(x = `50%`)) +
+  geom_histogram()
