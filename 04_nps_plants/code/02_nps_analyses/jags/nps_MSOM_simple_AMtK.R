@@ -42,7 +42,7 @@ model{
 
           #in this case, y is dependent on repeat survey because of the
           # dependence of p on survey period
-            y[k,i,t,r] ~ dbin(p[k,i,t,r] * z[k,i,t], n.rep[i,t])
+            y[k,i,t,r] ~ dbern(p[k,i,t,r] * z[k,i,t])
             
             
             #MISSING DATA for cover imputation
@@ -79,7 +79,8 @@ model{
   # the community for that variaable
   
   #occupancy probability
-  mu.lpsi ~ dnorm(0, 0.00001)
+  psi.mean ~ dbeta(1,1)
+  mu.lpsi <- logit(psi.mean)
   sig.lpsi ~ dunif(0, 10)
   tau.lpsi <- pow(sig.lpsi, -2)
   

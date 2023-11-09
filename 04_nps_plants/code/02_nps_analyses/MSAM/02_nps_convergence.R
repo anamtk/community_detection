@@ -27,7 +27,7 @@ rhat <- readRDS(here('04_nps_plants',
                      'monsoon',
                      "nps_MSAM",
                      'outputs',
-                     'nps_MSAM_model_Rhat4.RDS'))
+                     'nps_MSAM_model_Rhat2.RDS'))
 
 rhat <- readRDS(here('04_nps_plants',
                      'monsoon',

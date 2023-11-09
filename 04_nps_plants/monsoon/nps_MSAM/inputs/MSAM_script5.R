@@ -1,18 +1,20 @@
-#Monsoon script - NPS MSAM
-# Ana Miller-ter Kuile
-# October 11, 2023
+#Getting initials for next model run
+#Shelby Lamm
+#October 24, 2023
 
-#this script runs the plants MSOM
+#this script pulls out the last values from the chain with the lowest deviance
+#to use as initials in a follow-up model run
 
 # Load packages ---------------------------------------------------------------
-Sys.time()
+(start.time <- Sys.time())
 
 
 # Load packages,
 package.list <- c("jagsUI", "coda",
                   'dplyr', 'stringr',
                   'magrittr', 'tidyr',
-                  'mcmcplots','ggplot2') 
+                  'mcmcplots','ggplot2',
+                  'tibble') 
 
 
 ## Installing them if they aren't already on the computer
@@ -23,6 +25,58 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
+
+# Load model --------------------------------------------------------------
+
+mod <- readRDS(file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model4.RDS")
+
+# Get initials from previous model ----------------------------------------
+
+#get the MCMC chains
+samples <- mod$samples
+
+#function to make each chain a dataframe
+df_fun <- function(chain){
+  df <- as.data.frame(chain) %>%
+    rownames_to_column(var = "iteration")
+  return(df)
+}
+
+#use that function on all list elements
+samp_dfs <- lapply(samples, df_fun)
+
+#make into one dataframe
+samp_df <- bind_rows(samp_dfs, .id = "chain")
+
+#get values for all parameters from the last iteration of the
+#chain with the lowest deviance
+samp_df2 <- samp_df %>%
+  group_by(chain) %>%
+  #get mean deviance by chain
+  mutate(mean_dev = mean(deviance, na.rm = T)) %>%
+  ungroup() %>%
+  #get only the chain with the minimum average deviance
+  filter(mean_dev == min(mean_dev)) %>%
+  #pull out the final iteration from that chain
+  filter(iteration == max(iteration)) %>%
+  dplyr::select(-chain, -iteration,
+                -deviance, -mean_dev) 
+
+
+
+
+# for nps model root nodes:
+psi.mean <- as.vector(samp_df2$psi.mean)
+#mu.lpsi <- as.vector(samp_df2$mu.lpsi)
+#sig.lpsi <- as.vector(samp_df2$sig.lpsi)
+mu.a0 <- as.vector(samp_df2$mu.a0)
+sig.a0 <- as.vector(samp_df2$sig.a0)
+a1.Cover <- as.vector(samp_df2$a1.Cover)
+a2.Lifegroup <- as.vector(samp_df2$a2.Lifegroup)
+#mu.missingcover = as.vector(samp_df2$mu.missingcover)
+#sig.missingcover = as.vector(samp_df2$sig.missingcover)
+
+
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
@@ -30,7 +84,6 @@ for(i in package.list){library(i, character.only = T)}
 data <- readRDS("/scratch/sml665/nps_plants/inputs/nps_msam_multisite_subset.RDS")
 
 # Compile data ------------------------------------------------------------
-
 data_list <- list(n.species = data$n.species,
                   n.quads = data$n.quads,
                   n.yr = data$n.yr,
@@ -57,18 +110,31 @@ params <- c(
 
 # INits -------------------------------------------------------------------
 
-#we found ymax to set initials, since otherwise the model will hate us
-#also Kiona suggested setting initials for omega based on covariance, since
-#the model will struggle with this
-
-#inits <- function() list(N = data$z) 
-
-#model breaks with these initials...
-                         #omega = data$omega.init)
-
-inits <- list(list(N = data$z),
-              list(N = data$z),
-              list(N = data$z))
+#we found z to set initials, since otherwise the model will hate us
+inits <- list(list(N = data$z,
+                   psi.mean = samp_df2$psi.mean,
+                   #mu.lpsi = samp_df2$mu.lpsi,
+                   #sig.lpsi = samp_df2$sig.lpsi,
+                   mu.a0 = samp_df2$mu.a0,
+                   sig.a0 = samp_df2$sig.a0,
+                   a1.Cover = samp_df2$a1.Cover,
+                   a2.Lifegroup = a2.Lifegroup),
+              list(N = data$z,
+                   psi.mean = samp_df2$psi.mean - 0.0005,
+                   #mu.lpsi = samp_df2$mu.lpsi + 0.25,
+                   #sig.lpsi = samp_df2$sig.lpsi + 0.02,
+                   mu.a0 = samp_df2$mu.a0 + 0.1,
+                   sig.a0 = samp_df2$sig.a0 + 0.01,
+                   a1.Cover = samp_df2$a1.Cover + 0.02,
+                   a2.Lifegroup = a2.Lifegroup + 0.15),
+              list(N = data$z,
+                   psi.mean = samp_df2$psi.mean - 0.001,
+                   #mu.lpsi = samp_df2$mu.lpsi - 0.25,
+                   #sig.lpsi = samp_df2$sig.lpsi + 0.04,
+                   mu.a0 = samp_df2$mu.a0 - 0.1,
+                   sig.a0 = samp_df2$sig.a0 + 0.02,
+                   a1.Cover = samp_df2$a1.Cover - 0.02,
+                   a2.Lifegroup = a2.Lifegroup - 0.15)) 
 
 # JAGS model --------------------------------------------------------------
 
@@ -79,26 +145,30 @@ mod2 <- jagsUI::jags(data = data_list,
                      parameters.to.save = params,
                      parallel = TRUE,
                      n.chains = 3,
-                     n.iter = 20000,
-                     n.burnin = 5000,
+                     n.iter = 75000,
+                     n.burnin = 25000,
                      n.thin = 10,
                      DIC = TRUE)
 
+
 #save as an R data object
 saveRDS(mod2, 
-        file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model2.RDS")
+        file ="/scratch/sml665/nps_plants/outputs/nps_MSAM_model5.RDS")
+
+(end.time <- Sys.time())
 
 
+(tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod2$samples,
-         dir = "/scratch/sml665/nps_plants/outputs/mcmcplots/MSAM2")
+         dir = "/scratch/sml665/nps_plants/outputs/mcmcplots/MSAM5")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod2$Rhat
 
-saveRDS(Rhat, "/scratch/sml665/nps_plants/outputs/nps_MSAM_model_Rhat2.RDS")
+saveRDS(Rhat, "/scratch/sml665/nps_plants/outputs/nps_MSAM_model_Rhat5.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
@@ -145,3 +215,5 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
+
+
