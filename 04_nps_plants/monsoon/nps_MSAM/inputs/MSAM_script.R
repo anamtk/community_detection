@@ -45,15 +45,13 @@ data_list <- list(n.species = data$n.species,
 
 params <- c(
   #COMMUNITY parameters
-  'mu.lpsi',
+  'psi.mean',
+  #'mu.lpsi',
   'sig.lpsi',
   'mu.a0',
   'sig.a0',
   'a1.Cover',
-  'a2.LifeGroup',
-  #'p0',
-  'mu.missingcover',
-  'sig.missingcover'
+  'a2.LifeGroup'
 )
 
 
@@ -75,14 +73,14 @@ inits <- list(list(N = data$z),
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
-                        inits = inits,
-                        #inits = NULL,
-                        model.file = '/scratch/sml665/nps_plants/inputs/nps_MSOM_simple_AMtK.R',
-                        parameters.to.save = params,
-                        parallel = TRUE,
-                        n.chains = 3,
-                        n.iter = 4000,
-                        DIC = TRUE)
+                    inits = inits,
+                    #inits = NULL,
+                    model.file = '/scratch/sml665/nps_plants/inputs/nps_MSOM_simple_AMtK.R',
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    n.iter = 4000,
+                    DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
@@ -136,10 +134,6 @@ raf_all %>%
                                      na.rm = T)/3,
             max = max(iterations, 
                       na.rm = T)/3)
-# A tibble: 1 × 3
-# iterations_90 iterations_95   max
-#        <dbl>         <dbl>  <dbl>
-#        63790.        92048. 139970
 
 
 bu1 <- raf[[1]]$resmatrix[,1]
@@ -157,5 +151,5 @@ burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
 
 burn %>%
   summarise(max(iterations, na.rm = T))
-#688
+
 
