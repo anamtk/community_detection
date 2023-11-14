@@ -88,7 +88,7 @@ Temp <- all_data2  %>%
   as.matrix()
 
 sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
-#<1% missing data
+#7% missing data
 
 PPT <- all_data2  %>%
   dplyr::select(site_web_trans, YEAR, PPT:PPT_l5) %>%
