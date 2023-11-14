@@ -102,8 +102,8 @@ subsample_t <- plants %>%
 # plants <- subsample %>%
 #   left_join(plants, by = c("Plot", "Transect", "Quadrat"))
 
-# plants <- subsample_t %>%
-#   left_join(plants, by = c("Plot", "Transect"))
+plants <- subsample_t %>%
+  left_join(plants, by = c("Plot", "Transect"))
 
 
 # Remove always 0 plants from subset --------------------------------------
@@ -510,6 +510,7 @@ write.csv(quadnums, here('04_nps_plants',
 
 # Raw Jaccard -------------------------------------------------------------
 
+#all survyes
 matrix <- occ2 %>%
   unite(c("Plot", "Transect", "Quadrat"),
         col = "plot_trans_quad",
@@ -553,16 +554,66 @@ C <- colSums(c)
 turnover <- (B + C)/(A + B + C)
 years <- c(2007, 2008, 2009, 2011, 2013, 2015, 2019, 2022)
 
-raw_jacc <- as.data.frame(cbind(turnover = turnover,
+raw_jacc <- as.data.frame(cbind(turnover_all = turnover,
                                 year = years))
 
-saveRDS(raw_jacc, here("05_visualizations",
+#one survey
+matrix2 <- occ2 %>%
+  unite(c("Plot", "Transect", "Quadrat"),
+        col = "plot_trans_quad",
+        sep = "_",
+        remove = F) %>%
+  filter(plot_trans_quad == "S02_B_3") %>%
+  filter(REP == 1) %>%
+  dplyr::select(EventYear, SpecID, presence) %>%
+  pivot_wider(names_from = EventYear,
+              values_from = presence) %>%
+  column_to_rownames(var = 'SpecID')
+
+a2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+b2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+c2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+for(r in 1:nrow(matrix2)){
+  for(t in 2:ncol(matrix2)){
+    #is species k shared in site i between t and t+1
+    #if shared, value of a will be 1
+    a2[r, t] <- as.integer(matrix2[r, t-1]==1 & matrix2[r, t]==1)
+    #is species k gained in site i between t and t+1
+    #if gained, value of b will be 1
+    b2[r,t] <- as.integer(matrix2[r,t-1] == 1 & matrix2[r,t] == 0)
+    #is species k lost in site i between t and t+1?
+    #if lost, value of c will be 1
+    c2[r,t] <- as.integer(matrix2[r,t-1]==0 & matrix2[r,t]==1)
+  }
+}
+
+A2 <- colSums(a2)
+B2 <- colSums(b2)
+C2 <- colSums(c2)
+
+turnover2 <- (B2 + C2)/(A2 + B2 + C2)
+years <- c(2007, 2008, 2009, 2011, 2013, 2015, 2019, 2022)
+
+raw_jacc2 <- as.data.frame(cbind(turnover_one = turnover2,
+                                year = years))
+
+raw_jacc_all <- raw_jacc %>%
+  left_join(raw_jacc2, by = "year")
+
+saveRDS(raw_jacc_all, here("05_visualizations",
                        "viz_data",
                        "nps_S02_B_3_raw_jaccard.RDS"))
 
 
 #make code to create this! copy from code for other datasets
 diss_fun <- function(site){
+  #all surveyes
   matrix <- occ2 %>%
     unite(c("Plot", "Transect", "Quadrat"),
           col = "plot_trans_quad",
@@ -613,9 +664,64 @@ diss_fun <- function(site){
     filter(plot_trans_quad == site) %>%
     distinct(EventYear, plot_trans_quad) %>%
     cbind(turnover) %>%
-    mutate(type = "observed")
+    mutate(type = "observed_all")
   
-  return(turn_df)
+  #one surveyes
+  matrix2 <- occ2 %>%
+    unite(c("Plot", "Transect", "Quadrat"),
+          col = "plot_trans_quad",
+          sep = "_",
+          remove = F) %>%
+    filter(plot_trans_quad == site) %>%
+    filter(REP == 1) %>%
+    dplyr::select(EventYear, SpecID, presence) %>%
+    pivot_wider(names_from = EventYear,
+                values_from = presence) %>%
+    column_to_rownames(var = 'SpecID')
+  
+  a2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  b2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  c2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  for(r in 1:nrow(matrix2)){
+    for(t in 2:ncol(matrix2)){
+      #is species k shared in site i between t and t+1
+      #if shared, value of a will be 1
+      a2[r, t] <- as.integer(matrix2[r, t-1]==1 & matrix2[r, t]==1)
+      #is species k gained in site i between t and t+1
+      #if gained, value of b will be 1
+      b2[r,t] <- as.integer(matrix2[r,t-1] == 1 & matrix2[r,t] == 0)
+      #is species k lost in site i between t and t+1?
+      #if lost, value of c will be 1
+      c2[r,t] <- as.integer(matrix2[r,t-1]==0 & matrix2[r,t]==1)
+    }
+  }
+  
+  A2 <- colSums(a2)
+  B2 <- colSums(b2)
+  C2 <- colSums(c2)
+  
+  turnover2 <- (B2 + C2)/(A2 + B2 + C2)
+  
+  turn_df2 <- occ2 %>%
+    unite(c("Plot", "Transect", "Quadrat"),
+          col = "plot_trans_quad",
+          sep = "_",
+          remove = F) %>%
+    filter(plot_trans_quad == site) %>%
+    distinct(EventYear, plot_trans_quad) %>%
+    cbind(turnover) %>%
+    mutate(type = "observed_one")
+  
+  turn_df_all <- turn_df %>%
+    rbind(turn_df2)
+  
+  return(turn_df_all)
 }
 
 
