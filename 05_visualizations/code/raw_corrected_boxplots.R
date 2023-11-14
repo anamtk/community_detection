@@ -88,6 +88,20 @@ sev_modeled <- readRDS(here('03_sev_grasshoppers',
                             "outputs",
                             'sev_bray_meanSD.RDS'))
 
+nps_obs <- readRDS(here('05_visualizations',
+                        'viz_data',
+                        'nps_observed_jaccard.RDS'))
+
+nps_obs <- nps_obs %>%
+  rename(yrID = EventYear,
+         siteID = plot_trans_quad)
+
+nps_modeled <- readRDS(here('04_nps_plants',
+                            'monsoon',
+                            'nps_MSAM',
+                            'outputs_yrsite',
+                            'nps_Jaccard_summary.RDS'))
+
 # Prep modeled data -------------------------------------------------------
 
 #site x year
@@ -136,6 +150,14 @@ sev_m2 <- as.data.frame(sev_modeled) %>%
   mutate(type = "modeled")%>%
   mutate(yrID = as.numeric(yrID),
          siteID = as.numeric(siteID))
+
+nps_m2 <- nps_modeled %>%
+  rename(yrID = EventYear,
+         siteID = plot_trans_quad,
+         turnover = mean) %>%
+  dplyr::select(-sd) %>%
+  mutate(type = "modeled")
+
 # Combine -----------------------------------------------------------------
 
 sbc_bray <- rbind(sbc_obs, sbc_m2) %>%
@@ -149,7 +171,8 @@ sbc_bray <- rbind(sbc_obs, sbc_m2) %>%
   mutate(bray = case_when(bray == 0 ~ 0.001,
                           bray == 1 ~ 0.9999,
                           TRUE ~ bray)) %>%
-  mutate(dataset = "sbc_fish")
+  mutate(dataset = "sbc_fish") %>%
+  rename(diss = bray)
 
 kz_bray <- konza_obs %>%
   rename("siteID" = "TransID") %>% 
@@ -164,7 +187,8 @@ kz_bray <- konza_obs %>%
   mutate(bray = case_when(bray == 0 ~ 0.001,
                           bray == 1 ~ 0.9999,
                           TRUE ~ bray)) %>%
-  mutate(dataset = "konza_birds")
+  mutate(dataset = "konza_birds") %>%
+  rename(diss = bray)
 
 sev_bray <- sev_obs %>%
   rbind(sev_m2)  %>%
@@ -177,9 +201,26 @@ sev_bray <- sev_obs %>%
   mutate(bray = case_when(bray == 0 ~ 0.001,
                           bray == 1 ~ 0.9999,
                           TRUE ~ bray)) %>%
-  mutate(dataset = "sev_hoppers")
+  mutate(dataset = "sev_hoppers") %>%
+  rename(diss = bray)
 
-all_bray <- rbind(sbc_bray, kz_bray, sev_bray)
+nps_turn <- nps_obs %>%
+  rbind(nps_m2)%>% 
+  filter(!is.na(turnover)) %>%
+  unite("site_year",
+        c(siteID, yrID),
+        sep = "_",
+        remove = F) %>%
+  #the beta family in glmmTMB doesn't work
+  #if values are exactly 1 or exactly 0
+  mutate(turnover = case_when(turnover == 0 ~ 0.001,
+                          turnover == 1 ~ 0.9999,
+                          TRUE ~ turnover)) %>%
+  mutate(dataset = "nps_plants") %>%
+  rename(diss = turnover)
+
+
+all_diss <- rbind(sbc_bray, kz_bray, sev_bray, nps_turn )
 
 
 # Visualize ---------------------------------------------------------------
@@ -188,7 +229,7 @@ all_bray <- rbind(sbc_bray, kz_bray, sev_bray)
 modeled_col <- "#E88C23"
 observed_col <- "#438AA8"
 
-ggplot(all_bray, aes(x = dataset, y = bray)) +
+ggplot(all_diss, aes(x = dataset, y = diss)) +
   #geom_jitter(aes(group = type, color = type), alpha = 0.2, width = 0.2) +
   geom_boxplot(aes(color = type),  outlier.shape = NA) + 
   geom_point(aes(color = type), position = position_jitterdodge())+ 
@@ -199,7 +240,7 @@ ggplot(all_bray, aes(x = dataset, y = bray)) +
   scale_fill_manual(values = c(NA, NA)) + 
   scale_color_manual(values = c(modeled = modeled_col, observed = observed_col))  
 
-ggplot(all_bray, aes(x = type, y = bray)) +
+ggplot(all_diss, aes(x = type, y = diss)) +
   #geom_jitter(aes(group = type, color = type), alpha = 0.2, width = 0.2) +
   geom_violin(aes(fill = type)) + 
  # geom_point(aes(color = type), position = position_jitterdodge())+ 
@@ -213,14 +254,17 @@ ggplot(all_bray, aes(x = type, y = bray)) +
 boxplot_function <- function(dataset) {
   
   if(dataset == "birds"){
-    df <- all_bray %>% 
+    df <- all_diss %>% 
       filter(dataset == "konza_birds")
   } else if(dataset == "fish") {
-    df <- all_bray %>% 
+    df <- all_diss %>% 
       filter(dataset == "sbc_fish")
   } else if(dataset == "grasshoppers"){
-    df <- all_bray %>% 
+    df <- all_diss %>% 
       filter(dataset == "sev_hoppers")
+  } else if(dataset == "plants"){
+    df <- all_diss %>% 
+      filter(dataset == "nps_plants")
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -232,17 +276,19 @@ boxplot_function <- function(dataset) {
     title = "SBC fish"
   } else if(dataset == "grasshoppers") {
     title = "SEV grasshoppers"
+  } else if(dataset == "plants") {
+    title = "PFNP plants"
   }else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
   }
   
   df %>% 
-    ggplot(aes(x = type, y = bray, fill = type)) +
+    ggplot(aes(x = type, y = diss, fill = type)) +
     geom_violin() +
     scale_fill_manual(values = c(modeled = modeled_col, observed = observed_col)) +
     geom_boxplot(width = 0.1) +
-    labs(x = "Type", y = "Bray-Curtis dissimilarity", title = title) +
+    labs(x = "Type", y = "Dissimilarity", title = title) +
     scale_y_continuous(limits = c(0, 1)) +
     theme(legend.position = "none",
           plot.title.position = "panel",
@@ -261,8 +307,11 @@ sbc_boxplot
 sev_boxplot <- boxplot_function("grasshoppers")
 sev_boxplot
 
+nps_boxplot <- boxplot_function("plants")
+nps_boxplot
+
 all_boxplot <- (knz_boxplot | sbc_boxplot) /
-               (sev_boxplot | plot_spacer())
+               (sev_boxplot | nps_boxplot)
 all_boxplot
 
 
@@ -278,8 +327,8 @@ ggsave(plot = last_plot(),
 
 
 
-m1 <- glmmTMB(bray ~ type*dataset + (1|site_year),
-              data = all_bray,
+m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
+              data = all_diss,
               beta_family())
 
 summary(m1)

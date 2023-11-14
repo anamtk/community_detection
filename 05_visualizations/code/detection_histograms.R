@@ -48,6 +48,12 @@ bird_detect <- readRDS(here('02_konza_birds',
                             'outputs',
                             'bird_p0_summary.RDS'))
 
+plant_detect <- readRDS(here('04_nps_plants',
+                             'monsoon',
+                             'nps_MSAM',
+                             'outputs_yrsite',
+                             'nps_p0_summary.RDS'))
+
 # Prep for plotting -------------------------------------------------------
 
 fish_det2 <- as.data.frame(fish_detect$quantiles) %>%
@@ -65,23 +71,37 @@ bird_det2 <- as.data.frame(bird_detect$quantiles) %>%
   filter(parm != "deviance") %>%
   mutate(dataset = "birds")
 
+plant_det2 <- as.data.frame(plant_detect$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(parm != "deviance") %>%
+  mutate(dataset = "plants")
+
 detect_df <- fish_det2 %>%
-  rbind(hop_det2, bird_det2)
+  rbind(hop_det2, bird_det2, plant_det2)
 
 # Create histograms -------------------------------------------------------
 
-labs <- c("SBC fish", "SEV grasshoppers", "KNZ birds")
-names(labs) <- c("fish", "hoppers", 'birds')
+labs <- c("SBC fish", "SEV grasshoppers", "KNZ birds", "PFNP Plants")
+names(labs) <- c("fish", "hoppers", 'birds', 'plants')
 
 detect_df %>%
-  mutate(dataset = factor(dataset, levels = c("hoppers", "fish", 'birds'))) %>%
+  mutate(dataset = factor(dataset, levels = c("hoppers", "fish", 'birds', 'plants'))) %>%
 ggplot(aes(x = `50%`)) +
   geom_histogram() +
   facet_grid(dataset~.,
              labeller = labeller(dataset = labs)) +
-  labs(x = "Species-level detectoin probability",
+  labs(x = "Species-level detection probability",
        y = "Count") +
   theme(strip.background = element_rect(fill = "white"))
+
+detect_df %>%
+  mutate(dataset = factor(dataset, levels = c("hoppers", "fish", 'birds', 'plants'))) %>%
+  ggplot(aes(x = dataset, y = `50%`)) +
+  geom_boxplot() +
+  labs(x = "Dataset", 
+       y = "Species-level detection probability") +
+  scale_x_discrete(labels = labs) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave(plot = last_plot(),
        filename = here("pictures",
@@ -90,6 +110,3 @@ ggsave(plot = last_plot(),
        height = 7,
        width = 8,
        units = "in")
-
-ggplot(bird_det2, aes(x = `50%`)) +
-  geom_histogram()

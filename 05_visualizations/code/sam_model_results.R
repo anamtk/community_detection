@@ -68,17 +68,17 @@ bird_bray <- read.csv(here('02_konza_birds',
 
 # Effect plots ------------------------------------------------------------
 
-fisheffectsplot <- effects_plot_fun(fish_sam) +
+(fisheffectsplot <- effects_plot_fun(fish_sam) +
   labs(title = "SBC fish") +
   scale_x_discrete(labels = c("Kelp Biomass", "Temperature")) +
   theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5)))
 
-seveffectsplot <- effects_plot_fun(sev_sam)  +
+(seveffectsplot <- effects_plot_fun(sev_sam)  +
   labs(title = "SEV grasshoppers") +
   scale_x_discrete(labels = c("Temperature", "Plant biomass")) +
   theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5)))
 
 (birdeffectsplot <- effects_plot_fun(bird_sam) + 
   labs(title = "KNZ birds") +
