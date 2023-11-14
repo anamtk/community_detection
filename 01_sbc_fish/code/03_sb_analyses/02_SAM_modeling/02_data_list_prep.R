@@ -68,8 +68,7 @@ Kelp <- all_data %>%
   dplyr::select(DRY_GM2:DRY_GM2_l5) %>%
   as.matrix()
 
-sum(is.na(Kelp))
-sum(!is.na(Kelp))
+sum(is.na(Kelp))/(sum(!is.na(Kelp)) + sum(is.na(Kelp)))
 
 #~10% missing data
 
