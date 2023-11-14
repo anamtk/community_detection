@@ -306,7 +306,7 @@ write.csv(ids, here('03_sev_grasshoppers',
 #we'll do site one, and do whta folks used to do and just take the 
 #maximum number of individuals observed per species per year across
 #repeat surveys
-
+#all survey matrix
 matrix <- hopper4 %>%
   filter(site_web_trans == "BOER_1_108") %>%
   group_by(YEAR, speciesID) %>%
@@ -339,8 +339,52 @@ C <- colSums(c)
 bray <- (B + C)/(2*A+B+C)
 years <- 1992:2019
 
-raw_bray <- as.data.frame(cbind(raw_bray = bray,
+raw_bray <- as.data.frame(cbind(raw_bray_all = bray,
                                 year = years))
+
+#one-survey bray
+matrix2 <- hopper4 %>%
+  filter(site_web_trans == "BOER_1_108") %>%
+  group_by(YEAR, season, rep) %>%
+  mutate(r = cur_group_id()) %>%
+  ungroup() %>%
+  group_by(YEAR) %>%
+  filter(r == min(r)) %>%
+  ungroup() %>%
+  distinct(YEAR, CNT, speciesID) %>%
+  pivot_wider(names_from = YEAR,
+              values_from = CNT) %>%
+  column_to_rownames(var = 'speciesID')
+
+a2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+b2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+c2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+for(r in 1:nrow(matrix2)){
+  for(t in 2:ncol(matrix2)){
+    a2[r, t] <- min(c(matrix2[r,t-1], matrix2[r,t]))
+    b2[r,t] <- matrix2[r,t-1] - a2[r,t]
+    c2[r,t] <- matrix2[r,t] - a2[r,t]
+  }
+}
+
+A2 <- colSums(a2)
+B2 <- colSums(b2)
+C2 <- colSums(c2)
+
+bray2 <- (B2 + C2)/(2*A2+B2+C2)
+years <- 1992:2019
+
+raw_bray2 <- as.data.frame(cbind(raw_bray_one = bray2,
+                                year = years))
+
+raw_bray_all <- raw_bray %>%
+  left_join(raw_bray2, by = "year")
 
 saveRDS(raw_bray, here("05_visualizations",
                        "viz_data",
@@ -354,7 +398,7 @@ saveRDS(raw_bray, here("05_visualizations",
 #after the model
 
 diss_fun <- function(site){
-  
+  #all surveys
   matrix <- hopper4 %>%
     filter(siteID == site) %>%
     group_by(YEAR, speciesID) %>%
@@ -390,10 +434,59 @@ diss_fun <- function(site){
     filter(siteID == site) %>%
     distinct(yrID, siteID) %>%
     cbind(bray) %>%
-    mutate(type = "observed")
+    mutate(type = "observed_all")
   
-  return(bray_df)
+  #one survey
+  matrix2 <- hopper4 %>%
+    filter(siteID == site) %>%
+    group_by(YEAR, season, rep) %>%
+    mutate(r = cur_group_id()) %>%
+    ungroup() %>%
+    group_by(YEAR) %>%
+    filter(r == min(r)) %>%
+    ungroup() %>%
+    distinct(YEAR, CNT, speciesID) %>%
+    pivot_wider(names_from = YEAR,
+                values_from = CNT) %>%
+    column_to_rownames(var = 'speciesID')
+  
+  a2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  b2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  c2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  for(r in 1:nrow(matrix2)){
+    for(t in 2:ncol(matrix2)){
+      a2[r, t] <- min(c(matrix2[r,t-1], matrix2[r,t]))
+      b2[r,t] <- matrix2[r,t-1] - a2[r,t]
+      c2[r,t] <- matrix2[r,t] - a2[r,t]
+    }
+  }
+  
+  A2 <- colSums(a2)
+  B2 <- colSums(b2)
+  C2 <- colSums(c2)
+  
+  bray2 <- (B2 + C2)/(2*A2+B2+C2)
+  
+  bray_df2 <- hopper4 %>%
+    filter(siteID == site) %>%
+    distinct(yrID, siteID) %>%
+    cbind(bray2) %>%
+    rename(bray = bray2) %>%
+    mutate(type = "observed_one")
+  
+  bray_df_all <- bray_df %>%
+    rbind(bray_df2)
+  
+  return(bray_df_all)
 }
+
+diss_fun(site = 20)
 
 sites <- unique(hopper4$siteID)
 results <- lapply(sites, FUN = diss_fun)
