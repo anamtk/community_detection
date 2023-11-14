@@ -426,33 +426,33 @@ ymax[ymax == 0] <- NA
 # JSDM 
 
 #R needs to be positive definite,
-
-#trying shelby's code from Kiona/Jessica - need to ask what this means
-R<-diag(x=0.1, n.species, n.species)
-
-#omega also needs priors, which I'm going to attempt to define using
-#covariance among species abundances, we'll see how it goes
-
-t <- birds5 %>%
-  group_by(yrID, TransID, SpecID) %>%
-  summarise(COUNT = mean(NOBS, na.rm = T)) %>%
-  ungroup() %>%
-  unite("site_year", c("yrID", "TransID"),
-        sep = "_") %>%
-  dplyr::select(SpecID, COUNT, site_year) %>%
-  pivot_wider(names_from = SpecID,
-              values_from = COUNT,
-              values_fill = 0) %>%
-  column_to_rownames(var = "site_year") %>%
-  mutate(across(everything(), ~replace_na(.x, 0)))
 # 
+# #trying shelby's code from Kiona/Jessica - need to ask what this means
+# R<-diag(x=0.1, n.species, n.species)
 # 
-# ggcorrplot(cor(t), type = "lower",
-#            lab = FALSE)
-
-#set omega init to this - not sure if it will work with the NA values
-#or if i will need to define those as a value?? we can try it...
-omega.init <- cor(t)
+# #omega also needs priors, which I'm going to attempt to define using
+# #covariance among species abundances, we'll see how it goes
+# 
+# t <- birds5 %>%
+#   group_by(yrID, TransID, SpecID) %>%
+#   summarise(COUNT = mean(NOBS, na.rm = T)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "TransID"),
+#         sep = "_") %>%
+#   dplyr::select(SpecID, COUNT, site_year) %>%
+#   pivot_wider(names_from = SpecID,
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# # 
+# # 
+# # ggcorrplot(cor(t), type = "lower",
+# #            lab = FALSE)
+# 
+# #set omega init to this - not sure if it will work with the NA values
+# #or if i will need to define those as a value?? we can try it...
+# omega.init <- cor(t)
 
 # Prep list for JAGS ------------------------------------------------------
 
@@ -465,11 +465,8 @@ data <- list(n.species = n.species,
              effort = effort,
              size = size,
              y = y,
-             #omega prior:
-             R = R,
              #initials
-             ymax = ymax,
-             omega.init = omega.init)
+             ymax = ymax)
 
 
 #export that for using with the model
@@ -491,7 +488,7 @@ saveRDS(data, here('02_konza_birds',
 #repeat surveys
 
 #this correspondes to TransID == 3
-
+#max number ever observed calculation of braycurtis
 matrix <- birds5 %>%
   filter(WATERSHED == "004B") %>%
   group_by(RECYEAR, SpecID) %>%
@@ -524,10 +521,49 @@ C <- colSums(c)
 bray <- (B + C)/(2*A+B+C)
 years <- 1981:2009
 
-raw_bray <- as.data.frame(cbind(raw_bray = bray,
+raw_bray <- as.data.frame(cbind(raw_bray_all = bray,
                                 year = years))
 
-saveRDS(raw_bray, here("05_visualizations",
+#observed in just one survey version
+matrix2 <- birds5 %>%
+  filter(WATERSHED == "004B") %>%
+  filter(REP == 1) %>%
+  distinct(RECYEAR, NOBS, SpecID) %>%
+  pivot_wider(names_from = RECYEAR,
+              values_from = NOBS) %>%
+  column_to_rownames(var = 'SpecID')
+
+a2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+b2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+c2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+for(r in 1:nrow(matrix2)){
+  for(t in 2:ncol(matrix2)){
+    a2[r, t] <- min(c(matrix2[r,t-1], matrix2[r,t]))
+    b2[r,t] <- matrix2[r,t-1] - a2[r,t]
+    c2[r,t] <- matrix2[r,t] - a2[r,t]
+  }
+}
+
+A2 <- colSums(a2)
+B2 <- colSums(b2)
+C2 <- colSums(c2)
+
+bray2 <- (B2 + C2)/(2*A2+B2+C2)
+years <- 1981:2009
+
+raw_bray2 <- as.data.frame(cbind(raw_bray_one = bray2,
+                                year = years))
+
+raw_bray_all <- raw_bray %>%
+  left_join(raw_bray2, by = "year")
+
+saveRDS(raw_bray_all, here("05_visualizations",
                        "viz_data",
                        "knz_004B_raw_bray.RDS"))
 
@@ -574,9 +610,51 @@ diss_fun <- function(site){
     filter(TransID == site) %>%
     distinct(yrID, TransID) %>%
     cbind(bray) %>%
-    mutate(type = "observed")
+    mutate(type = "observed_all")
   
-  return(bray_df)
+  #one observation only
+  matrix2 <- birds5 %>%
+    filter(TransID == site) %>%
+    filter(REP == 1) %>%
+    distinct(yrID, NOBS, SpecID) %>%
+    pivot_wider(names_from = yrID,
+                values_from = NOBS) %>%
+    column_to_rownames(var = 'SpecID')
+  
+  a2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  b2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  c2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  for(r in 1:nrow(matrix2)){
+    for(t in 2:ncol(matrix2)){
+      a2[r, t] <- min(c(matrix2[r,t-1], matrix2[r,t]))
+      b2[r,t] <- matrix2[r,t-1] - a2[r,t]
+      c2[r,t] <- matrix2[r,t] - a2[r,t]
+    }
+  }
+  
+  A2 <- colSums(a)
+  B2 <- colSums(b)
+  C2 <- colSums(c)
+  
+  bray2 <- (B2 + C2)/(2*A2+B2+C2)
+  
+  bray_df2 <- birds5 %>%
+    filter(TransID == site) %>%
+    distinct(yrID, TransID) %>%
+    cbind(bray2) %>%
+    rename(bray = bray2) %>%
+    mutate(type = "observed_one")
+  
+  bray_df_all <- bray_df %>%
+    rbind(bray_df2)
+  
+  return(bray_df_all)
 }
 
 sites <- unique(birds5$TransID)
