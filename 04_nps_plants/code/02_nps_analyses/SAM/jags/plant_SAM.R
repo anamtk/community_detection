@@ -6,7 +6,7 @@ model{
   # - beta distribution for Jaccard dissimilarlity input data
   # - incorporate uncertainty from the detection model
   # - SAM components to look at effects of VPD and PPT
-  # - hierarchical spatial effects of quadrat within plot (for now)
+  # - hierarchical spatial effects of quadrat within transect within plot
   # - various other options to code this RE structure, depending
   ### on the distribution of quadrats across plots and adding more data
   
@@ -108,28 +108,31 @@ model{
   
   #OPTION 1:
   #hierarchical centering of quads on plots on b0
-  for(q in 1:n.quads){
-    b0.quad[q] ~ dnorm(b0.plot[Plot.ID[q]], tau.quad)
-  }
-  
-  for(p in 1:n.plots){
-    b0.plot[p] ~ dnorm(b0, tau.plot)
-  }
-  
-  #OPTION 2: (if we add more quads)
-  # #hierarchical centering of quads on transects on plots on b0
   # for(q in 1:n.quads){
-  #   b0.quad[q] ~ dnorm(b0.transect[Transect.ID[q]], tau.quad)
+  #   b0.quad[q] ~ dnorm(b0.plot[Plot.ID[q]], tau.quad)
   # }
   # 
-  # for(t in 1:n.transects){
-  #   b0.transect[t] ~ dnorm(b0.plot[Plot.ID[t]], tau.transect)
+  # for(p in 1:n.plots){
+  #   b0.plot[p] ~ dnorm(b0, tau.plot)
   # }
-  # 
-  # for(s in 1:n.plots){
-  #   b0.plot[s] ~ dnorm(b0, tau.plot)
-  # }
-  # 
+  
+  #OPTION 2: (if we add more quads - i added all quads on
+  #transects with repeat measurements on at least one quadrat)
+  # #hierarchical centering of quads on transects on plots on b0
+  for(q in 1:n.quads){
+    b0.quad[q] ~ dnorm(b0.transect[Transect.ID[q]], tau.quad)
+  }
+
+  for(t in 1:n.transects){
+    b0.transect[t] ~ dnorm(b0.plot[Plot.ID[t]], tau.transect)
+  }
+
+  #check how many plots are in the dataset - if it isn't that many,
+  #then we can remove this hierarchy (~ <5)
+  for(s in 1:n.plots){
+    b0.plot[s] ~ dnorm(b0, tau.plot)
+  }
+
   #OPTION 3: (if low sample size/plot)
   #if not using plot RE
   # for(t in 1:n.quads){
@@ -141,9 +144,11 @@ model{
   #for low # of levels, from Gellman paper - define sigma
   # as uniform and then precision in relation to this sigma
   sig.quad ~ dunif(0, 10)
+  sig.transect ~ dunif(0, 10)
   sig.plot ~ dunif(0, 10)
   
   tau.quad <- 1/pow(sig.quad,2)
+  tau.transect <- 1/pow(sig.transect,2)
   tau.plot <- 1/pow(sig.plot,2)
   
   for(i in 1:2){
