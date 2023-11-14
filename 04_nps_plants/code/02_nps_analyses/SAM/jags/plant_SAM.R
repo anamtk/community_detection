@@ -16,8 +16,8 @@ model{
     # Likelihood ###
     #-------------------------------------##
     
-    #jaccard is proportional, so beta distribution works here
-    jaccard[i] ~ dbeta(alpha[i], beta[i])
+    #diss is proportional, so beta distribution works here
+    diss[i] ~ dbeta(alpha[i], beta[i])
     
     #var.process is scalar but could be made dependent on site/other variables
     #phi incorporates mu (mean estimate), var.estimate (which is from
