@@ -61,16 +61,13 @@ fish1 <- fish %>%
   #make NA values for visibility
   mutate(VIS = case_when(VIS == -99999 ~ NA_real_,
                          TRUE ~ VIS)) %>%
-  group_by(YEAR, SITE,MONTH, TRANSECT) %>%
+  group_by(YEAR, SITE,MONTH, DATE, TRANSECT) %>%
   #fill missing VIS values for all species on a transect-year-month
   fill(VIS, .direction = "updown") %>%
   ungroup() %>%
   #set rid of NA counts
   mutate(COUNT = case_when(COUNT == -99999 ~ NA_integer_,
                            TRUE ~ COUNT)) %>%
-  group_by(YEAR, SITE,  MONTH, TRANSECT, VIS, SP_CODE) %>%
-  #get total count per species for all year-months
-  summarise(COUNT = sum(COUNT, na.rm = T)) %>%
   #ungroup that dataset
   ungroup() %>%
   unite(SITE_TRANS,
@@ -78,7 +75,11 @@ fish1 <- fish %>%
         sep = "_",
         remove = F) %>%
   #remove two transect only surveyed for a few years
-  filter(!SITE_TRANS %in% c("ABUR_3", "ABUR_2") )
+  filter(!SITE_TRANS %in% c("ABUR_3", "ABUR_2") ) %>%
+  group_by(YEAR, SITE, SITE_TRANS, MONTH,DATE, TRANSECT, VIS, SP_CODE) %>%
+  #get total count per species for all year-months
+  summarise(COUNT = sum(COUNT, na.rm = T)) %>%
+  ungroup()
 
 #add other transects from those sites that only
 #have one survey, by taking the annual data
@@ -92,8 +93,12 @@ bs2 <- bs %>%
         remove = F) %>%
   filter(!SITE_TRANS %in% c('ABUR_1', "ABUR_2", 
                             "AQUE_1", "MOHK_1")) %>%
-  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
-                TRANSECT, VIS, SP_CODE, COUNT)
+  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH, DATE,
+                TRANSECT, VIS, SP_CODE, COUNT) %>%
+  group_by(YEAR, SITE_TRANS, SITE, MONTH, DATE, 
+           TRANSECT, VIS, SP_CODE) %>%
+  summarise(COUNT = sum(COUNT, na.rm = T)) %>%
+  ungroup()
 
 #min(bs2$VIS, na.rm = T)
 
@@ -103,8 +108,12 @@ bs3 <- bs %>%
         c("SITE", "TRANSECT"),
         sep = "_",
         remove = F) %>%
-  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH,
-                TRANSECT, VIS, SP_CODE, COUNT)
+  dplyr::select(YEAR, SITE_TRANS, SITE, MONTH, DATE,
+                TRANSECT, VIS, SP_CODE, COUNT) %>%
+  group_by(YEAR, SITE_TRANS, SITE, MONTH, DATE,
+           TRANSECT, VIS, SP_CODE) %>%
+  summarise(COUNT = sum(COUNT, na.rm = T)) %>%
+  ungroup()
 
 #combine these datasets
 fish2 <- fish1 %>%
@@ -120,7 +129,7 @@ fish2 <- fish1 %>%
   #for all surveys
   mutate(SP_CODE = as.factor(SP_CODE)) %>%
   #group by unique surveyes
-  group_by(SITE_TRANS, YEAR, MONTH) %>%
+  group_by(SITE_TRANS, YEAR,DATE, MONTH, SITE, TRANSECT) %>%
   #complete species list for each survey
   complete(SP_CODE) %>%
   #fill all the data that was missing in this
@@ -166,11 +175,11 @@ fish2 %>%
 # model them later in JAGS (jags likes numbers)
 groups <- fish2 %>%
   #get the distinct combos of year and month
-  distinct(SITE_TRANS, YEAR, MONTH) %>%
+  distinct(SITE_TRANS, YEAR, MONTH, DATE) %>%
   #group by year
   group_by(SITE_TRANS, YEAR) %>%
   #arrange in order by month each year
-  arrange(MONTH) %>%
+  arrange(MONTH, DATE) %>%
   #give each month within a year a 1:4 count
   mutate(REP = 1:n()) %>%
   #ungroup
@@ -179,7 +188,7 @@ groups <- fish2 %>%
 #combine those month IDs and missing months with the 
 #fish observation dataset
 fish3 <- fish2 %>%
-  left_join(groups, by = c('SITE_TRANS', 'YEAR', 'MONTH')) %>%
+  left_join(groups, by = c('SITE_TRANS', 'YEAR', 'MONTH', 'DATE')) %>%
   #make numreic variables for year and species
   mutate(specID = as.numeric(as.factor(SP_CODE)),
          yrID = as.numeric(as.factor(YEAR))) %>%
@@ -208,7 +217,7 @@ fish4 %>%
   filter(COUNT >0) %>%
   tally()
 
-79643/(11297+79643)
+62449/(6347+62449)
 
 # Get covariates in order -------------------------------------------------
 
@@ -238,7 +247,7 @@ for(i in 1:dim(fish4)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the scaled vis data
   # for that sitexyearxreplicate combo
-  vis[site[i], yr[i], rep[i]] <- as.numeric(fish4[i,5])
+  vis[site[i], yr[i], rep[i]] <- as.numeric(fish4[i,6])
 }
 
 ### BODY SIZE covariate ###
@@ -332,7 +341,7 @@ for(i in 1:dim(fish4)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the 1-0 occupancy
   # for that speciesxyearxreplicate combo
-  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(fish4[i,6])
+  y[spec[i], site[i], yr[i], rep[i]] <- as.numeric(fish4[i,7])
 }
 
 #generate the z-matrix of speciesxsitexyear which assumes
@@ -372,13 +381,13 @@ for(i in 1:dim(Ndf)[1]){ #dim[1] = n.rows
 #set all zeros (which could be true or false) to NA
 ymax[ymax == 0] <- NA
 
-z <- ymax
+#z <- ymax
 
-z[z > 0] <- 1
+#z[z > 0] <- 1
 
-ymax2 <- ymax
+#ymax2 <- ymax
 
-ymax2[is.na(ymax2)] <- 1
+#ymax2[is.na(ymax2)] <- 1
 
 # Get covariates and list elements ----------------------------------------
 
@@ -435,24 +444,24 @@ n.rep <- fish4 %>%
 #R needs to be positive definite,
 
 #trying shelby's code from Kiona/Jessica - need to ask what this means
-R<-diag(x=0.1, n.species, n.species)
-
-#omega also needs priors, which I'm going to attempt to define using
-#covariance among species abundances, we'll see how it goes
-
-t <- fish4 %>%
-  group_by(yrID, siteID, specID) %>%
-  summarise(COUNT = mean(COUNT, na.rm = T)) %>%
-  ungroup() %>%
-  unite("site_year", c("yrID", "siteID"),
-        sep = "_") %>%
-  dplyr::select(specID, COUNT, site_year) %>%
-  pivot_wider(names_from = specID,
-              values_from = COUNT,
-              values_fill = 0) %>%
-  column_to_rownames(var = "site_year") %>%
-  mutate(across(everything(), ~replace_na(.x, 0)))
+# R<-diag(x=0.1, n.species, n.species)
 # 
+# #omega also needs priors, which I'm going to attempt to define using
+# #covariance among species abundances, we'll see how it goes
+# 
+# t <- fish4 %>%
+#   group_by(yrID, siteID, specID) %>%
+#   summarise(COUNT = mean(COUNT, na.rm = T)) %>%
+#   ungroup() %>%
+#   unite("site_year", c("yrID", "siteID"),
+#         sep = "_") %>%
+#   dplyr::select(specID, COUNT, site_year) %>%
+#   pivot_wider(names_from = specID,
+#               values_from = COUNT,
+#               values_fill = 0) %>%
+#   column_to_rownames(var = "site_year") %>%
+#   mutate(across(everything(), ~replace_na(.x, 0)))
+# # 
 # t2 <- fish4 %>%
 #   group_by(yrID, siteID, specID) %>%
 #   summarise(COUNT = max(COUNT, na.rm = T)) %>%
@@ -480,89 +489,89 @@ t <- fish4 %>%
 #   mutate(across(everything(), ~replace_na(.x, 0)))
 # 
 
-t1 <- t[1:64,]
-t2 <- t[65:128,]
-t3 <- t[129:194,]
-
-t_cov <- cov(t1)
-t_cov2 <- cov(t2)
-t_cov3 <- cov(t3)
-#get mean value of diagonal values that are not 0
-diag_mean <- mean(diag(t_cov)[diag(t_cov) != 0])
-diag_mean2 <- mean(diag(t_cov2)[diag(t_cov2) != 0])
-diag_mean3 <- mean(diag(t_cov3)[diag(t_cov3) != 0])
-#set all zero values on diagonal to be that mean value
-#set all diagonals to the mean (this did work):
-diag(t_cov) <- diag_mean
-diag(t_cov2) <- diag_mean2
-diag(t_cov3) <- diag_mean3
-
-#top and bottom 5% of off-diagonal
-(upper <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0)], 
-         probs = c(0.95)))
-(lower <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0)], 
-         probs = c(0.05)))
-(upper2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > 0)], 
-                   probs = c(0.95)))
-(lower2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0)], 
-                   probs = c(0.05)))
-(upper3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > 0)], 
-                   probs = c(0.95)))
-(lower3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0)], 
-                   probs = c(0.05)))
-
-
-#find mean of values that are positivie but less than the upper quantile
-umean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < upper) & ((t_cov) > 0)])
-#set all extreme positive values to this mean
-t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) >= upper)] <- umean
-
-#find the mean of values tha are negative but greater than the lower quantile
-lmean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > lower) & ((t_cov) < 0)])
-#set all extreme negative values to this mean
-t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0) & (t_cov <= lower)] <- lmean
-
-#get off diagonal mean that is not 0
-odiag_mean <- mean(t_cov[!t_cov == 0])
-#set any zero values to that off diagonal mean
-t_cov[t_cov == 0] <- odiag_mean
-
-#find mean of values that are positivie but less than the upper quantile
-umean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < upper2) & ((t_cov2) > 0)])
-#set all extreme positive values to this mean
-t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) >= upper2)] <- umean2
-
-#find the mean of values tha are negative but greater than the lower quantile
-lmean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > lower2) & ((t_cov2) < 0)])
-#set all extreme negative values to this mean
-t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0) & (t_cov2 <= lower2)] <- lmean2
-
-#get off diagonal mean that is not 0
-odiag_mean2 <- mean(t_cov2[!t_cov2 == 0])
-#set any zero values to that off diagonal mean
-t_cov2[t_cov2 == 0] <- odiag_mean2
-
-#find mean of values that are positivie but less than the upper quantile
-umean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < upper3) & ((t_cov3) > 0)])
-#set all extreme positive values to this mean
-t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) >= upper3)] <- umean3
-
-#find the mean of values tha are negative but greater than the lower quantile
-lmean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > lower3) & ((t_cov3) < 0)])
-#set all extreme negative values to this mean
-t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0) & (t_cov3 <= lower3)] <- lmean3
-
-#get off diagonal mean that is not 0
-odiag_mean3 <- mean(t_cov3[!t_cov3 == 0])
-#set any zero values to that off diagonal mean
-t_cov3[t_cov3 == 0] <- odiag_mean3
-
-#invert to get precision matrix
-omega.init <- ginv(t_cov)
-#these are currently not working
-omega.init1 <- ginv(t_cov)
-omega.init2 <- ginv(t_cov2)
-omega.init3 <- ginv(t_cov3)
+# t1 <- t[1:64,]
+# t2 <- t[65:128,]
+# t3 <- t[129:194,]
+# 
+# t_cov <- cov(t1)
+# t_cov2 <- cov(t2)
+# t_cov3 <- cov(t3)
+# #get mean value of diagonal values that are not 0
+# diag_mean <- mean(diag(t_cov)[diag(t_cov) != 0])
+# diag_mean2 <- mean(diag(t_cov2)[diag(t_cov2) != 0])
+# diag_mean3 <- mean(diag(t_cov3)[diag(t_cov3) != 0])
+# #set all zero values on diagonal to be that mean value
+# #set all diagonals to the mean (this did work):
+# diag(t_cov) <- diag_mean
+# diag(t_cov2) <- diag_mean2
+# diag(t_cov3) <- diag_mean3
+# 
+# #top and bottom 5% of off-diagonal
+# (upper <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > 0)], 
+#          probs = c(0.95)))
+# (lower <- quantile(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0)], 
+#          probs = c(0.05)))
+# (upper2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > 0)], 
+#                    probs = c(0.95)))
+# (lower2 <- quantile(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0)], 
+#                    probs = c(0.05)))
+# (upper3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > 0)], 
+#                    probs = c(0.95)))
+# (lower3 <- quantile(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0)], 
+#                    probs = c(0.05)))
+# 
+# 
+# #find mean of values that are positivie but less than the upper quantile
+# umean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < upper) & ((t_cov) > 0)])
+# #set all extreme positive values to this mean
+# t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) >= upper)] <- umean
+# 
+# #find the mean of values tha are negative but greater than the lower quantile
+# lmean <- mean(t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) > lower) & ((t_cov) < 0)])
+# #set all extreme negative values to this mean
+# t_cov[!(col(t_cov) == row(t_cov)) & ((t_cov) < 0) & (t_cov <= lower)] <- lmean
+# 
+# #get off diagonal mean that is not 0
+# odiag_mean <- mean(t_cov[!t_cov == 0])
+# #set any zero values to that off diagonal mean
+# t_cov[t_cov == 0] <- odiag_mean
+# 
+# #find mean of values that are positivie but less than the upper quantile
+# umean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < upper2) & ((t_cov2) > 0)])
+# #set all extreme positive values to this mean
+# t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) >= upper2)] <- umean2
+# 
+# #find the mean of values tha are negative but greater than the lower quantile
+# lmean2 <- mean(t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) > lower2) & ((t_cov2) < 0)])
+# #set all extreme negative values to this mean
+# t_cov2[!(col(t_cov2) == row(t_cov2)) & ((t_cov2) < 0) & (t_cov2 <= lower2)] <- lmean2
+# 
+# #get off diagonal mean that is not 0
+# odiag_mean2 <- mean(t_cov2[!t_cov2 == 0])
+# #set any zero values to that off diagonal mean
+# t_cov2[t_cov2 == 0] <- odiag_mean2
+# 
+# #find mean of values that are positivie but less than the upper quantile
+# umean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < upper3) & ((t_cov3) > 0)])
+# #set all extreme positive values to this mean
+# t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) >= upper3)] <- umean3
+# 
+# #find the mean of values tha are negative but greater than the lower quantile
+# lmean3 <- mean(t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) > lower3) & ((t_cov3) < 0)])
+# #set all extreme negative values to this mean
+# t_cov3[!(col(t_cov3) == row(t_cov3)) & ((t_cov3) < 0) & (t_cov3 <= lower3)] <- lmean3
+# 
+# #get off diagonal mean that is not 0
+# odiag_mean3 <- mean(t_cov3[!t_cov3 == 0])
+# #set any zero values to that off diagonal mean
+# t_cov3[t_cov3 == 0] <- odiag_mean3
+# 
+# #invert to get precision matrix
+# omega.init <- ginv(t_cov)
+# #these are currently not working
+# omega.init1 <- ginv(t_cov)
+# omega.init2 <- ginv(t_cov2)
+# omega.init3 <- ginv(t_cov3)
 
 
 # Make data list to export ------------------------------------------------
@@ -579,17 +588,7 @@ data <- list(y = y,
              n.transects = n.transects,
              n.rep = n.rep,
              #for initials
-             ymax = ymax,
-             ymax2 = ymax2,
-             z = z,
-             omega.init = omega.init,
-             omega.init1 = omega.init1,
-             omega.init2 = omega.init2,
-             omega.init3 = omega.init3,
-             #for omega prior
-             R = R,
-             #for hierarchical prior
-             Astar = 1)
+             ymax = ymax)
 
 #export that for using with the model
 saveRDS(data, here('01_sbc_fish',
@@ -668,10 +667,47 @@ C <- colSums(c)
 bray <- (B + C)/(2*A+B+C)
 years <- 2002:2022
 
-raw_bray <- as.data.frame(cbind(raw_bray = bray,
+raw_bray <- as.data.frame(cbind(raw_bray_all = bray,
                                 year = years))
 
-saveRDS(raw_bray, here("05_visualizations",
+matrix2 <- fish4 %>%
+  filter(SITE_TRANS == "ABUR_1") %>%
+  filter(REP == 1) %>%
+  distinct(YEAR, COUNT, specID) %>%
+  pivot_wider(names_from = YEAR,
+              values_from = COUNT) %>%
+  column_to_rownames(var = 'specID')
+
+a2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+b2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+c2 <- matrix(NA, nrow = nrow(matrix2),
+            ncol = ncol(matrix2))
+
+for(r in 1:nrow(matrix2)){
+  for(t in 2:ncol(matrix2)){
+    a2[r, t] <- min(c(matrix2[r,t-1], matrix2[r,t]))
+    b2[r,t] <- matrix2[r,t-1] - a2[r,t]
+    c2[r,t] <- matrix2[r,t] - a2[r,t]
+  }
+}
+
+A2 <- colSums(a2)
+B2 <- colSums(b2)
+C2 <- colSums(c2)
+
+bray2 <- (B2 + C2)/(2*A2+B2+C2)
+
+raw_bray2 <- as.data.frame(cbind(raw_bray_one = bray2,
+                                year = years))
+
+raw_bray_all <- raw_bray %>%
+  left_join(raw_bray2, by = "year")
+
+saveRDS(raw_bray_all, here("05_visualizations",
                        "viz_data",
                        "sbc_ABUR1_raw_bray.RDS"))
 
@@ -719,9 +755,50 @@ diss_fun <- function(site){
     filter(siteID == site) %>%
     distinct(yrID, siteID) %>%
     cbind(bray) %>%
-    mutate(type = "observed")
+    mutate(type = "observed_all")
+  
+  matrix2 <- fish4 %>%
+    filter(siteID == site) %>%
+    filter(REP == 1) %>%
+    distinct(YEAR, COUNT, specID) %>%
+    pivot_wider(names_from = YEAR,
+                values_from = COUNT) %>%
+    column_to_rownames(var = 'specID')
+  
+  a2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  b2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  c2 <- matrix(NA, nrow = nrow(matrix2),
+              ncol = ncol(matrix2))
+  
+  for(r in 1:nrow(matrix2)){
+    for(t in 2:ncol(matrix2)){
+      a2[r, t] <- min(c(matrix2[r,t-1], matrix2[r,t]))
+      b2[r,t] <- matrix2[r,t-1] - a2[r,t]
+      c2[r,t] <- matrix2[r,t] - a2[r,t]
+    }
+  }
+  
+  A2 <- colSums(a2)
+  B2 <- colSums(b2)
+  C2 <- colSums(c2)
+  
+  bray2 <- (B2 + C2)/(2*A2+B2+C2)
 
-  return(bray_df)
+  bray_df2 <- fish4 %>%
+    filter(siteID == site) %>%
+    distinct(yrID, siteID) %>%
+    cbind(bray2) %>%
+    rename(bray = bray2) %>%
+    mutate(type = "observed_one")
+  
+  bray_df_all <- bray_df %>%
+    rbind(bray_df2)
+  
+  return(bray_df_all)
 }
 
 sites <- unique(fish4$siteID)
