@@ -140,13 +140,12 @@ plant_effects2 <- plant_effects %>%
          y = "Covariate effect \n (Median and 95% BCI)") +
     scale_x_discrete(labels = c("Perennial forb", "Perennial grass", 'Perennial shrub',
                                 'Annual grass', 'Biennial forb', 'Perennial cacti',
-                                'Perennial succulent')) + 
+                                'Perennial succulent')) +
     theme(axis.text = element_text(size = 12),
           axis.title= element_text(size = 15),
           axis.text.x = element_text(angle = 45, hjust = 1),
           plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)) +
-  annotate(geom = "text", x = 3, y = 45, label = "*", size = 8))
+          plot.title = element_text(hjust = 0.5)) )
 
 plants <- plantdetect1 + plantdetect2
 
