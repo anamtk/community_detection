@@ -310,9 +310,10 @@ sev_boxplot
 nps_boxplot <- boxplot_function("plants")
 nps_boxplot
 
-all_boxplot <- (knz_boxplot | sbc_boxplot) /
+all_boxplot <- (sbc_boxplot | knz_boxplot) /
                (sev_boxplot | nps_boxplot)
-all_boxplot
+all_boxplot +
+  plot_annotation(tag_levels = "A")
 
 
 ggsave(plot = last_plot(),

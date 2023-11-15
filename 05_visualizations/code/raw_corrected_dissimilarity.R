@@ -31,7 +31,7 @@ raw_sbc <- readRDS(here("05_visualizations",
 
 #rename to merge
 raw_sbc <- raw_sbc %>%
-  rename(raw_diss = raw_bray)
+  rename(raw_diss = raw_bray_all) 
 
 #this is 100 random posterior samples of the "bray" object from the 
 #model (what is the model predicting bray to be across specific
@@ -64,7 +64,7 @@ raw_knz <- readRDS(here("05_visualizations",
                          "knz_004B_raw_bray.RDS"))
 
 raw_knz <- raw_knz %>%
-  rename(raw_diss = raw_bray)
+  rename(raw_diss = raw_bray_all)
 
 #this is 100 random posterior samples of the "bray" object from the 
 #model (what is the model predicting bray to be across specific
@@ -93,7 +93,7 @@ raw_sev <- readRDS(here('05_visualizations',
                         'sev_BOER_1_108_raw_bray.RDS'))
 
 raw_sev <- raw_sev %>%
-  rename(raw_diss = raw_bray)
+  rename(raw_diss = raw_bray_all)
 
 samples_sev <- readRDS(here('05_visualizations',
                             'viz_data',
@@ -123,7 +123,7 @@ raw_nps <- readRDS(here('05_visualizations',
                         'nps_S02_B_3_raw_jaccard.RDS'))
 
 raw_nps <- raw_nps %>%
-  rename(raw_diss = turnover)
+  rename(raw_diss = turnover_all)
 
 
 samples_nps <- readRDS(here('05_visualizations',
@@ -245,7 +245,8 @@ timeseries_nps <- timeseries_function(dataset = "plants") +
   coord_cartesian(xlim = c(2007, 2022))
 
 timeseries_together <- timeseries_sbc / timeseries_knz / timeseries_sev / timeseries_nps
-timeseries_together
+timeseries_together +
+  plot_annotation(tag_levels = "A")
 
 ggsave(plot = last_plot(),
        filename = here("pictures",

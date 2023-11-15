@@ -86,6 +86,9 @@ bird_bray <- read.csv(here('02_konza_birds',
   theme(plot.title.position = "panel",
         plot.title = element_text(hjust = 0.5)))
 
+fisheffectsplot /birdeffectsplot / seveffectsplot +
+  plot_annotation(tag_levels = "A")
+
 ggsave(plot = last_plot(),
        filename = here('pictures',
                        'sam_models',
@@ -236,12 +239,19 @@ coldcol <- '#5ab4ac'
 (hoppernppgraphs <- hoppernpp + hopper_npp_weights_plot)
 
 
-# ggsave(filename = here('pictures',
-#                        'sam_models',
-#                        'sam_partial_plots.jpg'),
-#        height = 7, 
-#        width = 8,
-#        units = "in")
+
+
+# Export ------------------------------------------------------------------
+
+fishtgraphs / hoppertgraphs / hoppernppgraphs +
+  plot_annotation(tag_levels = "A")
+
+ggsave(filename = here('pictures',
+                       'sam_models',
+                       'sam_partial_plots.jpg'),
+       height = 7,
+       width = 8,
+       units = "in")
 
 
 # Bird partial pluts ------------------------------------------------------

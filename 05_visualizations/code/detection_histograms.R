@@ -95,7 +95,7 @@ ggplot(aes(x = `50%`)) +
   theme(strip.background = element_rect(fill = "white"))
 
 detect_df %>%
-  mutate(dataset = factor(dataset, levels = c("hoppers", "fish", 'birds', 'plants'))) %>%
+  mutate(dataset = factor(dataset, levels = c("fish", 'birds',"hoppers", 'plants'))) %>%
   ggplot(aes(x = dataset, y = `50%`)) +
   geom_boxplot() +
   labs(x = "Dataset", 
@@ -107,6 +107,6 @@ ggsave(plot = last_plot(),
        filename = here("pictures",
                        "detection_models",
                        "species_detection_probabilities.jpg"),
-       height = 7,
-       width = 8,
+       height = 4,
+       width = 5,
        units = "in")

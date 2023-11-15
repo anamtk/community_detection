@@ -69,6 +69,7 @@ fish_effects <- as.data.frame(fish_sum$quantiles) %>%
   coord_flip() +
   theme(axis.text = element_text(size = 12),
         axis.title= element_text(size = 15),
+        axis.title.y = element_blank(),
         plot.title.position = "panel",
         plot.title = element_text(hjust = 0.5)))
 
@@ -125,6 +126,7 @@ plant_effects1 <- plant_effects %>%
     coord_flip() +
     theme(axis.text = element_text(size = 12),
           axis.title= element_text(size = 15),
+          axis.title.y = element_blank(),
           plot.title.position = "panel",
           plot.title = element_text(hjust = 0.5)))
 
@@ -145,7 +147,7 @@ plant_effects2 <- plant_effects %>%
           axis.title= element_text(size = 15),
           axis.text.x = element_text(angle = 45, hjust = 1),
           plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)) )
+          plot.title = element_blank()) )
 
 plants <- plantdetect1 + plantdetect2
 
@@ -153,8 +155,16 @@ plants <- plantdetect1 + plantdetect2
 
 #I NEED HELP MAKING THESE PRETTTTHHHH
 
-fishdetect / birddetect/ plants
+fishdetect / birddetect/ plants +
+  plot_annotation(tag_levels = "A")
 
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "detection_covariate_effects.jpg"),
+       height = 9,
+       width = 8,
+       units = "in")
 
 # Old code for partial plots ----------------------------------------------
 
