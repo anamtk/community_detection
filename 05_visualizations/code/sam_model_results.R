@@ -451,4 +451,8 @@ coldcol <- '#5ab4ac'
 
 
 
+# Summaries for paper -----------------------------------------------------
 
+View(fish_sam$quantiles)
+View(bird_sam$quantiles)
+View(sev_sam$quantiles)

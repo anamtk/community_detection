@@ -326,7 +326,10 @@ ggsave(plot = last_plot(),
 
 # Looking at differences across datasets ----------------------------------
 
-
+library(brms)
+a1 <- brm(log_yield ~ log_width + NHD_RdDensWs +
+            Dam_binary + meanTemp + exc_y + (1|huc_2), 
+          data = dat_amax_brms, family = gaussian())
 
 m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
               data = all_diss,
