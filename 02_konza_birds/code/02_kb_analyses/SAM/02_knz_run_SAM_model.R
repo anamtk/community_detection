@@ -55,8 +55,8 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.burnin = 1000,
-                    n.iter = 10000,
+                    n.burnin = 3000,
+                    n.iter = 15000,
                     n.thin = 2,
                     DIC = TRUE)
 
@@ -78,7 +78,25 @@ saveRDS(sum, here('02_konza_birds',
                   'data_outputs',
                   'SAM',
                   'model_outputs',
-                  'sev_SAM_summary.RDS'))
+                  'knz_SAM_summary.RDS'))
+
+
+# Update for GOF ----------------------------------------------------------
+params2 <- c('bray.rep',
+            'resid')
+
+modGOF <- update(mod,
+                 parameters.to.save = params2,
+                 n.iter = 1335)
+
+sumGOF <- summary(modGOF$samples)
+
+saveRDS(sumGOF, here('02_konza_birds',
+                  'data_outputs',
+                  'SAM',
+                  'model_outputs',
+                  'knz_SAM_GOF_summary.RDS'))
+
 # Check interaction for overfitting ---------------------------------------
 
 
