@@ -327,13 +327,19 @@ ggsave(plot = last_plot(),
 # Looking at differences across datasets ----------------------------------
 
 library(brms)
-a1 <- brm(log_yield ~ log_width + NHD_RdDensWs +
-            Dam_binary + meanTemp + exc_y + (1|huc_2), 
-          data = dat_amax_brms, family = gaussian())
 
-m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
-              data = all_diss,
-              beta_family())
+
+# a1 <- brm(log_yield ~ log_width + NHD_RdDensWs +
+#             Dam_binary + meanTemp + exc_y + (1|huc_2), 
+#           data = dat_amax_brms, family = gaussian())
+
+# m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
+#               data = all_diss,
+#               beta_family())
+
+m1 <- brm(diss ~ type*dataset + (1|site_year),
+          data = all_diss,
+          family = Beta())
 
 summary(m1)
 
@@ -341,3 +347,19 @@ em <- emmeans(m1, pairwise ~ type | dataset)
 
 em
 
+t <- as.data.frame(em$contrasts)
+
+ggplot(t, aes(x = dataset, y= estimate, shape = contrast)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_point(size = 3, position = position_dodge(width = 0.4)) +
+  geom_errorbar(aes(ymin = lower.HPD, ymax = upper.HPD), 
+                width = 0, linewidth = 0.75,
+                position = position_dodge(width = 0.4))
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "observed_modeled_data_contrasts.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
