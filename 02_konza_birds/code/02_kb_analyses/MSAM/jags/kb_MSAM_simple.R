@@ -5,9 +5,6 @@ model{
       for(t in n.start[i]:n.end[i]){
         
         #biological process model
-        # z[k,i,t] ~ dbern(omega[k,t])
-        # N[k,i,t] ~ dpois(lambda[k,t]*z[k,i,t])
-        # 
         N[k,i,t] ~ dpois(lambda[k,t])
         
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
