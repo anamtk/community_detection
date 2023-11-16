@@ -31,7 +31,7 @@ model{
           #and total true abundance at the site
           y[k,i,t,r] ~ dbin(p[k], N[k,i,t])
           
-          #y.rep[k,i,t,r] ~ dbin(p[k], N[k,i,t])
+          y.rep[k,i,t,r] ~ dbin(p[k], N[k,i,t])
           
         }
         
