@@ -47,17 +47,16 @@ model{
 
   }
   
-  #Prior for bo.site hierarchically-centered on ovreall intercept
-  for(s in 1:n.sites){
-    b0.site[s] ~ dnorm(b0, tau.site)
+  #for every year but the last one:
+  for(y in 1:(n.sites-1)){
+    b0.site[y] ~ dnorm( 0, tau.site)
   }
+  #set the last year to be the -sum of all other years so the 
+  # overall fo all year levels == 0
+  b0.site[n.sites] <- -sum(b0.site[1:(n.sites-1)])
   
-  b0 ~ dnorm(0, 1E-2)
-  
-  #for low # of levels, from Gellman paper - define sigma
-  # as uniform and then precision in relation to this sigma
-  sig.site ~ dunif(0, 10)
-  tau.site <- 1/pow(sig.site,2)
+  tau.site <- pow(sig.site, -2)
+  sig.site ~ dunif(0,10)
   
   #for every year but the last one:
   for(y in 1:(n.years-1)){
