@@ -72,10 +72,10 @@ model{
     #-------------------------------------##
     # 
     # #replicated data
-    # beta.rep[i] ~ dbeta(alpha[i], beta[i])
+    beta.rep[i] ~ dbeta(alpha[i], beta[i])
     # 
     # #residuals - is this still right?
-    # resid[i] <- bray[i] - mu[i]
+    resid[i] <- bray[i] - mu[i]
     
   }
   

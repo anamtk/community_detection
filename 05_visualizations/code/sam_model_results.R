@@ -57,7 +57,7 @@ bird_sam <- readRDS(here('02_konza_birds',
                          'data_outputs',
                          'SAM',
                          'model_outputs',
-                         'sev_SAM_summary.RDS'))
+                         'knz_SAM_summary.RDS'))
 
 bird_bray <- read.csv(here('02_konza_birds',
                            'data_outputs',
