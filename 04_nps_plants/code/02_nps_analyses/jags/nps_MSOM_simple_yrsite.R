@@ -14,6 +14,8 @@ model{
             
             y[k,t,i,r] ~ dbern(p[k,t,i,r]*z[k,t,i])
             
+            y.rep[k,t,i,r] ~ dbern(p[k,t,i,r]*z[k,t,i])
+            
           }
         }
       #yearly values for each species for psi

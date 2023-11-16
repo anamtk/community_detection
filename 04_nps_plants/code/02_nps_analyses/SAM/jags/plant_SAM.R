@@ -68,6 +68,16 @@ model{
       PPT[i,t] ~ dnorm(mu.ppt, tau.ppt)
     }
     
+    #-------------------------------------## 
+    # Goodness of fit parameters ###
+    #-------------------------------------##
+    # 
+    # #replicated data
+    diss.rep[i] ~ dbeta(alpha[i], beta[i])
+    # 
+    # #residuals - is this still right?
+    resid[i] <- diss[i] - mu[i]
+    
   }
   
   #-------------------------------------## 
