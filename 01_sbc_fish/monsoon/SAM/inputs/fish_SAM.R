@@ -38,7 +38,9 @@ model{
     #kelp biomass, temperature, and chl-a
       logit(mu[i]) <- b0.transect[Transect.ID[i]] +
         b[1]*AntKelp[i] +
-        b[2]*AntTemp[i] 
+        b[2]*AntTemp[i]# +
+        #removed due to overfitting:
+      # b[3]*AntKelp[i]*AntTemp[i]
       
       #-------------------------------------## 
       # SAM summing ###
@@ -69,10 +71,10 @@ model{
       #-------------------------------------##
       # 
       # #replicated data
-      # beta.rep[i] ~ dbeta(alpha[i], beta[i])
+      bray.rep[i] ~ dbeta(alpha[i], beta[i])
       # 
       # #residuals - is this still right?
-      # resid[i] <- bray[i] - mu[i]
+      resid[i] <- bray[i] - mu[i]
  
   }
   
