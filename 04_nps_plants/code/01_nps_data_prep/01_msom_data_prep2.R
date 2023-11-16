@@ -508,6 +508,11 @@ write.csv(quadnums, here('04_nps_plants',
                          'metadata',
                          'site_year_IDs.csv'))
 
+write.csv(occ2, here('04_nps_plants',
+                     'data_outputs',
+                     'MSAM',
+                     'pfnp_tidy_data_for_model.csv'))
+
 # Raw Jaccard -------------------------------------------------------------
 
 #all survyes
