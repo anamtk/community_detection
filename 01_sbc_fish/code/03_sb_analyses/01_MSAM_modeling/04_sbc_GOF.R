@@ -99,3 +99,8 @@ obs <- observed %>%
 ggplot() +
   geom_density(data = obs, aes(x = total), fill = "black", alpha = 0.4) +
   geom_density(data = N_tot, aes(x = total), fill = 'blue', alpha = 0.4)
+
+ggplot() +
+  geom_density(data = obs, aes(x = mean), fill = 'black', alpha = 0.4) +
+  geom_density(data = N, aes(x = Mean), fill = "blue", alpha = 0.4) +
+  scale_x_log10()
