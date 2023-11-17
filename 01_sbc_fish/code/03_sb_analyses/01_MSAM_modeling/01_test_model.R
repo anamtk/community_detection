@@ -27,12 +27,19 @@ data <- readRDS(here('01_sbc_fish',
                      "data_outputs",
                      'MSAM',
                      "model_inputs",
-                     "fish_msam_dynmultisite.RDS"))
+                     "fish_msam_dynmultisiteRE.RDS"))
 
 # Parameters to save ------------------------------------------------------
 
 params <- c(
             #COMMUNITY parameters
+            'mu.b0species',
+            'sig.b0species',
+            'b0.site',
+            'b0.year',
+            'b0',
+            'sig.site',
+            'sig.year',
             'a1.Vis',
             'a2.Size',
             'mu.llambda',
@@ -65,7 +72,7 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "MSAM_simple.R")
+              "MSAM_simple_siteRE.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,

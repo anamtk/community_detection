@@ -5,12 +5,16 @@ model{
       for(t in n.start[i]:n.end[i]){
         
         #biological process model
-        N[k,i,t] ~ dpois(lambda[k,t])
+        N[k,i,t] ~ dpois(lambda[k,i,t])
+        
+        log(lambda[k,i,t]) <- b0.species[k] + 
+          b0.site[Site.ID[i]] + 
+          b0.year[Year.ID[t]]
         
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
           # Observation model
           logit(p[k,i,t,r]) <- a0[k] + #species-level intercept
-            a1.Effort*effort[i,t,r] + #visibility effect, not species dependent
+            a1.Vis*vis[i,t,r] + #visibility effect, not species dependent
             a2.Size*size[k] #size effect, not species dependent
             
             #abundance is binomial based on detection probability
@@ -27,22 +31,49 @@ model{
     
     #SPECIES-LEVEL PRIORS:
     #Detection intercept and slopes
-    a0[k] ~ dnorm(mu.a0, tau.a0)
-    #"baseline" detection at covariates = 0
+    a0[k] ~ dnorm(mu.a0,tau.a0)
+    
+    #"baseline" detection at vis = 0 and size = 0 
+    #on standardized scale
     p0[k] <- ilogit(a0[k])
     
-    for(t in 1:n.years){
-    llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    lambda[k,t] <- exp(llambda[k,t])
-    }
+    b0.species[k] ~ dnorm(mu.b0species, tau.b0species)
+    
+    
+    # for(t in 1:n.years){
+    # llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
+    # lambda[k,t] <- exp(llambda[k,t])
+    # }
 
   }
   
+  #for every year but the last one:
+  for(y in 1:(n.sites-1)){
+    b0.site[y] ~ dnorm( 0, tau.site)
+  }
+  #set the last year to be the -sum of all other years so the 
+  # overall fo all year levels == 0
+  b0.site[n.sites] <- -sum(b0.site[1:(n.sites-1)])
+  
+  tau.site <- pow(sig.site, -2)
+  sig.site ~ dunif(0,10)
+  
+  #for every year but the last one:
+  for(y in 1:(n.years-1)){
+    b0.year[y] ~ dnorm( 0, tau.year)
+  }
+  #set the last year to be the -sum of all other years so the 
+  # overall fo all year levels == 0
+  b0.year[n.years] <- -sum(b0.year[1:(n.years-1)])
+  
+  tau.year <- pow(sig.year, -2)
+  sig.year ~ dunif(0,10)
+  
   #Community-level hyperpriors
   #initial abundance
-  mu.llambda ~ dnorm(0, 0.00001)
-  sig.llambda ~ dunif(0, 10)
-  tau.llambda <- pow(sig.llambda, -2)
+  # mu.llambda ~ dnorm(0, 0.00001)
+  # sig.llambda ~ dunif(0, 10)
+  # tau.llambda <- pow(sig.llambda, -2)
   
   #initial occupancy
   #Detection intercept
@@ -50,27 +81,32 @@ model{
   tau.a0 <- pow(sig.a0, -2)
   sig.a0 ~ dunif(0, 50)
   
-  #covariate means
-  a1.Effort ~ dnorm(0, 0.001)
+  #species-level abundance
+  mu.b0species ~ dnorm(0, 0.001)
+  tau.b0species <- pow(sig.b0species, -2)
+  sig.b0species ~ dunif(0,50)
+  
+  #covariate effect priors
+  a1.Vis ~ dnorm(0, 0.001)
   a2.Size ~ dnorm(0, 0.001)
   
   #missing data 
-  #SOme data for effort are missing, so we're imputing them
+  #SOme data for visibility are missing, so we're imputing them
   for(i in 1:n.transects){
     for(t in n.start[i]:n.end[i]){
       for(r in 1:n.rep[i,t]){
-        #missing data in the effort column
-        effort[i,t,r] ~ dnorm(mu.missingeffort, tau.missingeffort)
+        #missing data in the visibility column
+        vis[i,t,r] ~ dnorm(mu.missingvis, tau.missingvis)
       }
     }
   }
   
   #PRIORS FOR IMPUTING MISSING DATA
   #Priors for mean and tau of missing covariates in the model
-  mu.missingeffort ~ dunif(-10, 10)
-  sig.missingeffort ~ dunif(0, 20)
-  tau.missingeffort <- pow(sig.missingeffort, -2)
-
+  mu.missingvis ~ dunif(-10, 10)
+  sig.missingvis ~ dunif(0, 20)
+  tau.missingvis <- pow(sig.missingvis, -2)
+ 
   
   #BRAY CURTIS DERIVED QUANTIIES
   #lots of ways to calculate this, but I did this way

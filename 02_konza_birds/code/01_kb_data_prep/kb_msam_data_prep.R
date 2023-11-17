@@ -669,6 +669,11 @@ saveRDS(results_df, here('05_visualizations',
 
 # Export metadata ---------------------------------------------------------
 
+write.csv(birds5, here('02_konza_birds',
+                       'data_outputs',
+                       'MSAM',
+                       'knz_tidy_data_for_model.csv'))
+
 sites <- birds5 %>%
   distinct(RECYEAR, TRANSNUM,
            WATERSHED,
