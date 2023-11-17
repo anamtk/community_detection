@@ -33,6 +33,7 @@ all_data <- read.csv(here("04_nps_plants",
 # Filter years with data on climate/npp -----------------------------------
 
 all_data2 <- all_data %>%
+  filter(!is.na(mean)) %>%
   mutate(Quad.ID = as.numeric(as.factor(quadnum))) %>%
   #make transect_num
   unite(c(Plot, Transect),
@@ -90,7 +91,7 @@ PPT <- all_data2  %>%
   as.matrix()
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
-#~21% missing data
+#~8% missing data
 
 VPD <- all_data2 %>%
   dplyr::select(quadnum, EventYear, VPD:VPD_l20) %>%
@@ -104,7 +105,7 @@ VPD <- all_data2 %>%
   as.matrix()
 
 sum(is.na(VPD))/(sum(is.na(VPD)) + sum(!is.na(VPD)))
-#~21% missing data
+#~8% missing data
 
 
 # Combine data into a data list -------------------------------------------
