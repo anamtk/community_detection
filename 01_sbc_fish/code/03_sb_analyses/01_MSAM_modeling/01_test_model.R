@@ -33,19 +33,17 @@ data <- readRDS(here('01_sbc_fish',
 
 params <- c(
             #COMMUNITY parameters
-            'mu.b0species',
-            'sig.b0species',
-            'b0.site',
-            'b0.year',
-            'b0',
-            'sig.site',
-            'sig.year',
+            'b0.star',
+            'eps.site.star',
+            'eps.year.star',
             'a1.Vis',
             'a2.Size',
-            'mu.llambda',
-            'sig.llambda',
             'mu.a0',
-            'sig.a0'
+            'sig.a0',
+            'mu.b0species',
+            'sig.b0species',
+            'sig.eps.site',
+            'sig.eps.year'
             )
 
 #params <- c("bray")
@@ -72,7 +70,7 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "MSAM_simple_siteRE.R")
+              "MSAM_simple_siteyearRE.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,
@@ -83,16 +81,16 @@ mod <- jagsUI::jags(data = data,
                     parallel = TRUE,
                     n.chains = 3,
                     #n.burnin = 2000,
-                    n.iter = 1,
+                    n.iter = 4000,
                     DIC = TRUE)
 
 end.time <- Sys.time()
 
 end.time - st.time
 # 
-# mcmcplot(mod$samples)
+#mcmcplot(mod$samples)
 # 
-# gelman.diag(mod$samples)
+#gelman.diag(mod$samples)
 # 
 # # Get inits ---------------------------------------------------------------
 # 
