@@ -33,10 +33,15 @@ data <- readRDS(here('03_sev_grasshoppers',
 
 params <- c(
             #COMMUNITY parameters
-            'mu.llambda',
-            'sig.llambda',
+            'b0.star',
+            'eps.site.star',
+            'eps.year.star',
             'p.mean',
-            'sig.lp')
+            'sig.lp', 
+            'mu.b0species',
+            'sig.b0species',
+            'sig.eps.site',
+            'sig.eps.year')
 
 
 #we found ymax to set initials, since otherwise the model will hate us

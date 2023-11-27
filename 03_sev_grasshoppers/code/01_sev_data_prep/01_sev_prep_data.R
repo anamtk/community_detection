@@ -217,6 +217,24 @@ for(i in 1:dim(Ndf)[1]){ #dim[1] = n.rows
 #set all zeros (which could be true or false) to NA
 ymax[ymax == 0] <- NA
 
+
+# Random effects ----------------------------------------------------------
+
+
+Site.ID <- hopper4 %>%
+  separate(site_web_trans,
+           into = c("site", "web", 'transect'),
+           remove = F,
+           sep = "_") %>%
+  distinct(siteID, site) %>%
+  mutate(site = as.numeric(as.factor(site))) %>%
+  dplyr::select(site) %>%
+  as_vector()
+
+Year.ID <- 1:28
+
+n.sites <- length(unique(Site.ID))
+
 # Make R covariance matrix ------------------------------------------------
 
 #n.species x n.species matrix of covariance between species abundances
@@ -269,13 +287,17 @@ data <- list(y = y,
              n.rep = n.rep,
              #for initials
              ymax = ymax,
+             n.sites = n.sites,
+             Year.ID = Year.ID,
+             Site.ID = Site.ID,
              omega.init = omega.init,
              #for omega prior
              R = R)
 
 #export that for using with the model
-saveRDS(data, here('sev_grasshopper',
+saveRDS(data, here('03_sev_grasshoppers',
                    "data_outputs",
+                   'MSAM',
                    "model_inputs",
                    "sev_msam_dynmultisite.RDS"))
 
