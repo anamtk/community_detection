@@ -80,6 +80,12 @@ subsample <- plants %>%
   filter(REP == 2) %>%
   dplyr::select(Plot, Transect, Quadrat)
 
+subsample_t <- plants %>%
+  distinct(Plot, Transect, Quadrat, Obs_type) %>%
+  mutate(REP = case_when(Obs_type == "Regular" ~ 1,
+                         TRUE ~ 2)) %>%
+  filter(REP == 2) %>%
+  dplyr::select(Plot, Transect)
 
 # subset_plots = as.numeric(sort(subsample$Plot))
 # # randomly choose 10 plots
@@ -93,8 +99,11 @@ subsample <- plants %>%
 
 #filter only quadrats that had two surveys - should be very few
 #quadrats
-plants <- subsample %>%
-  left_join(plants, by = c("Plot", "Transect", "Quadrat"))
+# plants <- subsample %>%
+#   left_join(plants, by = c("Plot", "Transect", "Quadrat"))
+
+plants <- subsample_t %>%
+  left_join(plants, by = c("Plot", "Transect"))
 
 
 # Remove always 0 plants from subset --------------------------------------
@@ -113,7 +122,14 @@ zerospecies <- plants %>%
   as_vector()
 
 plants <- plants %>%
-  filter(!CurrentSpecies %in% zerospecies)
+  filter(!CurrentSpecies %in% zerospecies) %>%
+  #remove any that are "spp."
+  filter(!str_detect(CurrentSpecies, "spp.")) %>%
+  #this one is always 0 and i don't know why it didn't get flagged above
+  filter(CurrentSpecies != 'Oenothera pallida')
+
+
+
 # Manipulate data structure ----------------------------------
 
 # ignoring species:
@@ -243,12 +259,13 @@ lifeforms %>%
 lifeforms2 <- lifeforms %>%
   distinct(SpecID, lifegroup) %>%
   #factor lifegroup to put in a logical order, with highest number first
-  mutate(lifegroup2 = factor(lifegroup, levels = c('forb_annual', "forb_biennial",
-                                                  'forb_perennial','forb_NA',
-                                                  'graminoid_annual','graminoid_perennial',
-                                                  'graminoid_NA',
-                                                  'shrub_perennial', 
-                                                  'cactus_perennial', 
+  mutate(lifegroup2 = factor(lifegroup, levels = c('forb_annual', 
+                                                   'forb_perennial',
+                                                   'graminoid_perennial',
+                                                   'shrub_perennial', 
+                                                   'graminoid_annual',
+                                                   'forb_biennial',
+                                                   'cactus_perennial', 
                                                    'succulent_perennial'))) %>%
   #make this numeric because JAGS wants numeric factor variables
   mutate(lifegroup2 = as.numeric(lifegroup2))
@@ -406,6 +423,19 @@ for(i in 1:dim(zdf)[1]){ #dim[1] = n.rows
 z[z == 0] <- NA
 
 
+
+# Random effects ----------------------------------------------------------
+
+Site.ID <- occ2 %>%
+  distinct(quadID, Plot) %>%
+  mutate(Plot = as.numeric(as.factor(Plot))) %>%
+  dplyr::select(Plot) %>%
+  as_vector()
+
+Year.ID <- 1:8
+
+n.sites
+
 # Make R covariance matrix ------------------------------------------------
 
 #n.species x n.species matrix of covariance between species abundances
@@ -469,7 +499,10 @@ data <- list(n.species = n.species,
              lifegroup = lifegroup,
              n.groups = n.groups,
              y = y,
-             z = z)
+             z = z,
+             Site.ID = Site.ID,
+             Year.ID = Year.ID,
+             n.sites = n.sites)
 
 saveRDS(data, here('04_nps_plants',
                    'data_outputs',

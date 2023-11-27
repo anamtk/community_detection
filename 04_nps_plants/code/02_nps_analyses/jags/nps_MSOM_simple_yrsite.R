@@ -4,7 +4,11 @@ model{
     for(t in 1:n.years){
         for(i in 1:quads[t]){
           
-          z[k,t,i] ~ dbern(psi[k,t])
+          z[k,t,i] ~ dbern(psi[k,t, i])
+          
+          logit(psi[k,t,i]) <- b0.species[k] +
+            eps.site[Site.ID[t,i], k] +
+            eps.year[Year.ID[t], k]
           
           for(r in 1:n.rep[t,i]){
             
@@ -18,9 +22,7 @@ model{
             
           }
         }
-      #yearly values for each species for psi
-      lpsi[k,t] ~ dnorm(mu.lpsi, tau.lpsi)
-      psi[k,t] <- ilogit(lpsi[k,t])
+
     }
     
     #if we add in detection covariates
@@ -29,25 +31,57 @@ model{
     
     #"baseline" detection at all covariates == 0
     p0[k] <- ilogit(a0[k])
+    
+    #abundance model (biological process)
+    #non-identifiable:
+    b0.species[k] ~ dnorm(mu.b0species, tau.b0species)
+    #identifiable species-level intercept:
+    #track this for convergence
+    b0.star[k] <- b0.species[k] + ave.eps.site[k] + ave.eps.year[k]
+    
   }
+  
+  #SITE W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.sites){
+      #non-identifiable random effect
+      eps.site[p,s] ~ dnorm(0, tau.eps.site)
+      #identifiable site random effect (monitor this)
+      eps.site.star[p,s] <- eps.site[p,s] - ave.eps.site[s]
+    }
+    #mean site level random effects within each species
+    ave.eps.site[s] <- mean(eps.site[,s])
+  }
+  
+  #YEARS W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.years){
+      #non-identifiable random effect
+      eps.year[p,s] ~ dnorm(0, tau.eps.year)
+      #identifiable year random effect (monitor this)
+      eps.year.star[p,s] <- eps.year[p,s] - ave.eps.year[s]
+    }
+    #mean year level random effects within each species
+    ave.eps.year[s] <- mean(eps.year[,s])
+  }
+  
 
   #Community-level hyperpriors
   #All species-level priors are centered around hyperpriors for 
   # the community for that variaable
   
-  #occupancy probability
-  #psi.mean ~ dbeta(1,1)
-  #mu.lpsi <- logit(psi.mean)
-  sig.lpsi ~ dunif(0, 100)
-  tau.lpsi <- pow(sig.lpsi, -2)
-
-  mu.lpsi ~ dnorm(0, 0.0001)
-
-  #Detection community means
-  # p.mean ~ dbeta(1, 1)
-  # mu.lp <- logit(p.mean)
-  # sig.lp ~ dunif(0, 5)
-  # tau.lp <- pow(sig.lp, -2)
+  #species-level abundance
+  mu.b0species ~ dnorm(0, 0.001)
+  tau.b0species <- pow(sig.b0species, -2)
+  sig.b0species ~ dunif(0,50)
+  
+  #site and year variances
+  sig.eps.site ~ dunif(0, 10)
+  tau.eps.site <- pow(sig.eps.site, -2)
+  sig.eps.year ~ dunif(0, 10)
+  tau.eps.year <- pow(sig.eps.year, -2)
 
   #If we add detection covariates:
   # #Detection intercept

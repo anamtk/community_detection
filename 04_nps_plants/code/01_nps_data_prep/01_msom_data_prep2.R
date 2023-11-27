@@ -420,6 +420,21 @@ for(i in 1:dim(zdf)[1]){ #dim[1] = n.rows
 z[z == 0] <- NA
 
 
+# Random effects ----------------------------------------------------------
+#matrix of year x quad
+Site.ID <- occ2 %>%
+  distinct(quadnum, yrID, Plot) %>%
+  mutate(Plot = as.numeric(as.factor(Plot))) %>%
+  arrange(quadnum) %>%
+  pivot_wider(names_from = quadnum,
+              values_from = Plot) %>%
+  as.matrix()
+
+n.sites <- max(Site.ID, na.rm = T)
+
+#YearID
+Year.ID <- 1:10
+
 # Make R covariance matrix ------------------------------------------------
 
 #n.species x n.species matrix of covariance between species abundances
@@ -485,7 +500,10 @@ data <- list(n.species = n.species,
              lifegroup = lifegroup,
              n.groups = n.groups,
              y = y,
-             z = z)
+             z = z,
+             n.sites = n.sites,
+             Year.ID = Year.ID,
+             Site.ID = Site.ID)
 
 # saveRDS(data, here('04_nps_plants',
 #                    'data_outputs',
@@ -497,7 +515,7 @@ saveRDS(data, here('04_nps_plants',
                    'data_outputs',
                    'MSAM',
                    'model_inputs',
-                   'nps_msam_multisite_all.RDS'))
+                   'nps_msam_multisite_subset.RDS'))
 
 
 
