@@ -80,9 +80,9 @@ birds1 <- birds %>%
   #filter(TRANSNUM != 6) %>%
   filter(COMMONNAME !=  "Transect not run" )
 
-birds1 <- birds %>% 
-  filter(WATERSHED %in% c('001D', '004B','020B'))%>%
-  filter(COMMONNAME !=  "Transect not run" )
+# birds1 <- birds %>% 
+#   filter(WATERSHED %in% c('001D', '004B','020B'))%>%
+#   filter(COMMONNAME !=  "Transect not run" )
 
 
 # Match up species codes to scientific names ------------------------------
@@ -418,6 +418,18 @@ for(i in 1:dim(Ndf)[1]){ #dim[1] = n.rows
 ymax[ymax == 0] <- NA
 
 
+
+# Random effects variables ------------------------------------------------
+
+n.sites <- n.transects
+
+Site.ID <- birds5 %>%
+  distinct(TransID) %>%
+  as_vector()
+
+
+Year.ID <- years$yearnum
+
 # Make R covariance matrix ------------------------------------------------
 
 #n.species x n.species matrix of covariance between species abundances
@@ -465,6 +477,9 @@ data <- list(n.species = n.species,
              effort = effort,
              size = size,
              y = y,
+             n.sites = n.sites,
+             Year.ID = Year.ID,
+             Site.ID = Site.ID,
              #initials
              ymax = ymax)
 
