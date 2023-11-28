@@ -51,6 +51,8 @@ params <- c(
   'b0.star',
   'eps.site.star',
   'eps.year.star',
+  'eps.site',
+  'eps.year',
   'a1.Vis',
   'a2.Size',
   'mu.a0',
@@ -77,8 +79,9 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.burnin = 5000
-                    n.iter = 10000,
+                    n.burnin = 1000,
+                    n.thin = 3,
+                    n.iter = 13000,
                     DIC = TRUE)
 
 #save as an R data object
@@ -91,7 +94,23 @@ saveRDS(mod,
 (tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
+params2 <- c(
+  #COMMUNITY parameters
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'a1.Vis',
+  'a2.Size',
+  'mu.a0',
+  'sig.a0',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year'
+)
+
 mcmcplot(mod$samples,
+         parms = params2,
          dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM_RE")
 
 # Get RHat per parameter ------------------------------------------------
