@@ -34,14 +34,21 @@ all_data <- read.csv(here("04_nps_plants",
 
 all_data2 <- all_data %>%
   filter(!is.na(mean)) %>%
-  mutate(Quad.ID = as.numeric(as.factor(quadnum))) %>%
+  #there should be 70 unique quadrat IDs, I believe
+  unite(c(Plot, Transect, Quadrat),
+        col = "quadrat_num",
+        remove = F,
+        sep = "_") #%>%
+#I think this is wrong:
+  #mutate(Quad.ID = as.numeric(as.factor(quadnum))) %>%
   #make transect_num
   unite(c(Plot, Transect),
         col = "transect_num",
         remove = F,
         sep = "_") %>%
   mutate(Transect.ID = as.numeric(as.factor(transect_num))) %>%
-  mutate(Plot.ID = as.numeric(as.factor(Plot)))
+  mutate(Plot.ID = as.numeric(as.factor(Plot))) %>%
+  mutate(Quad.ID = as.numeric(as.factor(quadrat_num)))
 
 # Prep data objects for model ---------------------------------------------
 
@@ -50,7 +57,8 @@ all_data2 <- all_data %>%
 
 n.data <- nrow(all_data2)
 
-n.quads <- length(unique(all_data2$quadnum))
+#I think there should be 70 unique quadrats
+n.quads <- length(unique(all_data2$quadrat_num))
 
 n.transects <- length(unique(all_data2$transect_num))
 

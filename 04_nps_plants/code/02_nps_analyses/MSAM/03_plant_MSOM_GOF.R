@@ -99,15 +99,46 @@ z <- as.data.frame(modeled$statistics) %>%
 
 z_tot <- z %>%
   group_by(SpecID) %>%
-  summarise(total = sum(Mean, na.rm = T)) %>%
+  summarise(totalz = sum(Mean, na.rm = T),
+            meanz = mean(Mean, na.rm = T)) %>%
   ungroup()
 
 obs <- observed %>%
   group_by(SpecID) %>%
-  summarise(total = sum(presence),
-            mean = mean(presence))
+  summarise(totalobs = sum(presence),
+            meanobs = mean(presence))
 
 ggplot() +
-  geom_density(data = obs, aes(x = total), fill = "black", alpha = 0.4) +
-  geom_density(data = z_tot, aes(x = total), fill = 'blue', alpha = 0.4)
+  geom_density(data = obs, aes(x = totalobs), fill = "black", alpha = 0.4) +
+  geom_density(data = z_tot, aes(x = totalz), fill = 'blue', alpha = 0.4)
+
+comb <- z_tot %>%
+  left_join(obs, by = "SpecID")
+
+m2 <- lm(totalz ~ totalobs,
+         data = comb)
+
+summary(m2)
+
+lb2 <- paste("R^2 == 0.85")
+
+
+ggplot(comb, aes(x = totalobs, y = totalz)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_point() +
+  annotate(geom = "text", x = 300, y = 100, label = lb2, parse = T)
+
+
+m3 <- lm(meanz ~ meanobs,
+         data = comb)
+
+summary(m3)
+
+lb3 <- paste("R^2 == 0.85")
+
+ggplot(comb, aes(x = meanobs, y = meanz)) +
+  geom_point() +
+  geom_smooth(method = "lm", se =F) +
+  annotate(geom = "text", x = 0.8, y = 0.3, label = lb3, parse = T)
+
 

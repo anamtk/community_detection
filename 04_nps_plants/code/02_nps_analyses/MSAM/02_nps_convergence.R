@@ -27,7 +27,7 @@ rhat <- readRDS(here('04_nps_plants',
                      'monsoon',
                      "nps_MSAM",
                      'outputs_yrsite',
-                     'nps_MSAM_model_Rhat.RDS'))
+                     'nps_MSAM_model_RE_Rhat.RDS'))
 
 
 # Graph RHat per parameter ------------------------------------------------

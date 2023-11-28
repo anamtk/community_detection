@@ -428,6 +428,7 @@ Site.ID <- occ2 %>%
   arrange(quadnum) %>%
   pivot_wider(names_from = quadnum,
               values_from = Plot) %>%
+  column_to_rownames(var = "yrID") %>%
   as.matrix()
 
 n.sites <- max(Site.ID, na.rm = T)

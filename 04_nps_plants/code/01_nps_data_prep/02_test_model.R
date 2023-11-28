@@ -101,7 +101,7 @@ parms2 <- c("z")
 
 mod2 <- update(mod,
                parameters.to.save = parms2,
-               n.iter = 10)
+               n.iter = 1)
 
 samples <- mod2$sims.list[[1]]
 
@@ -112,7 +112,7 @@ test <- melt(samples) %>%
          'quadnum' = "Var4")
 
 t2 <- test %>%
-  full_join(quadnums, by = c("yrID", "quadnum")) %>%
+  left_join(quadnums, by = c("yrID", "quadnum")) %>%
   unite(c("Plot", "Transect", "Quadrat"),
         col = "plot_trans_quad",
         sep = "_",
@@ -130,8 +130,8 @@ t3 <- t2 %>%
 
 # Get jaccard for each iteration ------------------------------------------
 
-sites <- unique(t2$plot_trans_quad)
-iterations <- unique(t2$iter)
+sites <- unique(t3$plot_trans_quad)
+iterations <- unique(t3$iter)
 
 g <- expand.grid(sites, iterations)
 

@@ -24,7 +24,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS( file = "/scratch/atm234/nps_plants/outputs/nps_JAGS_model.RDS")
+mod <- readRDS( file = "/scratch/atm234/nps_plants/outputs/nps_JAGS_RE_model.RDS")
 
 
 # Get summary of model -------------------------------------------------

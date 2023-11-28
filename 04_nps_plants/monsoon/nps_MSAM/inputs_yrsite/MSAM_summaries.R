@@ -32,7 +32,7 @@ library(data.table)
 
 # Load model --------------------------------------------------------------
 
-model <- readRDS(file ="/scratch/atm234/nps_plants/outputs/nps_JAGS_model.RDS")
+model <- readRDS(file ="/scratch/atm234/nps_plants/outputs/nps_JAGS_RE_model.RDS")
 
 print('model loaded')
 # Detection summary -------------------------------------------------------
@@ -82,7 +82,7 @@ test <- reshape2::melt(samples) %>%
          'quadnum' = "Var4")
 
 t2 <- test %>%
-  full_join(quadnums, by = c("yrID", "quadnum")) %>%
+  left_join(quadnums, by = c("yrID", "quadnum")) %>%
   unite(c("Plot", "Transect", "Quadrat"),
         col = "plot_trans_quad",
         sep = "_",
