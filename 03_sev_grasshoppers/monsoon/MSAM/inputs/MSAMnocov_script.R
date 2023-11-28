@@ -55,6 +55,8 @@ params <- c(
   'b0.star',
   'eps.site.star',
   'eps.year.star',
+  'eps.site',
+  'eps.year',
   'p.mean',
   'sig.lp', 
   'mu.b0species',
@@ -72,16 +74,16 @@ inits <- list(list(N = data$ymax),
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
-                        inits = inits,
-                        #inits = NULL,
-                        model.file = '/scratch/atm234/sev_hoppers/inputs/sev_MSAM_simple_nocov.R',
-                        parameters.to.save = params,
-                        parallel = TRUE,
-                        n.chains = 3,
+                    inits = inits,
+                    #inits = NULL,
+                    model.file = '/scratch/atm234/sev_hoppers/inputs/sev_MSAM_simple_nocov.R',
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
                     n.thin = 10,
                     n.burnin = 10000,
-                        n.iter = 50000,
-                        DIC = TRUE)
+                    n.iter = 50000,
+                    DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
@@ -93,7 +95,20 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
+params2 <- c(
+  #COMMUNITY parameters
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'p.mean',
+  'sig.lp', 
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year')
+
 mcmcplot(mod$samples,
+         parms = params2,
          dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM_nocovRE")
 
 # Get RHat per parameter ------------------------------------------------
