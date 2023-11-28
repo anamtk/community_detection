@@ -39,11 +39,15 @@ data_list <- list(n.species = data$n.species,
              effort = data$effort,
              size = data$size,
              y = data$y,
+             n.sites = data$n.sites,
+             Year.ID = data$Year.ID,
+             Site.ID = data$Site.ID,
              #omega prior:
-             R = data$R,
+             #R = data$R,
              #initials
-             ymax = data$ymax,
-             omega.init = data$omega.init)
+             ymax = data$ymax)#,
+             #omega.init = data$omega.init)
+
 
 # Parameters to save ------------------------------------------------------
 
@@ -51,8 +55,13 @@ params <- c(
   #COMMUNITY parameters
   'a1.Effort',
   'a2.Size',
-  'mu.llambda',
-  'sig.llambda',
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year',
   'mu.a0',
   'sig.a0')
 
@@ -79,7 +88,7 @@ mod <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_model.RDS")
+        file ="/scratch/atm234/konza_birds/outputs/bird_MSAM_RE_model.RDS")
 
 Sys.time()
 
@@ -88,7 +97,7 @@ Sys.time()
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM")
+         dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM_RE")
 
 # Get RHat per parameter ------------------------------------------------
 
@@ -96,7 +105,7 @@ mcmcplot(mod$samples,
 # to plot per-parameter convergence
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/konza_birds/outputs/bird_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/konza_birds/outputs/bird_MSAM_model_RE_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

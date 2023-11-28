@@ -24,6 +24,10 @@ model{
         #occupancy is dependent currently on species, quadrat, and time period
         #for that quadrat
         
+        logit(psi[k,i,t]) <- b0.species[k] +
+          eps.site[Site.ID[i], k] +
+          eps.year[Year.ID[t], k]
+        
         #Detection model:
         #with no covariates for detection:
         # y[k,i,t] ~ dbin(p[k] * z[k,i,t], n.rep[i,t])
@@ -44,25 +48,25 @@ model{
           # dependence of p on survey period
             y[k,i,t,r] ~ dbern(p[k,i,t,r] * z[k,i,t])
             
+            y.rep[k,i,t,r] ~ dbern(p[k,i,t,r]*z[k,i,t])
             
             #MISSING DATA for cover imputation
             #cover[k,i,t,r] ~ dnorm(mu.missingcover, tau.missingcover)
         } #reps
         
-        #SPECIES-LEVEL PRIORS:
-        
-        #occupancy species-year-level priors
-        lpsi[k,i,t] ~ dnorm(mu.lpsi, tau.lpsi)
-        psi[k,i,t] <- ilogit(lpsi[k,i,t])
+
           
       }# years
     } #quads
     
     
     #SPECIES-LEVEL PRIORS:
-    #Detection hierarchy
-    # lp[k] ~ dnorm(mu.lp, tau.lp)
-    # p[k] <- ilogit(lp[k])
+    #abundance model (biological process)
+    #non-identifiable:
+    b0.species[k] ~ dnorm(mu.b0species, tau.b0species)
+    #identifiable species-level intercept:
+    #track this for convergence
+    b0.star[k] <- b0.species[k] + ave.eps.site[k] + ave.eps.year[k]
     
     #if we add in detection covariates
     # #Detection intercept
@@ -73,22 +77,36 @@ model{
     
   }
   
+  #SITE W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.sites){
+      #non-identifiable random effect
+      eps.site[p,s] ~ dnorm(0, tau.eps.site)
+      #identifiable site random effect (monitor this)
+      eps.site.star[p,s] <- eps.site[p,s] - ave.eps.site[s]
+    }
+    #mean site level random effects within each species
+    ave.eps.site[s] <- mean(eps.site[,s])
+  }
+  
+  #YEARS W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.years){
+      #non-identifiable random effect
+      eps.year[p,s] ~ dnorm(0, tau.eps.year)
+      #identifiable year random effect (monitor this)
+      eps.year.star[p,s] <- eps.year[p,s] - ave.eps.year[s]
+    }
+    #mean year level random effects within each species
+    ave.eps.year[s] <- mean(eps.year[,s])
+  }
+  
   
   #Community-level hyperpriors
   #All species-level priors are centered around hyperpriors for 
   # the community for that variaable
-  
-  #occupancy probability
-  psi.mean ~ dbeta(1,1)
-  mu.lpsi <- logit(psi.mean)
-  sig.lpsi ~ dunif(0, 10)
-  tau.lpsi <- pow(sig.lpsi, -2)
-  
-  #Detection community means
-  # p.mean ~ dbeta(1, 1)
-  # mu.lp <- logit(p.mean)
-  # sig.lp ~ dunif(0, 5)
-  # tau.lp <- pow(sig.lp, -2)
   
   #If we add detection covariates:
   # #Detection intercept
@@ -98,6 +116,17 @@ model{
   
   #covariate means
   a1.Cover ~ dnorm(0, 1E-3)
+  
+  #species-level abundance
+  mu.b0species ~ dnorm(0, 0.001)
+  tau.b0species <- pow(sig.b0species, -2)
+  sig.b0species ~ dunif(0,50)
+  
+  #site and year variances
+  sig.eps.site ~ dunif(0, 10)
+  tau.eps.site <- pow(sig.eps.site, -2)
+  sig.eps.year ~ dunif(0, 10)
+  tau.eps.year <- pow(sig.eps.year, -2)
   
   #categorical covariate of lifegroup
   #this is cell-referenced - so each level other than the first

@@ -37,21 +37,30 @@ data_list <- list(y = data$y,
                   n.start = data$n.start,
                   n.end = data$n.end,
                   n.transects = data$n.transects,
-                  n.rep = data$n.rep,
+                  n.rep = data$n.rep, 
+                  n.sites = data$n.sites,
+                  Year.ID = data$Year.ID,
+                  Site.ID = data$Site.ID,
                   #for initials
                   ymax = data$ymax,
                   omega.init = data$omega.init,
                   #for omega prior
                   R = data$R)
 
+
 # Parameters to save ------------------------------------------------------
 
 params <- c(
   #COMMUNITY parameters
-  'mu.llambda',
-  'sig.llambda',
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
   'p.mean',
-  'sig.lp')
+  'sig.lp', 
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year')
 
 # INits -------------------------------------------------------------------
 
@@ -69,12 +78,14 @@ mod <- jagsUI::jags(data = data_list,
                         parameters.to.save = params,
                         parallel = TRUE,
                         n.chains = 3,
-                        n.iter = 4000,
+                    n.thin = 10,
+                    n.burnin = 10000,
+                        n.iter = 50000,
                         DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/sev_hoppers/outputs/sev_MSAM_nocov_model.RDS")
+        file ="/scratch/atm234/sev_hoppers/outputs/sev_MSAM_nocovRE_model.RDS")
 
 Sys.time()
 
@@ -83,13 +94,13 @@ Sys.time()
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM_nocov")
+         dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM_nocovRE")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sev_hoppers/outputs/sev_MSAMnocov_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sev_hoppers/outputs/sev_MSAMnocovRE_model_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

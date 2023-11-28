@@ -8,8 +8,8 @@ model{
         N[k,i,t] ~ dpois(lambda[k,i,t])
         
         log(lambda[k,i,t]) <- b0.species[k] + 
-          b0.site[Site.ID[i]] + 
-          b0.year[Year.ID[t]]
+          eps.site[Site.ID[i], k] +
+          eps.year[Year.ID[t], k]
         
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
           # Observation model
@@ -37,43 +37,82 @@ model{
     #on standardized scale
     p0[k] <- ilogit(a0[k])
     
+    #species-level intercept - see note below about 
+    #how to incorprate the site and year effects into
+    #this or the community level for this
     b0.species[k] ~ dnorm(mu.b0species, tau.b0species)
-    
-    
-    # for(t in 1:n.years){
-    # llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    # lambda[k,t] <- exp(llambda[k,t])
-    # }
 
   }
   
-  #for every year but the last one:
-  for(y in 1:(n.sites-1)){
-    b0.site[y] ~ dnorm( 0, tau.site)
+  #SITE W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.sites){
+      #non-identifiable random effect
+      eps.site[p,s] ~ dnorm(0, tau.eps.site)
+      #identifiable site random effect (monitor this)
+      eps.site.star[p,s] <- eps.site[p,s] - ave.eps.site[s]
+    }
+    #mean site level random effects within each species
+    ave.eps.site[s] <- mean(eps.site[,s])
   }
-  #set the last year to be the -sum of all other years so the 
-  # overall fo all year levels == 0
-  b0.site[n.sites] <- -sum(b0.site[1:(n.sites-1)])
   
-  tau.site <- pow(sig.site, -2)
-  sig.site ~ dunif(0,10)
-  
-  #for every year but the last one:
-  for(y in 1:(n.years-1)){
-    b0.year[y] ~ dnorm( 0, tau.year)
+  #Species random effects:
+  for(s in 1:n.species){
+    #non-identifiable random effect
+    gamma.site[s] ~ dnorm(0, tau.gamma.site)
+    #Identifiable random effect (monitor this):
+    gamma.site.star[s] <- gamma.site[s] + 
+      ave.eps.site[s] - 
+      ave.gamma.site -
+      ave.ave.eps.site
   }
-  #set the last year to be the -sum of all other years so the 
-  # overall fo all year levels == 0
-  b0.year[n.years] <- -sum(b0.year[1:(n.years-1)])
   
-  tau.year <- pow(sig.year, -2)
-  sig.year ~ dunif(0,10)
+  #Mean species random effects:
+  ave.gamma.site <- mean(gamma.site[])
+  #mean overall site random effect:
+  ave.ave.eps.site <- mean(ave.eps.site[])
   
-  #Community-level hyperpriors
-  #initial abundance
-  # mu.llambda ~ dnorm(0, 0.00001)
-  # sig.llambda ~ dunif(0, 10)
-  # tau.llambda <- pow(sig.llambda, -2)
+  
+  #YEARS W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.years){
+      #non-identifiable random effect
+      eps.year[p,s] ~ dnorm(0, tau.eps.year)
+      #identifiable year random effect (monitor this)
+      eps.year.star[p,s] <- eps.year[p,s] - ave.eps.year[s]
+    }
+    #mean year level random effects within each species
+    ave.eps.year[s] <- mean(eps.year[,s])
+  }
+  
+  #Species random effects:
+  for(s in 1:n.species){
+    #non-identifiable random effect
+    gamma.year[s] ~ dnorm(0, tau.gamma.year)
+    #Identifiable random effect (monitor this):
+    gamma.year.star[s] <- gamma.year[s] + 
+      ave.eps.year[s] - 
+      ave.gamma.year -
+      ave.ave.eps.year
+  }
+  
+  #Mean species random effects:
+  ave.gamma.year <- mean(gamma.year[])
+  #mean overall year random effect:
+  ave.ave.eps.year <- mean(ave.eps.year[])
+  
+  
+  #OUTSTANDING QUESTION
+  #what to do about overall b0 when it is indexed by species
+  #and then hierarchically centered around the community value?
+  # also how to incorporate both year and site effects into it?
+  
+  #code from lecture has b0 as:
+  #b0 ~ dnorm(0, 1E-6)
+  #identifiable intercept
+  #b0.star <- b0 + ave.gamma + ave.ave.eps
   
   #initial occupancy
   #Detection intercept

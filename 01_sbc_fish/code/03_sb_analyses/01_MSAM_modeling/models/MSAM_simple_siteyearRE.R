@@ -5,7 +5,11 @@ model{
       for(t in n.start[i]:n.end[i]){
         
         #biological process model
-        N[k,i,t] ~ dpois(lambda[k,t])
+        N[k,i,t] ~ dpois(lambda[k,i,t])
+        
+        log(lambda[k,i,t]) <- b0.species[k] + 
+          eps.site[Site.ID[i], k] +
+          eps.year[Year.ID[t], k]
         
         for(r in 1:n.rep[i,t]){ #for the number of surveys on each transect in each year
           # Observation model
@@ -33,24 +37,57 @@ model{
     #on standardized scale
     p0[k] <- ilogit(a0[k])
     
-    for(t in 1:n.years){
-    llambda[k,t] ~ dnorm(mu.llambda, tau.llambda) #centered around community mean
-    lambda[k,t] <- exp(llambda[k,t])
-    }
+    #species-level intercept - 
+    #currently non-identifiable:
+    b0.species[k] ~ dnorm(mu.b0species, tau.b0species)
+    #compute the identifiable species-level intercept:
+    #TRACK THIS ONE for convergence
+    b0.star[k] <- b0.species[k] + ave.eps.site[k] + ave.eps.year[k]
 
   }
   
-  #Community-level hyperpriors
-  #initial abundance
-  mu.llambda ~ dnorm(0, 0.00001)
-  sig.llambda ~ dunif(0, 10)
-  tau.llambda <- pow(sig.llambda, -2)
+  #SITE W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.sites){
+      #non-identifiable random effect
+      eps.site[p,s] ~ dnorm(0, tau.eps.site)
+      #identifiable site random effect (monitor this)
+      eps.site.star[p,s] <- eps.site[p,s] - ave.eps.site[s]
+    }
+    #mean site level random effects within each species
+    ave.eps.site[s] <- mean(eps.site[,s])
+  }
+  
+  #YEARS W/IN SPECIES RANDOM EFFECTS
+  #sites nested within species (sites sum to zero w/in each species)
+  for(s in 1:n.species){
+    for(p in 1:n.years){
+      #non-identifiable random effect
+      eps.year[p,s] ~ dnorm(0, tau.eps.year)
+      #identifiable year random effect (monitor this)
+      eps.year.star[p,s] <- eps.year[p,s] - ave.eps.year[s]
+    }
+    #mean year level random effects within each species
+    ave.eps.year[s] <- mean(eps.year[,s])
+  }
   
   #initial occupancy
   #Detection intercept
   mu.a0 ~ dnorm(0, 0.001)
   tau.a0 <- pow(sig.a0, -2)
   sig.a0 ~ dunif(0, 50)
+  
+  #species-level abundance
+  mu.b0species ~ dnorm(0, 0.001)
+  tau.b0species <- pow(sig.b0species, -2)
+  sig.b0species ~ dunif(0,50)
+  
+  #site and year variances
+  sig.eps.site ~ dunif(0, 10)
+  tau.eps.site <- pow(sig.eps.site, -2)
+  sig.eps.year ~ dunif(0, 10)
+  tau.eps.year <- pow(sig.eps.year, -2)
   
   #covariate effect priors
   a1.Vis ~ dnorm(0, 0.001)

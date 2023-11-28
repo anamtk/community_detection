@@ -4,7 +4,7 @@
 
 
 #this script looks at observed vs. predicted y and calculates
-#some total N stuff for the bird MSAM
+#some total N stuff for the fish MSAM
 
 # Load packages ---------------------------------------------------------------
 
@@ -37,6 +37,13 @@ modeled <- readRDS(here('01_sbc_fish',
                         'fish_MSAM',
                         'outputs',
                         'fish_MSAM_GOF_summary.RDS'))
+
+modeled <- readRDS(here('01_sbc_fish',
+                        'monsoon',
+                        'fish_MSAM',
+                        'outputs',
+                        'fish_MSAM_RE_GOF_summary.RDS'))
+
 
 
 # Pull out yrep -----------------------------------------------------------
@@ -98,9 +105,11 @@ obs <- observed %>%
 
 ggplot() +
   geom_density(data = obs, aes(x = total), fill = "black", alpha = 0.4) +
-  geom_density(data = N_tot, aes(x = total), fill = 'blue', alpha = 0.4)
+  geom_density(data = N_tot, aes(x = total), fill = 'blue', alpha = 0.4) +
+  scale_x_log10()
 
 ggplot() +
   geom_density(data = obs, aes(x = mean), fill = 'black', alpha = 0.4) +
   geom_density(data = N, aes(x = Mean), fill = "blue", alpha = 0.4) +
-  scale_x_log10()
+  scale_x_log10() +
+  labs(x = "Mean detection")

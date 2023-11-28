@@ -41,15 +41,21 @@ data_list <- list(n.species = data$n.species,
              lifegroup = data$lifegroup,
              n.groups = data$n.groups,
              y = data$y,
-             z = data$z)
+             z = data$z,
+             n.sites = data$n.sites,
+             Year.ID = data$Year.ID,
+             Site.ID = data$Site.ID)
 
 # Parameters to save ------------------------------------------------------
 
 params <- c(
-  #COMMUNITY parameters
-  'psi.mean',
-  'mu.lpsi',
-  'sig.lpsi',
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year',
   'mu.a0',
   'sig.a0',
   'a1.Cover',
@@ -88,7 +94,7 @@ mod <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/nps_plants/outputs/nps_JAGS_model.RDS")
+        file ="/scratch/atm234/nps_plants/outputs/nps_JAGS_RE_model.RDS")
 
 Sys.time()
 
@@ -97,7 +103,7 @@ Sys.time()
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/nps_plants/outputs/mcmcplots/MSAM")
+         dir = "/scratch/atm234/nps_plants/outputs/mcmcplots/MSAM_RE")
 
 # Get RHat per parameter ------------------------------------------------
 
@@ -105,7 +111,7 @@ mcmcplot(mod$samples,
 # to plot per-parameter convergence
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/nps_plants/outputs/nps_MSAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/nps_plants/outputs/nps_MSAM_model_RE_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

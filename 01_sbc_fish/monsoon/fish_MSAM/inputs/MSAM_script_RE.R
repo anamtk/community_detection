@@ -48,19 +48,17 @@ data_list <- list(y = data$y,
 
 params <- c(
   #COMMUNITY parameters
-  'mu.b0species',
-  'sig.b0species',
-  'b0.site',
-  'b0.year',
-  'b0',
-  'sig.site',
-  'sig.year',
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
   'a1.Vis',
   'a2.Size',
-  'mu.llambda',
-  'sig.llambda',
   'mu.a0',
-  'sig.a0'
+  'sig.a0',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year'
 )
 
 # INits -------------------------------------------------------------------
@@ -75,11 +73,12 @@ inits <- list(list(N = data$ymax),
 mod <- jagsUI::jags(data = data_list,
                     inits = inits,
                     #inits = NULL,
-                    model.file = '/scratch/atm234/sbc_fish/inputs/MSAM_simple_siteRE.R',
+                    model.file = '/scratch/atm234/sbc_fish/inputs/MSAM_simple_siteyearRE.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.burnin = 5000
+                    n.iter = 10000,
                     DIC = TRUE)
 
 #save as an R data object

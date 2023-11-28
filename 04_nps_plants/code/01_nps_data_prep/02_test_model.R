@@ -53,9 +53,13 @@ inits <- list(list(z = data$z),
 # Parameters to save ------------------------------------------------------
 
 params <- c(
-  'mu.lpsi',
-  'psi.mean',
-  'sig.lpsi',
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year',
   'mu.a0',
   'sig.a0',
   'a1.Cover',
@@ -81,7 +85,7 @@ mod <- jagsUI::jags(data = data,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.iter = 1,
                     DIC = TRUE)
 
 Sys.time()
