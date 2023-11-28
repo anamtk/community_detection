@@ -27,7 +27,7 @@ rhat <- readRDS(here('02_konza_birds',
                      'monsoon',
                      "MSAM",
                      'outputs',
-                     'bird_MSAM_model_Rhat.RDS'))
+                     'bird_MSAM_model_RE_Rhat.RDS'))
 
 
 # Graph RHat per parameter ------------------------------------------------

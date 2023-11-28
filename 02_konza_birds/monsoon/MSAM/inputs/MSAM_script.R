@@ -56,6 +56,8 @@ params <- c(
   'a1.Effort',
   'a2.Size',
   'b0.star',
+  'eps.site',
+  'eps.year',
   'eps.site.star',
   'eps.year.star',
   'mu.b0species',
@@ -75,16 +77,16 @@ inits <- list(list(N = data$ymax),
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
-                        inits = inits,
-                        #inits = NULL,
-                        model.file = '/scratch/atm234/konza_birds/inputs/kb_MSAM_simple.R',
-                        parameters.to.save = params,
-                        parallel = TRUE,
-                        n.chains = 3,
-                    n.iter = 50000,
-                    n.thin = 10,
+                    inits = inits,
+                    #inits = NULL,
+                    model.file = '/scratch/atm234/konza_birds/inputs/kb_MSAM_simple.R',
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    n.iter = 80000,
+                    n.thin = 15,
                     n.burnin = 10000,
-                        DIC = TRUE)
+                    DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
@@ -96,7 +98,22 @@ Sys.time()
 
 # Check convergence -------------------------------------------------------
 
+params2 <- c(
+  #COMMUNITY parameters
+  'a1.Effort',
+  'a2.Size',
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year',
+  'mu.a0',
+  'sig.a0')
+
 mcmcplot(mod$samples,
+         parms = params2,
          dir = "/scratch/atm234/konza_birds/outputs/mcmcplots/MSAM_RE")
 
 # Get RHat per parameter ------------------------------------------------
