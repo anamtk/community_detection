@@ -29,8 +29,16 @@ rhat <- readRDS(here('01_sbc_fish',
                      'outputs',
                      'fish_MSAM_model_RhatRE.RDS'))
 
+rhat2 <- readRDS(here('01_sbc_fish',
+                     'monsoon',
+                     'fish_MSAM',
+                     'outputs',
+                     'fish_MSAM_modelRE_Rhat2.RDS'))
+
 
 
 # Graph RHat per parameter ------------------------------------------------
 
 rhat_graph_fun(rhat)
+
+rhat_graph_fun(rhat2)
