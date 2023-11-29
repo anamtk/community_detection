@@ -53,7 +53,7 @@ stability2 <- as.data.frame(stability) %>%
 # ppt --------------------------------------------------------------------
 
 ppt <- climate %>%
-  select(-c(vpd_monsoon:vpd_winter)) %>%
+  dplyr::select(-c(vpd_monsoon:vpd_winter)) %>%
   pivot_longer(cols = ppt_monsoon:ppt_winter,
                names_to = "season",
                values_to = "PPT") %>%
@@ -67,7 +67,7 @@ ppt <- climate %>%
 
 
 vpd <- climate %>%
-  select(-c(ppt_monsoon:ppt_winter)) %>%
+  dplyr::select(-c(ppt_monsoon:ppt_winter)) %>%
   pivot_longer(cols = vpd_monsoon:vpd_winter,
                names_to = "season",
                values_to = "VPD") %>%

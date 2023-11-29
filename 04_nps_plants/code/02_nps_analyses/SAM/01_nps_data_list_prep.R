@@ -38,7 +38,7 @@ all_data2 <- all_data %>%
   unite(c(Plot, Transect, Quadrat),
         col = "quadrat_num",
         remove = F,
-        sep = "_") #%>%
+        sep = "_") %>%
 #I think this is wrong:
   #mutate(Quad.ID = as.numeric(as.factor(quadnum))) %>%
   #make transect_num
