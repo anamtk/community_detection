@@ -65,20 +65,21 @@ samp_df2 <- samp_df %>%
                 -deviance, -mean_dev) 
 
 #for fish model root nodes:
-mu.llambda <- as.vector(samp_df2$mu.llambda)
-sig.llambda <- as.vector(samp_df2$sig.llambda)
+eps.site<- as.vector(samp_df2$eps.site)
+eps.year<- as.vector(samp_df2$eps.year)
 mu.a0 <- as.vector(samp_df2$mu.a0)
-#sig.a0 seemed to be covering the whole domain of dunif(0,50) so updated to 100 in
-#next run
-sig.a0 <- as.vector(samp_df2$sig.a0)
+sig.a0<- as.vector(samp_df2$sig.a0)
 a1.Vis <- as.vector(samp_df2$a1.Vis)
 a2.Size <- as.vector(samp_df2$a2.Size)
-
+mu.b0species <- as.vector(samp_df2$mu.b0species)
+sig.b0species <- as.vector(samp_df2$sig.b0species)
+sig.eps.site <- as.vector(samp_df2$sig.eps.site)
+sig.eps.year <- as.vector(samp_df2$sig.eps.year)
 
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-data <- readRDS("/scratch/atm234/sbc_fish/inputs/fish_msam_dynmultisite.RDS")
+data <- readRDS("/scratch/atm234/sbc_fish/inputs/fish_msam_dynmultisiteRE.RDS")
 
 # Compile data ------------------------------------------------------------
 data_list <- list(y = data$y,
@@ -90,21 +91,29 @@ data_list <- list(y = data$y,
                   n.end = data$n.end,
                   n.transects = data$n.transects,
                   n.rep = data$n.rep,
+                  n.sites = data$n.sites,
+                  Site.ID = data$Site.ID,
+                  Year.ID = data$Year.ID,
                   #for initials
-                  ymax = data$ymax,
-                  #for covariance prior
-                  R = data$R)
+                  ymax = data$ymax)
 
 # Parameters to save ------------------------------------------------------
 
 params <- c(
   #COMMUNITY parameters
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'eps.site',
+  'eps.year',
   'a1.Vis',
   'a2.Size',
-  'mu.llambda',
-  'sig.llambda',
   'mu.a0',
-  'sig.a0'
+  'sig.a0',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year'
 )
 
 
@@ -112,44 +121,56 @@ params <- c(
 
 #we found ymax to set initials, since otherwise the model will hate us
 inits <- list(list(N = data$ymax,
-                   mu.llambda = mu.llambda,
-                   sig.llambda = sig.llambda,
+                   eps.site = eps.site,
+                   eps.year = eps.year,
                    mu.a0 = mu.a0,
                    sig.a0 = sig.a0,
                    a1.Vis = a1.Vis,
-                   a2.Size = a2.Size),
+                   a2.Size = a2.Size,
+                   mu.b0species = mu.b0species,
+                   sig.b0species = sig.b0species,
+                   sig.eps.site  = sig.eps.site,
+                   sig.eps.year = sig.eps.year),
               list(N = data$ymax,
-                   mu.llambda = mu.llambda + 0.05,
-                   sig.llambda = sig.llambda + 0.05,
-                   mu.a0 = mu.a0 + 0.05,
-                   sig.a0 = sig.a0 + 0.05,
-                   a1.Vis = a1.Vis + 0.05,
-                   a2.Size = a2.Size + 0.5),
+                   eps.site = eps.site + 0.5,
+                   eps.year = eps.year + 0.5,
+                   mu.a0 = mu.a0 + 0.25,
+                   sig.a0 = sig.a0 + 0.25,
+                   a1.Vis = a1.Vis + 0.25,
+                   a2.Size = a2.Size + 0.25,
+                   mu.b0species = mu.b0species + 0.25,
+                   sig.b0species = sig.b0species + 0.25,
+                   sig.eps.site  = sig.eps.site + 0.25,
+                   sig.eps.year = sig.eps.year + 0.25),
               list(N = data$ymax,
-                   mu.llambda = mu.llambda - 0.05,
-                   sig.llambda = sig.llambda + 1,
-                   mu.a0 = mu.a0 - 0.05,
-                   sig.a0 = sig.a0 + 0.08,
-                   a1.Vis = a1.Vis - 0.05,
-                   a2.Size = a2.Size - 0.5))
+                   eps.site = eps.site - 0.5,
+                   eps.year = eps.year - 0.5,
+                   mu.a0 = mu.a0 - 0.25,
+                   sig.a0 = sig.a0 + 0.4,
+                   a1.Vis = a1.Vis - 0.25,
+                   a2.Size = a2.Size - 0.25,
+                   mu.b0species = mu.b0species - 0.25,
+                   sig.b0species = sig.b0species + 0.4,
+                   sig.eps.site  = sig.eps.site + 0.4,
+                   sig.eps.year = sig.eps.year + 0.4))
 
 # JAGS model --------------------------------------------------------------
 
 mod2 <- jagsUI::jags(data = data_list,
                      inits = inits,
                      #inits = NULL,
-                     model.file = '/scratch/atm234/sbc_fish/inputs/MSAM_simple.R',
+                     model.file = '/scratch/atm234/sbc_fish/inputs/MSAM_simple_siteyearRE.R',
                      parameters.to.save = params,
                      parallel = TRUE,
                      n.chains = 3,
-                     n.iter = 100000,
-                     n.burnin = 10000,
-                     n.thin = 20,
+                     n.iter = 45000,
+                     n.burnin = 5000,
+                     n.thin = 10,
                      DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod2, 
-        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model2.RDS")
+        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_RE_model2.RDS")
 
 (end.time <- Sys.time())
 
@@ -158,13 +179,13 @@ saveRDS(mod2,
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod2$samples,
-         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM2")
+         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM_RE2")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod2$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_Rhat2.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_modelRE_Rhat2.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
