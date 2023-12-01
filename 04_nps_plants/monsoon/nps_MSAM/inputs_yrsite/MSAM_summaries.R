@@ -63,12 +63,17 @@ print("detection saved")
 
 # update for z ------------------------------------------------------------
 
+Sys.time()
+print("start z model")
+
 parms2 <- c("z")
 
 z_update <- update(model, 
                    parameters.to.save = parms2,
-                   n.iter = 1335)
+                   n.iter = 700)
 
+Sys.time()
+print("end z model")
 # Jaccard calculations ----------------------------------------------------
 
 quadnums <- read.csv(file = "/scratch/atm234/nps_plants/inputs/site_year_IDs.csv")
@@ -158,14 +163,19 @@ jacc_fun <- function(x, data = g){
     filter(iter == iteration) %>%
     distinct(yrNum, plot_trans_quad) %>%
     arrange(yrNum) %>%
-    cbind(turnover) 
+    cbind(turnover) %>%
+    cbind(gain) %>%
+    cbind(loss)
   
   return(jacc_df)
 }
 
-
+Sys.time()
+print("start jaccard calculation")
 results_list <- lapply(1:nrow(g), FUN = jacc_fun)
 results_df <- rbindlist(results_list, idcol = "groups")
+Sys.time()
+print("end jaccard calculation")
 # jaccard summary ---------------------------------------------------------
 
 
@@ -175,9 +185,13 @@ results_sum <- results_df %>%
   dplyr::select(-yrNum) %>%
   group_by(EventYear, plot_trans_quad) %>%
   summarise(mean = mean(turnover, na.rm = T),
-            sd = sd(turnover, na.rm = T))
+            sd = sd(turnover, na.rm = T),
+            mean_loss = mean(loss, na.rm = T),
+            sd_loss = sd(loss, na.rm = T),
+            mean_gain = mean(gain, na.rm = T),
+            sd_gain = sd(gain, na.rm = T))
 
-saveRDS(file = "/scratch/atm234/nps_plants/outputs/nps_Jaccard_summary.RDS")
+saveRDS(results_sum, file = "/scratch/atm234/nps_plants/outputs/nps_Jaccard_summary.RDS")
 
 # jaccard samples ---------------------------------------------------------
 
@@ -192,9 +206,9 @@ one_sitedf <- results_df %>%
   filter(plot_trans_quad == "S02_B_3") %>%
   filter(groups %in% iter_sample)
 
-saveRDS(file = "/scratch/atm234/nps_plants/outputs/nps_Jaccard_samples_S02_B_3.RDS")
+saveRDS(one_sitedf, file = "/scratch/atm234/nps_plants/outputs/nps_Jaccard_samples_S02_B_3.RDS")
 
 onesite_summary <- results_sum %>%
   filter(plot_trans_quad == "S02_B_3")
 
-saveRDS(file = "/scratch/atm234/nps_plants/outputs/nps_Jaccard_summary_S02_B_3.RDS")
+saveRDS(onesite_summary, file = "/scratch/atm234/nps_plants/outputs/nps_Jaccard_summary_S02_B_3.RDS")
