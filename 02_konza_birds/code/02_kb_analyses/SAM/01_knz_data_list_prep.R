@@ -30,9 +30,9 @@ all_data <- read.csv(here('02_konza_birds',
                           "stability_metrics_with_covariates.csv"))
 
 
-# Remove years before 1984 ------------------------------------------------
+# Remove years before 1982 ------------------------------------------------
 all_data <- all_data %>%
-  filter(RECYEAR >1983)
+  filter(RECYEAR >1981)
 # Prep data for jags ------------------------------------------------------
 
 

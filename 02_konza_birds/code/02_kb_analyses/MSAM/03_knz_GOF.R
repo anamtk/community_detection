@@ -60,16 +60,26 @@ yrep <- as.data.frame(modeled$statistics) %>%
 
 # Plot --------------------------------------------------------------------
 
-ggplot(yrep, aes(x = NOBS, y = Mean)) +
-  geom_abline(intercept = 0, slope = 1) +
-  geom_point()
-
 m1 <- lm(Mean ~ NOBS,
          data = yrep)
 
 summary(m1)
 
+lb1 <- paste("R^2 == 0.48")
 
+ggplot(yrep, aes(x = NOBS, y = Mean)) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_point()+
+  annotate(geom = 'text', x = 125, y = 20, label = lb1, parse = T) +
+  labs(x = "observed", y = "predicted", title = "KNZ LTER bird MSAM GOF")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "KNZ_GOF_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
 
 # Pull out N --------------------------------------------------------------
 
@@ -95,6 +105,14 @@ obs <- observed %>%
   summarise(total = sum(NOBS),
             mean = mean(NOBS))
 
-ggplot(obs, aes(x = total)) +
-  geom_histogram()
+ggplot() +
+  geom_density(data = obs, aes(x = total), fill = "black", alpha = 0.4) +
+  geom_density(data = N_tot, aes(x = total), fill = 'blue', alpha = 0.4) +
+  scale_x_log10()
+
+ggplot() +
+  geom_density(data = obs, aes(x = mean), fill = 'black', alpha = 0.4) +
+  geom_density(data = N, aes(x = Mean), fill = "blue", alpha = 0.4) +
+  scale_x_log10() +
+  labs(x = "Mean detection")
 

@@ -34,7 +34,7 @@ params <- c('b',
             'b0',
             'wA',
             'wB',
-            'wC',
+            #'wC',
             'var.process')
 
 
@@ -55,9 +55,7 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.burnin = 3000,
-                    n.iter = 15000,
-                    n.thin = 2,
+                    n.iter = 10000,
                     DIC = TRUE)
 
 Sys.time()
@@ -68,8 +66,21 @@ mcmcplot(mod$samples)
 
 gelman.diag(mod$samples, multivariate = F)
 
+rhats <- mod$Rhat
 
+parm <- c("b", "b0", "wA", "wB", "var.process", "deviance")
 
+rhat_graph_fun(list =rhats, parms = parm, rhat = 1.1) +
+  labs(title = "KNZ LTER bird SAM Rhat")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "KNZ_SAM_Rhat_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
 # Output summary ----------------------------------------------------------
 
 sum <- summary(mod$samples)
