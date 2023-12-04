@@ -61,7 +61,7 @@ posterior_sbc <- posterior_sbc %>%
 
 raw_knz <- readRDS(here("05_visualizations",
                          "viz_data",
-                         "knz_004B_raw_bray.RDS"))
+                         "knz_N04D_raw_bray.RDS"))
 
 raw_knz <- raw_knz %>%
   rename(raw_diss = raw_bray_all)
@@ -71,7 +71,7 @@ raw_knz <- raw_knz %>%
 #iterations of the MCMC chains)
 samples_knz <- readRDS(here("05_visualizations",
                              "viz_data",
-                             "knz_004B_bray_samples.RDS"))
+                             "knz_N04D_bray_samples.RDS"))
 
 samples_knz <- samples_knz %>%
   rename(diss = bray)
@@ -80,7 +80,7 @@ samples_knz <- samples_knz %>%
 #from the model output
 posterior_knz <- readRDS(here("05_visualizations",
                                "viz_data",
-                               "knz_004B_bray_summary.RDS"))
+                               "knz_N04D_bray_summary.RDS"))
 
 posterior_knz <- posterior_knz %>%
   rename(mean = mean_bray,

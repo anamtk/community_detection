@@ -65,7 +65,23 @@ bird_bray <- read.csv(here('02_konza_birds',
                            'data_prep',
                            'stability_metrics_with_covariates.csv'))
 
+plant_sam <- readRDS(here('04_nps_plants',
+                          'monsoon',
+                          'nps_SAM',
+                          'outputs',
+                          'nps_SAM_summary.RDS'))
 
+plant_diss <- read.csv(here('04_nps_plants',
+                            'data_outputs',
+                            'SAM',
+                            'data_prep',
+                            'nps_stability_metrics_with_covariates.csv'))
+
+plant_diss <- plant_diss %>%
+  unite(c(Plot, Transect, Quadrat),
+        col = "plot_trans_quad",
+        sep = "_", 
+        remove = F)
 # Effect plots ------------------------------------------------------------
 
 (fisheffectsplot <- effects_plot_fun(fish_sam) +
@@ -86,7 +102,13 @@ bird_bray <- read.csv(here('02_konza_birds',
   theme(plot.title.position = "panel",
         plot.title = element_text(hjust = 0.5)))
 
-fisheffectsplot /birdeffectsplot / seveffectsplot +
+(planteffectsplot <- effects_plot_fun(plant_sam) +
+    labs(title = "PFNP plants") +
+    scale_x_discrete(labels = c("Vapor pressure deficit", "Precipitation")) +
+    theme(plot.title.position = "panel",
+          plot.title = element_text(hjust = 0.5)))
+
+fisheffectsplot /birdeffectsplot / seveffectsplot /planteffectsplot +
   plot_annotation(tag_levels = "A")
 
 ggsave(plot = last_plot(),
@@ -122,11 +144,12 @@ fish_tweights <- as.data.frame(fish_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
   filter(str_detect(parm, "wB")) %>%
   mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Warm",
-                            parm %in% c("wB[2]", "wB[4]", "wB[6]") ~ "Cold")) %>%
+                            parm %in% c("wB[2]", "wB[4]", 'wB[6]') ~ "Cold")) %>%
   mutate(year = case_when(parm == "wB[1]" ~ 0,
                           parm %in% c("wB[2]", 'wB[3]') ~ 1,
                           parm %in% c('wB[4]', 'wB[5]') ~ 2,
-                          parm == 'wB[6]' ~ 3))
+                          parm == "wB[6]" ~ 3,
+                          TRUE ~ NA_real_))
 
 warmcol <- '#d8b365'
 coldcol <- '#5ab4ac'
@@ -138,11 +161,17 @@ coldcol <- '#5ab4ac'
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
                 position = position_dodge(width = 0.5),
                 width = 0) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5)) +
   scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
   labs(x = "Years into the past",
        y = "Importance weight\n(median and 95% BCI)"))
 
 (fishtgraphs <- fisht + fish_tweights_plot)
+
+
+# Bird partial plots ------------------------------------------------------
+
+
 
 # Grasshopper partial plots -----------------------------------------------
 
@@ -240,10 +269,75 @@ coldcol <- '#5ab4ac'
 
 
 
+# Plant partial plots -----------------------------------------------------
+
+
+#temperature
+plantp <- partial_plot_fun(model = plant_sam, 
+                          covariate = 'b[2]', 
+                          df = plant_diss, 
+                          ID= 'plot_trans_quad', 
+                          yearID = 'EventYear', 
+                          start = 'PPT', 
+                          end = 'PPT_l20',
+                          weight = "wB",
+                          diss = as.name('mean')) +
+  labs(x = "Precipitation",
+       y = "Community turnover",
+       title = "PFNP plants") + 
+  theme(plot.title.position = "panel",
+        plot.title = element_text(hjust = 0.5))
+
+###WEIGHTS
+
+# season == "ppt_monsoon" ~ 1,
+# season == "ppt_earlysummer" ~ 2,
+# season == "ppt_spring" ~ 3,
+# ppt_winter == 4
+
+#21 total weights right now:
+plant_pweights <- as.data.frame(plant_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wB")) %>%
+  mutate(season = case_when(parm %in% c("wB[1]", "wB[5]", 'wB[9]', 
+                                        'wB[13]', 'wB[17]', 'wB[21]') ~ "Monsoon",
+                            parm %in% c("wB[2]", 'wB[6]', 'wB[10]',
+                                        'wB[14]', 'wB[18]') ~ "Early Summer",
+                            parm %in% c("wB[3]", 'wB[7]', 'wB[11]',
+                                        'wB[15]', 'wB[19]') ~ "Spring",
+                            parm %in% c("wB[4]", 'wB[8]', 'wB[12]',
+                                        'wB[16]', 'wB[20]') ~ "Winter")) %>%
+  mutate(year = case_when(parm %in% c("wB[1]", 'wB[2]', 'wB[3]', 'wB[4]') ~ 0,
+                          parm %in% c("wB[5]", 'wB[6]', 'wB[7]', 'wB[8]') ~ 1,
+                          parm %in% c('wB[9]', 'wB[10]', 'wB[11]', 'wB[12]') ~ 2,
+                          parm %in% c('wB[13]', 'wB[14]', 'wB[15]', 'wB[16]') ~ 3,
+                          parm %in% c("wB[17]", 'wB[18]', 'wB[19]', 'wB[20]') ~ 4,
+                          parm %in% c("wB[21]") ~ 5,
+                          TRUE ~ NA_real_))
+
+warmcol <- '#d8b365'
+coldcol <- '#5ab4ac'
+
+1/21
+
+(plant_pweights_plot <- plant_pweights %>%
+    ggplot(aes(x = year, y= `50%`, shape = season)) +
+    geom_hline(yintercept = 1/21, linetype = 2) +
+    geom_point(position = position_dodge(width = 0.5), size = 3) +
+    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                  position = position_dodge(width = 0.5),
+                  width = 0) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5)) +
+    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+    labs(x = "Years into the past",
+         y = "Importance weight\n(median and 95% BCI)"))
+
+(planttgraphs <- plantp + plant_pweights_plot)
+
 
 # Export ------------------------------------------------------------------
 
-fishtgraphs / hoppertgraphs / hoppernppgraphs +
+fishtgraphs / hoppertgraphs / hoppernppgraphs /planttgraphs +
   plot_annotation(tag_levels = "A")
 
 ggsave(filename = here('pictures',

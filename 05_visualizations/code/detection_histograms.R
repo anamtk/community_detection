@@ -110,3 +110,16 @@ ggsave(plot = last_plot(),
        height = 4,
        width = 5,
        units = "in")
+
+mod <- lm(`50%` ~ dataset,
+          data = detect_df)
+
+summary(mod)
+
+em <- emmeans(mod, pairwise ~ dataset)
+
+em
+
+detect_df %>%
+  group_by(dataset) %>%
+  summarise(mean = mean(`50%`))
