@@ -129,13 +129,13 @@ model{
   #OPTION 2: (if we add more quads - i added all quads on
   #transects with repeat measurements on at least one quadrat)
   # #hierarchical centering of quads on transects on plots on b0
-  for(q in 1:n.quads){
-    b0.quad[q] ~ dnorm(b0.transect[Transect.ID[q]], tau.quad)
-  }
-
-  for(t in 1:n.transects){
-    b0.transect[t] ~ dnorm(b0, tau.transect)
-  }
+  # for(q in 1:n.quads){
+  #   b0.quad[q] ~ dnorm(b0.transect[Transect.ID[q]], tau.quad)
+  # }
+  # 
+  # for(t in 1:n.transects){
+  #   b0.transect[t] ~ dnorm(b0, tau.transect)
+  # }
   
   # for(t in 1:n.transects){
   #   b0.transect[t] ~ dnorm(b0.plot[Plot.ID[t]], tau.transect)
@@ -149,20 +149,20 @@ model{
 
   #OPTION 3: (if low sample size/plot)
   #if not using plot RE
-  # for(t in 1:n.quads){
-  #    b0.quad[t] ~ dnorm(b0, tau.quad)
-  # }
+  for(t in 1:n.quads){
+     b0.quad[t] ~ dnorm(b0, tau.quad)
+  }
   
   b0 ~ dnorm(0, 1E-2)
   
   #for low # of levels, from Gellman paper - define sigma
   # as uniform and then precision in relation to this sigma
   sig.quad ~ dunif(0, 10)
-  sig.transect ~ dunif(0, 10)
+  #sig.transect ~ dunif(0, 10)
   #sig.plot ~ dunif(0, 10)
   
   tau.quad <- 1/pow(sig.quad,2)
-  tau.transect <- 1/pow(sig.transect,2)
+  #tau.transect <- 1/pow(sig.transect,2)
   #tau.plot <- 1/pow(sig.plot,2)
   
   for(i in 1:2){

@@ -31,13 +31,13 @@ data_list <- readRDS(here('04_nps_plants',
 # Parameters to save ------------------------------------------------------
 
 params <- c('b0.quad',
-            'b0.transect',
+            #'b0.transect',
             #'b0.plot',
             'b',
             'wA',
             'wB',
             'sig.quad',
-            'sig.transect',
+            #'sig.transect',
             #'sig.plot',
             'var.process')
 
