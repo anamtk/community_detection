@@ -12,4 +12,4 @@
 module load R/4.1.2
 module  --ignore-cache load jags/4.3.0
 
-srun Rscript summary.R
+srun Rscript GOF.R

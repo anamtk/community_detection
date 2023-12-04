@@ -1,7 +1,7 @@
 #Get diss out of converged model
 #December 4, 2023
 
-#this script pulls out and sumamrises Bray Curtis for visualizations
+#this script pulls out and summarises diss for visualizations
 #purposes for An's project
 
 
@@ -29,9 +29,15 @@ mod <- readRDS( file = "/scratch/sml665/nps_plants/SAM/outputs/nps_SAM_model.RDS
 
 # Get summary of model -------------------------------------------------
 
-sum <- summary(mod$samples)
+params <- c("diss.rep",
+            "resid")
 
-saveRDS(sum, 
-        file = "/scratch/sml665/nps_plants/SAM/outputs/nps_SAM_summary.RDS")
+mod2 <- update(mod, 
+               parameters.to.save = params,
+               n.iter = 1335)
 
 
+sum2 <- summary(mod2$samples)
+
+saveRDS(sum2, 
+        file = "/scratch/sml665/nps_plants/SAM/outputs/nps_SAM_GOF_summary.RDS")
