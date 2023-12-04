@@ -30,7 +30,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_model_RE.RDS")
+mod <- readRDS(file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_RE_model2.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -164,27 +164,27 @@ inits <- list(list(N = data$ymax,
                    sig.eps.site  = sig.eps.site,
                    sig.eps.year = sig.eps.year),
               list(N = data$ymax,
-                   eps.site = eps.site + 0.5,
-                   eps.year = eps.year + 0.5,
-                   mu.a0 = mu.a0 + 0.25,
-                   sig.a0 = sig.a0 + 0.25,
-                   a1.Vis = a1.Vis + 0.25,
-                   a2.Size = a2.Size + 0.25,
-                   mu.b0species = mu.b0species + 0.25,
-                   sig.b0species = sig.b0species + 0.25,
-                   sig.eps.site  = sig.eps.site + 0.25,
-                   sig.eps.year = sig.eps.year + 0.25),
+                   eps.site = eps.site + 0.05,
+                   eps.year = eps.year + 0.05,
+                   mu.a0 = mu.a0 + 0.05,
+                   sig.a0 = sig.a0 + 0.5,
+                   a1.Vis = a1.Vis + 0.05,
+                   a2.Size = a2.Size + 0.05,
+                   mu.b0species = mu.b0species + 0.05,
+                   sig.b0species = sig.b0species + 0.05,
+                   sig.eps.site  = sig.eps.site + 0.05,
+                   sig.eps.year = sig.eps.year + 0.05),
               list(N = data$ymax,
-                   eps.site = eps.site - 0.5,
-                   eps.year = eps.year - 0.5,
-                   mu.a0 = mu.a0 - 0.25,
-                   sig.a0 = sig.a0 + 0.4,
-                   a1.Vis = a1.Vis - 0.25,
-                   a2.Size = a2.Size - 0.25,
-                   mu.b0species = mu.b0species - 0.25,
-                   sig.b0species = sig.b0species + 0.4,
-                   sig.eps.site  = sig.eps.site + 0.4,
-                   sig.eps.year = sig.eps.year + 0.4))
+                   eps.site = eps.site - 0.05,
+                   eps.year = eps.year - 0.05,
+                   mu.a0 = mu.a0 - 0.05,
+                   sig.a0 = sig.a0 + 0.08,
+                   a1.Vis = a1.Vis - 0.05,
+                   a2.Size = a2.Size - 0.05,
+                   mu.b0species = mu.b0species - 0.05,
+                   sig.b0species = sig.b0species + 0.08,
+                   sig.eps.site  = sig.eps.site + 0.08,
+                   sig.eps.year = sig.eps.year + 0.08))
 
 # JAGS model --------------------------------------------------------------
 
@@ -195,12 +195,14 @@ mod2 <- jagsUI::jags(data = data_list,
                      parameters.to.save = params,
                      parallel = TRUE,
                      n.chains = 3,
-                     n.iter = 4000,
+                     n.burnin = 5000,
+                     n.iter = 9000,
+                     #n.thin = 5,
                      DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod2, 
-        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_RE_model2.RDS")
+        file ="/scratch/atm234/sbc_fish/outputs/fish_MSAM_RE_model3.RDS")
 
 (end.time <- Sys.time())
 
@@ -226,13 +228,13 @@ params2 <- c(
 
 mcmcplot(mod2$samples,
          parms = params2,
-         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM_RE2")
+         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM_RE3")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod2$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_modelRE_Rhat2.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSAM_modelRE_Rhat3.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
