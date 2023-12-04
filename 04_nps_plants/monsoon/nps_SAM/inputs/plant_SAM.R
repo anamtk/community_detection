@@ -137,6 +137,8 @@ model{
     b0.transect[t] ~ dnorm(b0, tau.transect)
   }
   
+  
+  
   # for(t in 1:n.transects){
   #   b0.transect[t] ~ dnorm(b0.plot[Plot.ID[t]], tau.transect)
   # }
