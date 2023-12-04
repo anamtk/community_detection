@@ -67,20 +67,32 @@ yrep <- as.data.frame(modeled$statistics) %>%
 
 # Plot --------------------------------------------------------------------
 
-ggplot(yrep, aes(x = presence, y = Mean)) +
-  geom_abline(intercept = 0, slope = 1) +
-  geom_point()
-
-yrep %>%
-  mutate(presence = as.factor(presence)) %>%
-  ggplot(aes(x = presence, y = Mean)) +
-  geom_boxplot()
-
 m1 <- lm(Mean ~ presence,
          data = yrep)
 
 summary(m1)
 
+
+ggplot(yrep, aes(x = presence, y = Mean)) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_point()
+
+lb1 <- paste("R^2 == 0.89")
+
+yrep %>%
+  mutate(presence = as.factor(presence)) %>%
+  ggplot(aes(x = presence, y = Mean)) +
+  geom_boxplot() +
+  annotate(geom = 'text', x = 2.25, y = 0.25, label = lb1, parse = T) +
+  labs(x = "observed", y = "predicted", title = "PFNP plant MSOM GOF")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "PFNP_GOF_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
 
 
 # Pull out z --------------------------------------------------------------

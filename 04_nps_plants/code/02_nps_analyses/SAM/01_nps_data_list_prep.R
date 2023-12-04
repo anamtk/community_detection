@@ -72,10 +72,11 @@ n.lag <- all_data2 %>%
 # Response data -----------------------------------------------------------
 
 # diss <- as.vector(all_data2$mean)
-# var.estimate <- as.vector(all_data2$sd)
+# var.estimate <- as.vector(all_data2$sd^2)
 
-diss <- as.vector(all_data2$mean_gain)
-var.estimate <- as.vector(all_data2$sd_gain)
+diss <- as.vector(all_data2$mean)
+var.estimate <- as.vector(all_data2$sd^2)
+
 
 # Random effects ----------------------------------------------------------
 

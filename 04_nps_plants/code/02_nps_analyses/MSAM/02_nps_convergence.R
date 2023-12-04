@@ -32,4 +32,19 @@ rhat <- readRDS(here('04_nps_plants',
 
 # Graph RHat per parameter ------------------------------------------------
 
-rhat_graph_fun(rhat)
+parm <- c("b0.star", "eps.site.star", "eps.year.star",
+          'sig.eps.site', 'sig.eps.year', 'deviance',
+          'mu.b0species', 'sig.b0species',
+          'mu.a0', 'sig.a0','a1.Cover', 'a2.LifeGroup')
+
+rhat_graph_fun(rhat, parms = parm, rhat = 1.2)+ 
+  labs(title = "PFNP plant MSOM Rhat")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "PFNP_Rhat_graph.jpg"),
+       height = 7,
+       width = 8,
+       units = "in")
+
