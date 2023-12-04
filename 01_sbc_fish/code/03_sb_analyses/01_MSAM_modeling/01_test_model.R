@@ -29,6 +29,12 @@ data <- readRDS(here('01_sbc_fish',
                      "model_inputs",
                      "fish_msam_dynmultisiteRE.RDS"))
 
+data <- readRDS(here('01_sbc_fish',
+                     "data_outputs",
+                     'MSAM',
+                     "model_inputs",
+                     "fish_msom_RE.RDS"))
+
 # Parameters to save ------------------------------------------------------
 
 params <- c(
@@ -43,7 +49,9 @@ params <- c(
             'mu.b0species',
             'sig.b0species',
             'sig.eps.site',
-            'sig.eps.year'
+            'sig.eps.year',
+            'eps.site',
+            'eps.year'
             )
 
 #params <- c("bray")
@@ -60,6 +68,9 @@ inits <- list(list(N = data$ymax),
               list(N = data$ymax),
               list(N = data$ymax))
 
+inits <- list(list(z = data$z),
+              list(z = data$z),
+              list(z = data$z))
 
 #inits <- function()list(N = data$ymax)
 
@@ -70,18 +81,18 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "MSAM_simple_siteyearRE.R")
+              "MSOM_simple_siteyearRE.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,
-                    #inits = NULL,
-                    inits = inits,
+                    inits = NULL,
+                    #inits = inits,
                     model.file = model,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
                     #n.burnin = 2000,
-                    n.iter = 4000,
+                    n.iter = 1,
                     DIC = TRUE)
 
 end.time <- Sys.time()
@@ -124,40 +135,46 @@ end.time - st.time
 #   dplyr::select(-chain, -iteration,
 #                 -deviance, -mean_dev) 
 # 
-# #for root nodes (except species-level taus)
+# #for fish model root nodes:
+# eps.site<- samp_df2 %>%
+#   dplyr::select(contains('eps.site')) %>%
+#   dplyr::select(-contains('eps.site.star')) %>%
+#   dplyr::select(-contains('sig')) %>%
+#   pivot_longer(cols = everything(),
+#                names_to = "parm",
+#                values_to = "value") %>%
+#   separate(parm, 
+#            into = c("site", "species"),
+#            sep = ",") %>%
+#   mutate(site = str_sub(site, 10, nchar(site))) %>%
+#   mutate(species = str_sub(species, 1, (nchar(species)-1))) %>%
+#   pivot_wider(names_from = species,
+#               values_from = value) %>%
+#   dplyr::select(-site) %>%
+#   as.matrix()
+# 
+# eps.year<- samp_df2 %>%
+#   dplyr::select(contains('eps.year')) %>%
+#   dplyr::select(-contains('eps.year.star')) %>%
+#   dplyr::select(-contains('sig')) %>%
+#   pivot_longer(cols = everything(),
+#                names_to = "parm",
+#                values_to = "value") %>%
+#   separate(parm, 
+#            into = c("year", "species"),
+#            sep = ",") %>%
+#   mutate(year = str_sub(year, 10, nchar(year))) %>%
+#   mutate(species = str_sub(species, 1, (nchar(species)-1))) %>%
+#   pivot_wider(names_from = species,
+#               values_from = value) %>%
+#   dplyr::select(-year) %>%
+#   as.matrix()
+# 
+# mu.a0 <- as.vector(samp_df2$mu.a0)
+# sig.a0<- as.vector(samp_df2$sig.a0)
 # a1.Vis <- as.vector(samp_df2$a1.Vis)
 # a2.Size <- as.vector(samp_df2$a2.Size)
-# lambda.mean <- as.vector(samp_df2$lambda.mean)
-# omega.mean <- as.vector(samp_df2$omega.mean)
-# sig.llambda <- as.vector(samp_df2$sig.llambda)
-# sig.lomega <- as.vector(samp_df2$sig.lomega)
-# a0.mean <- as.vector(samp_df2$a0.mean)
-# sig.a0 <- as.vector(samp_df2$sig.a0)
-# 
-# 
-# # Run model again ---------------------------------------------------------
-# 
-# inits2 <- list(list(N = data$ymax,
-#                    a1.Vis = a1.Vis,
-#                    a2.Size = a2.Size,
-#                    lambda.mean = lambda.mean,
-#                    sig.llambda = sig.llambda,
-#                    a0.mean = a0.mean,
-#                    sig.a0 = sig.a0),
-#               list(N = data$ymax,
-#                    a1.Vis = a1.Vis + 0.05,
-#                    a2.Size = a2.Size + 0.05,
-#                    lambda.mean = lambda.mean + 0.001,
-#                    sig.llambda = sig.llambda + 0.01,
-#                    a0.mean = a0.mean + 0.01,
-#                    sig.a0 = sig.a0 + 0.05),
-#               list(N = data$ymax,
-#                    a1.Vis = a1.Vis - 0.05,
-#                    a2.Size = a2.Size - 0.05,
-#                    lambda.mean = lambda.mean - 0.001,
-#                    sig.llambda = sig.llambda - 0.01,
-#                    a0.mean = a0.mean - 0.01,
-#                    sig.a0 = sig.a0 - 0.05))
-# 
-# 
-# 
+# mu.b0species <- as.vector(samp_df2$mu.b0species)
+# sig.b0species <- as.vector(samp_df2$sig.b0species)
+# sig.eps.site <- as.vector(samp_df2$sig.eps.site)
+# sig.eps.year <- as.vector(samp_df2$sig.eps.year)

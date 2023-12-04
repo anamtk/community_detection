@@ -36,12 +36,6 @@ modeled <- readRDS(here('01_sbc_fish',
                         'monsoon',
                         'fish_MSAM',
                         'outputs',
-                        'fish_MSAM_GOF_summary.RDS'))
-
-modeled <- readRDS(here('01_sbc_fish',
-                        'monsoon',
-                        'fish_MSAM',
-                        'outputs',
                         'fish_MSAM_RE_GOF_summary.RDS'))
 
 
@@ -67,16 +61,26 @@ yrep <- as.data.frame(modeled$statistics) %>%
 
 # Plot --------------------------------------------------------------------
 
-ggplot(yrep, aes(x = COUNT, y = Mean)) +
-  geom_abline(intercept = 0, slope = 1) +
-  geom_point()
-
 m1 <- lm(Mean ~ COUNT,
          data = yrep)
 
 summary(m1)
 
+lb1 <- paste("R^2 == 0.85")
 
+ggplot(yrep, aes(x = COUNT, y = Mean)) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_point() +
+  annotate(geom = 'text', x = 500, y = 200, label = lb1, parse = T) +
+  labs(x = "observed", y = "predicted", title = "SBC LTER fish MSAM GOF")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "detection_models",
+                       "SBC_GOF_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
 
 # Pull out N --------------------------------------------------------------
 
