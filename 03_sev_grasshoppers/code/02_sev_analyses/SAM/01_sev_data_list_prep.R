@@ -53,7 +53,11 @@ n.webs <- length(unique(all_data2$site_web))
 n.transects <- length(unique(all_data2$site_web_trans))
 
 n.templag <- all_data2 %>%
-  dplyr::select(Temp:Temp_l5) %>%
+  dplyr::select(Temp:Temp_l10) %>%
+  ncol()
+
+n.pptlag <- all_data2 %>%
+  dplyr::select(PPT:PPT_l5) %>%
   ncol()
 
 n.npplag <- all_data2 %>%
@@ -77,18 +81,19 @@ Transect.ID <- as.vector(all_data2$siteID)
 # Covariates --------------------------------------------------------------
 
 Temp <- all_data2  %>%
-  dplyr::select(site_web_trans, YEAR, Temp:Temp_l5) %>%
-  pivot_longer(Temp:Temp_l5,
+  dplyr::select(site_web_trans, YEAR, Temp:Temp_l10) %>%
+  pivot_longer(Temp:Temp_l10,
                names_to = 'lag',
                values_to = 'temp') %>%
   mutate(temp = scale(temp)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "temp") %>%
-  dplyr::select(Temp:Temp_l5) %>%
+  dplyr::select(Temp:Temp_l10) %>%
   as.matrix()
 
 sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
 #7% missing data
+#with more lags - 0.4%
 
 PPT <- all_data2  %>%
   dplyr::select(site_web_trans, YEAR, PPT:PPT_l5) %>%
@@ -126,6 +131,7 @@ data <- list(n.data = n.data,
              n.webs = n.webs,
              n.templag = n.templag,
              n.npplag = n.npplag,
+             n.pptlag = n.pptlag,
              n.transects = n.transects,
              bray = bray,
              var.estimate = var.estimate,

@@ -23,6 +23,46 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
+
+# Load model --------------------------------------------------------------
+
+mod <- readRDS(file ='/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model.RDS')
+
+# Get initials from previous model ----------------------------------------
+
+#get the MCMC chains
+samples <- mod$samples
+
+#function to make each chain a dataframe
+df_fun <- function(chain){
+  df <- as.data.frame(chain) %>%
+    rownames_to_column(var = "iteration")
+  return(df)
+}
+
+#use that function on all list elements
+samp_dfs <- lapply(samples, df_fun)
+
+#make into one dataframe
+samp_df <- bind_rows(samp_dfs, .id = "chain")
+
+#get values for all parameters from the last iteration of the
+#chain with the lowest deviance
+samp_df2 <- samp_df %>%
+  group_by(chain) %>%
+  #get mean deviance by chain
+  mutate(mean_dev = mean(deviance, na.rm = T)) %>%
+  ungroup() %>%
+  #get only the chain with the minimum average deviance
+  filter(mean_dev == min(mean_dev)) %>%
+  #pull out the final iteration from that chain
+  filter(iteration == max(iteration)) %>%
+  dplyr::select(-chain, -iteration,
+                -deviance, -mean_dev)
+
+
+
+
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
@@ -39,7 +79,6 @@ data_list <- list(n.data = data$n.data,
                    var.estimate = data$var.estimate,
                    n.templag = data$n.templag,
                    n.npplag = data$n.npplag,
-                  n.pptlag = data$n.pptlag,
                    Temp = data$Temp,
                    PPT = data$PPT, 
                    NPP = data$NPP)
@@ -65,11 +104,13 @@ params <- c('b0.web',
 mod <- jagsUI::jags(data = data_list,
                     #inits = inits,
                     inits = NULL,
-                    model.file = '/scratch/atm234/sev_hoppers/SAM/inputs/sev_SAM.R',
+                    model.file = '/scratch/atm234/sev_hoppers/SAM/inputs/sev_SAM_temp.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.burnin = 1000,
+                    n.iter =  21000,
+                    n.thin = 5,
                     DIC = TRUE)
 
 #save as an R data object

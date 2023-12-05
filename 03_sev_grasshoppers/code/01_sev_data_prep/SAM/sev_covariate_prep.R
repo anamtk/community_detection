@@ -273,7 +273,7 @@ npp_lags <- npp3 %>%
 # Combine datasets --------------------------------------------------------
 
 all_data <- stability2 %>%
-  left_join(temp_lags2, by = c("YEAR" = "Year")) %>%
+  left_join(temp_lags, by = c("YEAR" = "Year")) %>%
   left_join(ppt_lags2, by = c("YEAR" = "Year")) %>%
   left_join(npp_lags, by = c("site", "web", "YEAR" = "year"))
 

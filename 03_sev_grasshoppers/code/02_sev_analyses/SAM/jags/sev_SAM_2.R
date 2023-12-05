@@ -53,15 +53,10 @@ model{
     #generating each month's weight to sum above
     for(t in 1:n.templag){ #number of time steps we're going back in the past
       TempTemp[i,t] <- Temp[i,t]*wA[t] 
+      TempPPT[i,t] <- PPT[i,t]*wB[t]
       
       #missing data
       Temp[i,t] ~ dnorm(mu.temp, tau.temp)
-
-    }
-    
-    for(t in 1:n.pptlag){
-      TempPPT[i,t] <- PPT[i,t]*wB[t]
-      
       PPT[i,t] ~ dnorm(mu.ppt, tau.ppt)
     }
     
@@ -103,15 +98,10 @@ model{
     #and follow a relatively uninformative gamma prior
     deltaA[t] ~ dgamma(1,1)
     
-
-  }
-  
-  for(t in 1:n.pptlag){
     #the weights for ppt - getting the weights to sum to 1
     wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
     deltaB[t] ~ dgamma(1,1)
-    
   }
   
   #sum of weights for the npp lag
@@ -132,14 +122,18 @@ model{
   #i didn't use "site" since there are only two levels, but could
   #add it in if we wanted later
   #hierarchical centering of transects on webs on b0
+  # for(t in 1:n.transects){
+  #   b0.transect[t] ~ dnorm(b0.web[Web.ID[t]], tau.transect)
+  # }
+  # 
+  # for(w in 1:n.webs){
+  #   b0.web[w] ~ dnorm(b0, tau.web)
+  # }
+  
   for(t in 1:n.transects){
-    b0.transect[t] ~ dnorm(b0.web[Web.ID[t]], tau.transect)
+    b0.transect[t] ~ dnorm(b0, tau.transect)
   }
-  
-  for(w in 1:n.webs){
-    b0.web[w] ~ dnorm(b0, tau.web)
-  }
-  
+
   b0 ~ dnorm(0, 1E-2)
   
   for(i in 1:3){
