@@ -25,7 +25,7 @@ data_list <- readRDS(here('01_sbc_fish',
                           "data_outputs",
                           'SAM',
                           "model_inputs",
-                          "bray_SAM_input_data.RDS"))
+                          "bray_SAM_input_data_long.RDS"))
 
 
 # Parameters to save ------------------------------------------------------
@@ -56,7 +56,7 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.iter = 1335,
                     DIC = TRUE)
 
 Sys.time()
