@@ -39,7 +39,7 @@ fish_bray <- read.csv(here("01_sbc_fish",
                           "data_outputs",
                           'SAM',
                           'data_prep',
-                          "stability_metrics_with_covariates.csv"))
+                          "stability_metrics_with_covariates_long.csv"))
 
 sev_sam <- readRDS(here('03_sev_grasshoppers',
                         'monsoon',
@@ -130,7 +130,7 @@ fisht <- partial_plot_fun(model = fish_sam,
                  ID= 'SITE_TRANS', 
                  yearID = 'YEAR', 
                  start = 'TEMP_C', 
-                 end = 'TEMP_C_l5',
+                 end = 'TEMP_C_l10',
                  weight = "wB",
                  diss = as.name('bray')) +
   labs(x = "Temperature",
@@ -143,12 +143,16 @@ fisht <- partial_plot_fun(model = fish_sam,
 fish_tweights <- as.data.frame(fish_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
   filter(str_detect(parm, "wB")) %>%
-  mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Warm",
-                            parm %in% c("wB[2]", "wB[4]", 'wB[6]') ~ "Cold")) %>%
+  mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]",
+                                        'wB[7]', 'wB[9]','wB[11]') ~ "Warm",
+                            parm %in% c("wB[2]", "wB[4]", 'wB[6]',
+                                        'wB[8]', 'wB[10]') ~ "Cold")) %>%
   mutate(year = case_when(parm == "wB[1]" ~ 0,
                           parm %in% c("wB[2]", 'wB[3]') ~ 1,
                           parm %in% c('wB[4]', 'wB[5]') ~ 2,
-                          parm == "wB[6]" ~ 3,
+                          parm %in% c("wB[6]", 'wB[7]') ~ 3,
+                          parm %in% c("wB[8]", 'wB[9]') ~ 4,
+                          parm %in% c("wB[10]", 'wB[11]') ~ 5,
                           TRUE ~ NA_real_))
 
 warmcol <- '#d8b365'
@@ -156,7 +160,7 @@ coldcol <- '#5ab4ac'
 
 (fish_tweights_plot <- fish_tweights %>%
   ggplot(aes(x = year, y= `50%`, shape = season)) +
-  geom_hline(yintercept = 1/6, linetype = 2) +
+  geom_hline(yintercept = 1/11, linetype = 2) +
   geom_point(position = position_dodge(width = 0.5), size = 3) +
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
                 position = position_dodge(width = 0.5),
@@ -302,17 +306,17 @@ plant_pweights <- as.data.frame(plant_sam$quantiles) %>%
   mutate(season = case_when(parm %in% c("wB[1]", "wB[5]", 'wB[9]', 
                                         'wB[13]', 'wB[17]', 'wB[21]') ~ "Monsoon",
                             parm %in% c("wB[2]", 'wB[6]', 'wB[10]',
-                                        'wB[14]', 'wB[18]') ~ "Early Summer",
+                                        'wB[14]', 'wB[18]') ~ "Winter",
                             parm %in% c("wB[3]", 'wB[7]', 'wB[11]',
                                         'wB[15]', 'wB[19]') ~ "Spring",
                             parm %in% c("wB[4]", 'wB[8]', 'wB[12]',
-                                        'wB[16]', 'wB[20]') ~ "Winter")) %>%
-  mutate(year = case_when(parm %in% c("wB[1]", 'wB[2]', 'wB[3]', 'wB[4]') ~ 0,
-                          parm %in% c("wB[5]", 'wB[6]', 'wB[7]', 'wB[8]') ~ 1,
-                          parm %in% c('wB[9]', 'wB[10]', 'wB[11]', 'wB[12]') ~ 2,
-                          parm %in% c('wB[13]', 'wB[14]', 'wB[15]', 'wB[16]') ~ 3,
-                          parm %in% c("wB[17]", 'wB[18]', 'wB[19]', 'wB[20]') ~ 4,
-                          parm %in% c("wB[21]") ~ 5,
+                                        'wB[16]', 'wB[20]') ~ "Early Summer")) %>%
+  mutate(year = case_when(parm %in% c("wB[1]", 'wB[2]') ~ 0,
+                          parm %in% c('wB[3]', 'wB[4]', "wB[5]", 'wB[6]') ~ 1,
+                          parm %in% c( 'wB[7]', 'wB[8]','wB[9]', 'wB[10]') ~ 2,
+                          parm %in% c('wB[11]', 'wB[12]', 'wB[13]', 'wB[14]') ~ 3,
+                          parm %in% c('wB[15]', 'wB[16]', "wB[17]", 'wB[18]') ~ 4,
+                          parm %in% c('wB[19]', 'wB[20]', "wB[21]") ~ 5,
                           TRUE ~ NA_real_))
 
 warmcol <- '#d8b365'
