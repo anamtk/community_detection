@@ -58,10 +58,9 @@ ppt <- climate %>%
                names_to = "season",
                values_to = "PPT") %>%
   mutate(season = case_when(season == "ppt_monsoon" ~ 1,
-                            season == "ppt_earlysummer" ~ 2,
+                            season == "ppt_winter" ~ 2,
                             season == "ppt_spring" ~ 3,
                             TRUE ~ 4))
-
 
 # vpd --------------------------------------------------------------------
 
@@ -72,7 +71,7 @@ vpd <- climate %>%
                names_to = "season",
                values_to = "VPD") %>%
   mutate(season = case_when(season == "vpd_monsoon" ~ 1,
-                            season == "vpd_earlysummer" ~ 2,
+                            season == "vpd_winter" ~ 2,
                             season == "vpd_spring" ~ 3,
                             TRUE ~ 4))
 
