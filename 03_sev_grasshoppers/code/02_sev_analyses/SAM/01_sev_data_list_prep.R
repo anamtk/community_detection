@@ -102,7 +102,7 @@ PPT <- all_data2  %>%
   as.matrix()
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
-#<1% missing data
+#<5% missing data
 
 NPP <- all_data2 %>%
   dplyr::select(site_web_trans, YEAR, NPP:NPP_l10) %>%

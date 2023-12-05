@@ -304,6 +304,10 @@ saveRDS(data, here('03_sev_grasshoppers',
 
 # Extract info on sites and years -----------------------------------------
 
+write.csv(hopper4, here('03_sev_grasshoppers',
+                        'data_outputs',
+                        'MSAM',
+                        'sev_tidy_data_for_model.csv'))
 str(hopper4)
 
 ids <- hopper4 %>%

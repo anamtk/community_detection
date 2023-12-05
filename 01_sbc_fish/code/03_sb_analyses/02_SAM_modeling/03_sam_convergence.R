@@ -32,5 +32,17 @@ rhat <- readRDS(here('01_sbc_fish',
 
 
 # Graph RHat per parameter ------------------------------------------------
+parm <- c('b0.transect', 'b', 'wA', 'wB', 'sig.transect', 'sig.site',
+          'var.process', 'deviance')
 
-rhat_graph_fun(rhat)
+rhat_graph_fun(rhat, parms = parm, rhat = 1.1) +
+  labs(title = "SBC LTER fish SAM Rhat")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "SBC_SAM_Rhat_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")

@@ -1,11 +1,11 @@
-#Monsoon script - grasshopper MSAM
+#Monsoon script - fish MSAM
 # Ana Miller-ter Kuile
-# September 11, 2023
+# July 27, 2023
 
-#this script runs the grasshopper MSOM
+#this script runs the fish MSOM
 
 # Load packages ---------------------------------------------------------------
-Sys.time()
+(start.time <- Sys.time())
 
 
 # Load packages,
@@ -26,27 +26,23 @@ for(i in package.list){library(i, character.only = T)}
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-data <- readRDS("/scratch/atm234/sev_hoppers/inputs/sev_msam_dynmultisite.RDS")
+data <- readRDS("/scratch/atm234/sbc_fish/inputs/fish_msom_RE.RDS")
 
 # Compile data ------------------------------------------------------------
-
 data_list <- list(y = data$y,
-                  reprod = data$reprod,
-                  n.species = data$n.species,
-                  n.years = data$n.years,
-                  n.start = data$n.start,
-                  n.end = data$n.end,
-                  n.transects = data$n.transects,
-                  n.rep = data$n.rep, 
-                  n.sites = data$n.sites,
-                  Year.ID = data$Year.ID,
-                  Site.ID = data$Site.ID,
-                  #for initials
-                  ymax = data$ymax,
-                  omega.init = data$omega.init,
-                  #for omega prior
-                  R = data$R)
-
+                   vis = data$vis,
+                   size = data$size,
+                   n.species = data$n.species,
+                   n.years = data$n.years,
+                   n.start = data$n.start,
+                   n.end = data$n.end,
+                   n.transects = data$n.transects,
+                   n.rep = data$n.rep,
+                   n.sites = data$n.sites,
+                   Site.ID = data$Site.ID,
+                   Year.ID = data$Year.ID,
+                   #for initials
+                   z = data$z)
 
 # Parameters to save ------------------------------------------------------
 
@@ -57,42 +53,45 @@ params <- c(
   'eps.year.star',
   'eps.site',
   'eps.year',
-  'p.mean',
-  'sig.lp', 
+  'a1.Vis',
+  'a2.Size',
+  'mu.a0',
+  'sig.a0',
   'mu.b0species',
   'sig.b0species',
   'sig.eps.site',
-  'sig.eps.year')
+  'sig.eps.year'
+)
 
 # INits -------------------------------------------------------------------
 
 #we found ymax to set initials, since otherwise the model will hate us
-inits <- list(list(N = data$ymax),
-              list(N = data$ymax),
-              list(N = data$ymax))
+# inits <- list(list(N = data$ymax),
+#               list(N = data$ymax),
+#               list(N = data$ymax))
 
 # JAGS model --------------------------------------------------------------
 
-mod <- jagsUI::autojags(data = data_list,
-                        inits = inits,
-                        parameters.to.save = params,
-                        model.file = '/scratch/atm234/sev_hoppers/inputs/sev_MSAM_simple_nocov.R',
-                        parallel = TRUE,
-                        n.chains = 3,
-                        iter.increment = 1000,
-                        n.burnin = 10000,
-                        n.thin = 10,
-                        Rhat.limit = 1.2,
-                        max.iter = 100000)
+mod <- jagsUI::jags(data = data_list,
+                    #inits = inits,
+                    inits = NULL,
+                    model.file = '/scratch/atm234/sbc_fish/inputs/MSOM_simple_siteyearRE.R',
+                    parameters.to.save = params,
+                    parallel = TRUE,
+                    n.chains = 3,
+                    #n.burnin = 1000,
+                    #n.thin = 3,
+                    n.iter = 4000,
+                    DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/sev_hoppers/outputs/sev_MSAM_nocovRE_model3.RDS")
+        file ="/scratch/atm234/sbc_fish/outputs/fish_MSOM_model_RE.RDS")
 
-Sys.time()
+(end.time <- Sys.time())
 
 
-
+(tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
 params2 <- c(
@@ -100,27 +99,29 @@ params2 <- c(
   'b0.star',
   'eps.site.star',
   'eps.year.star',
-  'p.mean',
-  'sig.lp', 
+  'a1.Vis',
+  'a2.Size',
+  'mu.a0',
+  'sig.a0',
   'mu.b0species',
   'sig.b0species',
   'sig.eps.site',
   'sig.eps.year',
-  'deviance')
+  'deviance'
+)
 
 mcmcplot(mod$samples,
          parms = params2,
-         dir = "/scratch/atm234/sev_hoppers/outputs/mcmcplots/MSAM_RE3")
+         dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSOM_RE")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sev_hoppers/outputs/sev_MSAMRE3_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/outputs/fish_MSOM_model_RhatRE.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
-
 
 raf <- raftery.diag(mod$samples)
 

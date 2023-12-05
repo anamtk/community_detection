@@ -65,8 +65,40 @@ samp_df2 <- samp_df %>%
                 -deviance, -mean_dev) 
 
 #for fish model root nodes:
-eps.site<- as.vector(samp_df2$eps.site)
-eps.year<- as.vector(samp_df2$eps.year)
+eps.site<- samp_df2 %>%
+  dplyr::select(contains('eps.site')) %>%
+  dplyr::select(-contains('eps.site.star')) %>%
+  dplyr::select(-contains('sig')) %>%
+  pivot_longer(cols = everything(),
+               names_to = "parm",
+               values_to = "value") %>%
+  separate(parm, 
+           into = c("site", "species"),
+           sep = ",") %>%
+  mutate(site = str_sub(site, 10, nchar(site))) %>%
+  mutate(species = str_sub(species, 1, (nchar(species)-1))) %>%
+  pivot_wider(names_from = species,
+              values_from = value) %>%
+  dplyr::select(-site) %>%
+  as.matrix()
+
+eps.year<- samp_df2 %>%
+  dplyr::select(contains('eps.year')) %>%
+  dplyr::select(-contains('eps.year.star')) %>%
+  dplyr::select(-contains('sig')) %>%
+  pivot_longer(cols = everything(),
+               names_to = "parm",
+               values_to = "value") %>%
+  separate(parm, 
+           into = c("year", "species"),
+           sep = ",") %>%
+  mutate(year = str_sub(year, 10, nchar(year))) %>%
+  mutate(species = str_sub(species, 1, (nchar(species)-1))) %>%
+  pivot_wider(names_from = species,
+              values_from = value) %>%
+  dplyr::select(-year) %>%
+  as.matrix()
+
 mu.a0 <- as.vector(samp_df2$mu.a0)
 sig.a0<- as.vector(samp_df2$sig.a0)
 a1.Vis <- as.vector(samp_df2$a1.Vis)
@@ -163,9 +195,7 @@ mod2 <- jagsUI::jags(data = data_list,
                      parameters.to.save = params,
                      parallel = TRUE,
                      n.chains = 3,
-                     n.iter = 45000,
-                     n.burnin = 5000,
-                     n.thin = 10,
+                     n.iter = 4000,
                      DIC = TRUE)
 
 #save as an R data object
@@ -178,7 +208,24 @@ saveRDS(mod2,
 (tot.time <- end.time - start.time)
 # Check convergence -------------------------------------------------------
 
+params2 <- c(
+  #COMMUNITY parameters
+  'b0.star',
+  'eps.site.star',
+  'eps.year.star',
+  'a1.Vis',
+  'a2.Size',
+  'mu.a0',
+  'sig.a0',
+  'mu.b0species',
+  'sig.b0species',
+  'sig.eps.site',
+  'sig.eps.year',
+  'deviance'
+)
+
 mcmcplot(mod2$samples,
+         parms = params2,
          dir = "/scratch/atm234/sbc_fish/outputs/mcmcplots/MSAM_RE2")
 
 # Get RHat per parameter ------------------------------------------------

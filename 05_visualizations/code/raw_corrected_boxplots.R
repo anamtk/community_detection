@@ -151,12 +151,15 @@ sev_m2 <- as.data.frame(sev_modeled) %>%
   mutate(yrID = as.numeric(yrID),
          siteID = as.numeric(siteID))
 
+str(sev_m2)
 nps_m2 <- nps_modeled %>%
   rename(yrID = EventYear,
          siteID = plot_trans_quad,
          turnover = mean) %>%
-  dplyr::select(-sd) %>%
+  dplyr::select(-sd, - mean_loss, -sd_loss, -sd_gain, -mean_gain) %>%
   mutate(type = "modeled")
+
+str(nps_m2)
 
 # Combine -----------------------------------------------------------------
 
@@ -296,12 +299,12 @@ boxplot_function <- function(dataset) {
   
 }
 
-knz_boxplot <- boxplot_function("birds") +
-  annotate(geom = "text", x = 0.75, y = 1, label = "More different") +
-  annotate(geom = "text", x = 0.75, y = 0, label = "More similar") 
+knz_boxplot <- boxplot_function("birds")
 knz_boxplot
 
-sbc_boxplot <- boxplot_function("fish")
+sbc_boxplot <- boxplot_function("fish") +
+  annotate(geom = "text", x = 1, y = 1, label = "More different") +
+  annotate(geom = "text", x = 1, y = 0, label = "More similar") 
 sbc_boxplot
 
 sev_boxplot <- boxplot_function("grasshoppers")

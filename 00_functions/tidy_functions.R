@@ -132,3 +132,24 @@ scale_df <- function(x, length, name){
   #get the final DF back from the function
   return(final_df)
 }
+
+
+
+# Rhat DF -----------------------------------------------------------------
+
+
+rhat_df_fun <- function(list){
+  
+  #this creates a dtaaframe out of the Rhat values from the model
+  df <- data.frame(id = names(list),
+                   Rhat = unlist(lapply(list, paste, collapse = ","))) %>%
+    #splits Rhat by , when that list element had more than one value
+    mutate(Rhat = str_split(Rhat, ",")) %>%
+    #unnests - so makes each Rhat a new row in the df
+    unnest(c(Rhat)) %>%
+    #make sure Rhat is a numeric
+    mutate(Rhat = as.numeric(Rhat)) 
+  
+  return(df)
+  
+}

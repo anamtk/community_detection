@@ -16,7 +16,7 @@ for(i in package.list){library(i, character.only = T)}
 # Rhat graph --------------------------------------------------------------
 
 
-rhat_graph_fun <- function(list){
+rhat_graph_fun <- function(list, parms, rhat){
 
   #this creates a dtaaframe out of the Rhat values from the model
   df <- data.frame(id = names(list),
@@ -26,12 +26,13 @@ rhat_graph_fun <- function(list){
     #unnests - so makes each Rhat a new row in the df
     unnest(c(Rhat)) %>%
     #make sure Rhat is a numeric
-    mutate(Rhat = as.numeric(Rhat)) 
+    mutate(Rhat = as.numeric(Rhat)) %>%
+    filter(id %in% parms)
   
   #plot histogram and make sure all below 1.1
   plot <- ggplot(df, aes(x = Rhat)) +
     geom_histogram() +
-    geom_vline(xintercept = 1.1, linetype = 2) +
+    geom_vline(xintercept = rhat, linetype = 2) +
     theme_bw() +
     scale_y_sqrt() +
     #this is facetted by the parameter ID so you

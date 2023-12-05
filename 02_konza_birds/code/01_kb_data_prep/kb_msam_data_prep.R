@@ -505,7 +505,7 @@ saveRDS(data, here('02_konza_birds',
 #this correspondes to TransID == 3
 #max number ever observed calculation of braycurtis
 matrix <- birds5 %>%
-  filter(WATERSHED == "004B") %>%
+  filter(WATERSHED == "N04D") %>%
   group_by(RECYEAR, SpecID) %>%
   summarise(COUNT = max(NOBS, na.rm = T)) %>%
   pivot_wider(names_from = RECYEAR,
@@ -541,7 +541,7 @@ raw_bray <- as.data.frame(cbind(raw_bray_all = bray,
 
 #observed in just one survey version
 matrix2 <- birds5 %>%
-  filter(WATERSHED == "004B") %>%
+  filter(WATERSHED == "N04D") %>%
   filter(REP == 1) %>%
   distinct(RECYEAR, NOBS, SpecID) %>%
   pivot_wider(names_from = RECYEAR,
@@ -580,7 +580,7 @@ raw_bray_all <- raw_bray %>%
 
 saveRDS(raw_bray_all, here("05_visualizations",
                        "viz_data",
-                       "knz_004B_raw_bray.RDS"))
+                       "knz_N04D_raw_bray.RDS"))
 
 # Uncorrected bray for all sites-years ------------------------------------
 
