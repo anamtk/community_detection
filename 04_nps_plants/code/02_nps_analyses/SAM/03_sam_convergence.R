@@ -27,9 +27,33 @@ rhat <- readRDS(here('04_nps_plants',
                      'monsoon',
                      "nps_SAM",
                      'outputs',
-                     'nps_SAM_model_Rhat_4.RDS'))
+                     'nps_SAM_model_Rhat.RDS'))
 
 
 # Graph RHat per parameter ------------------------------------------------
 
-rhat_graph_fun(rhat)
+#rhat_graph_fun(rhat)
+
+parm <- c('b0.quad',
+            'b0.transect',
+            'b',
+            'wA',
+            'wB',
+            'sig.quad',
+            'sig.transect',
+            'var.process', 
+          'deviance')
+
+rhat_graph_fun(rhat, parms = parm, rhat = 1.1) +
+  labs(title = "NPS Plant SAM Rhat")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "NPS_SAM_Rhat_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
+
+
