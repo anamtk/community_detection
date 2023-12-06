@@ -178,6 +178,25 @@ temp_lags2 <- temp_lags %>%
   dplyr::select(-SEASON) %>%
   mutate(YEAR = as.integer(YEAR))
 
+temp_lags_l <- bottemp2 %>%
+  group_by(SITE) %>%
+  arrange(SITE, YEAR, SEASON) %>%
+  #this creates a column for a lag 1:10 seasons ago
+  do(data.frame(., setNames(shift(.$TEMP_C, 1:10), c("TEMP_C_l1",
+                                                    "TEMP_C_l2", "TEMP_C_l3",
+                                                    "TEMP_C_l4", "TEMP_C_l5",
+                                                    "TEMP_C_l6", "TEMP_C_l7",
+                                                    "TEMP_C_l8", "TEMP_C_l9", 
+                                                    "TEMP_C_l10")))) %>%
+  ungroup() %>%
+  dplyr::select(SITE, YEAR, SEASON,
+                TEMP_C:TEMP_C_l10)
+
+temp_lags_l2 <- temp_lags_l %>%
+  filter(SEASON == "WARM") %>%
+  dplyr::select(-SEASON) %>%
+  mutate(YEAR = as.integer(YEAR))
+
 chla_lags <- chl_a2 %>%
   group_by(site) %>%
   arrange(site, YEAR, SEASON) %>%
@@ -208,4 +227,14 @@ write.csv(all_data, here("01_sbc_fish",
                          'data_prep',
                         "stability_metrics_with_covariates.csv"))
 
+all_data2 <- stability2 %>%
+  left_join(bio_lags, by = c("YEAR",
+                             "SITE_TRANS")) %>%
+  left_join(temp_lags_l2, by = c("SITE", "YEAR")) %>%
+  left_join(chla_lags2, by = c("SITE" = "site", "YEAR"))
 
+write.csv(all_data2, here("01_sbc_fish",
+                         "data_outputs",
+                         'SAM',
+                         'data_prep',
+                         "stability_metrics_with_covariates_long.csv"))

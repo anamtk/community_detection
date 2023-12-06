@@ -1,8 +1,8 @@
-#Monsoon script - grasshopper
+#Monsoon script - fish SAM
 # Ana Miller-ter Kuile
 # May 12, 2023
 
-#this script runs the grasshopper SAM
+#this script runs the fish SAM
 
 # Load packages ---------------------------------------------------------------
 (start.time <- Sys.time())
@@ -26,34 +26,32 @@ for(i in package.list){library(i, character.only = T)}
 # Load Data ---------------------------------------------------------------
 
 #load the formatted data for the JAGS model
-data <- readRDS("/scratch/atm234/sev_hoppers/SAM/inputs/sev_bray_SAM_input_data.RDS")
+data <- readRDS("/scratch/atm234/sbc_fish/SAM/inputs/bray_SAM_input_data_long.RDS")
 
 # Compile data ------------------------------------------------------------
-
 data_list <- list(n.data = data$n.data,
-                   n.webs = data$n.webs,
                   n.transects = data$n.transects,
-                   Web.ID = data$Web.ID,
+                  n.sites = data$n.sites,
+                  n.years = data$n.years,
                   Transect.ID = data$Transect.ID,
-                   bray = data$bray,
-                   var.estimate = data$var.estimate,
-                   n.templag = data$n.templag,
-                   n.npplag = data$n.npplag,
-                  n.pptlag = data$n.pptlag,
-                   Temp = data$Temp,
-                   PPT = data$PPT, 
-                   NPP = data$NPP)
+                  Year.ID = data$Year.ID,
+                  Site.ID = data$Site.ID,
+                  bray = data$bray,
+                  var.estimate = data$var.estimate,
+                  n.kelplag = data$n.kelplag,
+                  Kelp = data$Kelp,
+                  n.templag = data$n.templag,
+                  Temp = data$Temp,
+                  Chla = data$Chla)
 
 # Parameters to save ------------------------------------------------------
 
-params <- c('b0.web',
-            'b0.transect',
+params <- c('b0.transect',
             'b',
             'wA',
             'wB',
-            'wC',
-            'sig.web',
             'sig.transect',
+            'sig.site',
             'var.process')
 
 # INits -------------------------------------------------------------------
@@ -65,16 +63,18 @@ params <- c('b0.web',
 mod <- jagsUI::jags(data = data_list,
                     #inits = inits,
                     inits = NULL,
-                    model.file = '/scratch/atm234/sev_hoppers/SAM/inputs/sev_SAM.R',
+                    model.file = '/scratch/atm234/sbc_fish/SAM/inputs/fish_SAM.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.iter =  10000,
+                    n.burnin = 1000,
+                    n.thin = 2,
                     DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model.RDS")
+        file ="/scratch/atm234/sbc_fish/SAM/outputs/fish_SAM_model_long.RDS")
 
 (end.time <- Sys.time())
 
@@ -83,13 +83,13 @@ saveRDS(mod,
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/sev_hoppers/SAM/outputs/mcmcplots/SAM")
+         dir = "/scratch/atm234/sbc_fish/SAM/outputs/mcmcplots/SAM_long")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/SAM/outputs/fish_SAM_modellong_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
