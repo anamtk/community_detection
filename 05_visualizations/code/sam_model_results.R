@@ -240,9 +240,9 @@ hopper_ppt_weights <- as.data.frame(sev_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
   filter(str_detect(parm, "wB")) %>%
   mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]", "wB[7]",
-                                        'wB[9]', 'wB[11]') ~ "Fall",
+                                        'wB[9]', 'wB[11]') ~ "Wet",
                             parm %in% c("wB[2]", "wB[4]", "wB[6]",
-                                        'wB[8]', 'wB[10]') ~ "Spring")) %>%
+                                        'wB[8]', 'wB[10]') ~ "Dry")) %>%
   mutate(year = case_when(parm %in% c("wB[1]", "wB[2]") ~ 0,
                           parm %in% c('wB[3]', 'wB[4]') ~ 1,
                           parm %in% c('wB[5]', 'wB[6]') ~ 2,
@@ -404,8 +404,8 @@ coldcol <- '#5ab4ac'
 bird_pweights <- as.data.frame(bird_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
   filter(str_detect(parm, "wB")) %>%
-  mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Cold",
-                            parm %in% c("wB[2]", "wB[4]", "wB[6]") ~ "Warm")) %>%
+  mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Dry",
+                            parm %in% c("wB[2]", "wB[4]", "wB[6]") ~ "Wet")) %>%
   mutate(year = case_when(parm %in% c("wB[1]", "wB[2]") ~ 0,
                           parm %in% c('wB[3]', 'wB[4]') ~ 1,
                           parm %in% c('wB[5]', 'wB[6]') ~ 2))
@@ -429,7 +429,7 @@ coldcol <- '#5ab4ac'
 
 # Export ------------------------------------------------------------------
 
-fishtgraphs/birdtgraphs/birdpgraphs/plantpgraphs
+fishtgraphs/birdtgraphs/birdpgraphs/hoppertgraphs/hopperpptgraphs/plantpgraphs
 
 fishtgraphs / hoppertgraphs / hoppernppgraphs / birdtgraphs +
   plot_annotation(tag_levels = "A")
@@ -437,7 +437,7 @@ fishtgraphs / hoppertgraphs / hoppernppgraphs / birdtgraphs +
 ggsave(filename = here('pictures',
                        'sam_models',
                        'sam_partial_plots.jpg'),
-       height = 7,
+       height = 9,
        width = 8,
        units = "in")
 
