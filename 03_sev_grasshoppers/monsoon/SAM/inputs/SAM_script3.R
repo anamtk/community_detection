@@ -12,7 +12,8 @@
 package.list <- c("jagsUI", "coda",
                   'dplyr', 'stringr',
                   'magrittr', 'tidyr',
-                  'mcmcplots','ggplot2') 
+                  'mcmcplots','ggplot2',
+                  'tibble', 'purrr') 
 
 
 ## Installing them if they aren't already on the computer
@@ -22,6 +23,70 @@ if(length(new.packages)) install.packages(new.packages)
 
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
+
+
+# Load model --------------------------------------------------------------
+
+mod <- readRDS(file ='/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model2.RDS')
+
+# Get initials from previous model ----------------------------------------
+
+#get the MCMC chains
+samples <- mod$samples
+
+#function to make each chain a dataframe
+df_fun <- function(chain){
+  df <- as.data.frame(chain) %>%
+    rownames_to_column(var = "iteration")
+  return(df)
+}
+
+#use that function on all list elements
+samp_dfs <- lapply(samples, df_fun)
+
+#make into one dataframe
+samp_df <- bind_rows(samp_dfs, .id = "chain")
+
+#get values for all parameters from the last iteration of the
+#chain with the lowest deviance
+samp_df2 <- samp_df %>%
+  group_by(chain) %>%
+  #get mean deviance by chain
+  mutate(mean_dev = mean(deviance, na.rm = T)) %>%
+  ungroup() %>%
+  #get only the chain with the minimum average deviance
+  filter(mean_dev == min(mean_dev)) %>%
+  #pull out the final iteration from that chain
+  filter(iteration == max(iteration)) %>%
+  dplyr::select(-chain, -iteration,
+                -deviance, -mean_dev)
+
+
+var.process <- as.vector(samp_df2$var.process)
+sig.web <- as.vector(samp_df2$sig.web)
+sig.transect <- as.vector(samp_df2$sig.transect)
+b0 <- as.vector(samp_df2$b0)
+b <- samp_df2 %>%
+  dplyr::select(contains('b')) %>%
+  dplyr::select(-contains('b0')) %>%
+  dplyr::select(-contains('wB')) %>%
+  dplyr::select(-contains('delta')) %>%
+  dplyr::select(-contains('web')) %>%
+  as_vector()
+
+deltaA <- samp_df2 %>%
+  dplyr::select(contains('deltaA')) %>%
+  as_vector()
+
+deltaB <- samp_df2 %>%
+  dplyr::select(contains('deltaB')) %>%
+  as_vector()
+
+deltaC <- samp_df2 %>%
+  dplyr::select(contains('deltaC')) %>%
+  as_vector()
+
+
 
 # Load Data ---------------------------------------------------------------
 
@@ -64,21 +129,48 @@ params <- c('b0.web',
 
 #inits <- readRDS("/scratch/atm234/whwo_ipm/parameter_models/adult_occupancy/inputs/adult_occupancy_inits.RDS")
 
+inits <- list(list(var.process = var.process,
+                   b0 = b0,
+                   b = b,
+                   sig.web = sig.web,
+                   sig.transect = sig.transect,
+                   deltaA = deltaA,
+                   deltaB = deltaB,
+                   deltaC = deltaC),
+              list(var.process = var.process + 0.001,
+                   b0 = b0 + 0.05,
+                   b = b + 0.5,
+                   sig.web = sig.web + 0.01,
+                   sig.transect = sig.transect + 0.01,
+                   deltaA = deltaA + 0.01,
+                   deltaB = deltaB + 0.01,
+                   deltaC = deltaC + 0.01),
+              list(var.process = var.process - 0.001,
+                   b0 = b0 - 0.05,
+                   b = b - 0.5,
+                   sig.web = sig.web + 0.04,
+                   sig.transect = sig.transect + 0.04,
+                   deltaA = deltaA + 0.04,
+                   deltaB = deltaB + 0.04,
+                   deltaC = deltaC + 0.04))
+
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
-                    #inits = inits,
-                    inits = NULL,
+                    inits = inits,
+                    #inits = NULL,
                     model.file = '/scratch/atm234/sev_hoppers/SAM/inputs/sev_SAM.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 4000,
+                    n.burnin = 10000,
+                    n.iter =  50000,
+                    n.thin = 10,
                     DIC = TRUE)
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model.RDS")
+        file ="/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model3.RDS")
 
 (end.time <- Sys.time())
 
@@ -87,13 +179,13 @@ saveRDS(mod,
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/sev_hoppers/SAM/outputs/mcmcplots/SAM")
+         dir = "/scratch/atm234/sev_hoppers/SAM/outputs/mcmcplots/SAM3")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model_Rhat3.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

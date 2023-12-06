@@ -33,9 +33,13 @@ data_list <- readRDS(here('03_sev_grasshoppers',
 params <- c('b0.web',
             'b0.transect',
             'b',
+            'b0',
             'wA',
             'wB',
             'wC',
+            'deltaA',
+            'deltaB',
+            'deltaC',
             'sig.web',
             'sig.transect',
             'var.process')
@@ -49,7 +53,7 @@ model <- here('03_sev_grasshoppers',
               "02_sev_analyses",
               'SAM',
               "jags",
-              "sev_SAM_2.R")
+              "sev_SAM.R")
 
 Sys.time()
 mod <- jagsUI::jags(data = data_list,

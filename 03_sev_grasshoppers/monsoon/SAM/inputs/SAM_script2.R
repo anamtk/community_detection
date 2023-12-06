@@ -12,7 +12,8 @@
 package.list <- c("jagsUI", "coda",
                   'dplyr', 'stringr',
                   'magrittr', 'tidyr',
-                  'mcmcplots','ggplot2') 
+                  'mcmcplots','ggplot2',
+                  'tibble', 'purrr') 
 
 
 ## Installing them if they aren't already on the computer
@@ -61,6 +62,30 @@ samp_df2 <- samp_df %>%
                 -deviance, -mean_dev)
 
 
+var.process <- as.vector(samp_df2$var.process)
+sig.web <- as.vector(samp_df2$sig.web)
+sig.transect <- as.vector(samp_df2$sig.transect)
+b0 <- as.vector(samp_df2$b0)
+b <- samp_df2 %>%
+  dplyr::select(contains('b')) %>%
+  dplyr::select(-contains('b0')) %>%
+  dplyr::select(-contains('wB')) %>%
+  dplyr::select(-contains('delta')) %>%
+  dplyr::select(-contains('web')) %>%
+  as_vector()
+
+deltaA <- samp_df2 %>%
+  dplyr::select(contains('deltaA')) %>%
+  as_vector()
+
+deltaB <- samp_df2 %>%
+  dplyr::select(contains('deltaB')) %>%
+  as_vector()
+
+deltaC <- samp_df2 %>%
+  dplyr::select(contains('deltaC')) %>%
+  as_vector()
+
 
 
 # Load Data ---------------------------------------------------------------
@@ -79,6 +104,7 @@ data_list <- list(n.data = data$n.data,
                    var.estimate = data$var.estimate,
                    n.templag = data$n.templag,
                    n.npplag = data$n.npplag,
+                  n.pptlag = data$n.pptlag,
                    Temp = data$Temp,
                    PPT = data$PPT, 
                    NPP = data$NPP)
@@ -88,9 +114,13 @@ data_list <- list(n.data = data$n.data,
 params <- c('b0.web',
             'b0.transect',
             'b',
+            'b0',
             'wA',
             'wB',
             'wC',
+            'deltaA',
+            'deltaB',
+            'deltaC',
             'sig.web',
             'sig.transect',
             'var.process')
@@ -99,12 +129,37 @@ params <- c('b0.web',
 
 #inits <- readRDS("/scratch/atm234/whwo_ipm/parameter_models/adult_occupancy/inputs/adult_occupancy_inits.RDS")
 
+inits <- list(list(var.process = var.process,
+                   b0 = b0,
+                   b = b,
+                   sig.web = sig.web,
+                   sig.transect = sig.transect,
+                   deltaA = deltaA,
+                   deltaB = deltaB,
+                   deltaC = deltaC),
+              list(var.process = var.process + 0.001,
+                   b0 = b0 + 0.05,
+                   b = b + 0.5,
+                   sig.web = sig.web + 0.01,
+                   sig.transect = sig.transect + 0.01,
+                   deltaA = deltaA + 0.01,
+                   deltaB = deltaB + 0.01,
+                   deltaC = deltaC + 0.01),
+              list(var.process = var.process - 0.001,
+                   b0 = b0 - 0.05,
+                   b = b - 0.5,
+                   sig.web = sig.web + 0.04,
+                   sig.transect = sig.transect + 0.04,
+                   deltaA = deltaA + 0.04,
+                   deltaB = deltaB + 0.04,
+                   deltaC = deltaC + 0.04))
+
 # JAGS model --------------------------------------------------------------
 
 mod <- jagsUI::jags(data = data_list,
-                    #inits = inits,
-                    inits = NULL,
-                    model.file = '/scratch/atm234/sev_hoppers/SAM/inputs/sev_SAM_temp.R',
+                    inits = inits,
+                    #inits = NULL,
+                    model.file = '/scratch/atm234/sev_hoppers/SAM/inputs/sev_SAM.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
@@ -115,7 +170,7 @@ mod <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(mod, 
-        file ="/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model.RDS")
+        file ="/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model2.RDS")
 
 (end.time <- Sys.time())
 
@@ -124,13 +179,13 @@ saveRDS(mod,
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/sev_hoppers/SAM/outputs/mcmcplots/SAM")
+         dir = "/scratch/atm234/sev_hoppers/SAM/outputs/mcmcplots/SAM2")
 
 # Get RHat per parameter ------------------------------------------------
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sev_hoppers/SAM/outputs/sev_SAM_model_Rhat2.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

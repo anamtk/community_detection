@@ -29,8 +29,19 @@ rhat <- readRDS(here('03_sev_grasshoppers',
                      'outputs',
                      'sev_SAM_model_Rhat.RDS'))
 
+rhat2 <- readRDS(here('03_sev_grasshoppers',
+                     'monsoon',
+                     'SAM',
+                     'outputs',
+                     'sev_SAM_model_Rhat2.RDS'))
 
 
 # Graph RHat per parameter ------------------------------------------------
 
-rhat_graph_fun(rhat)
+parms <- c('b0.web', 'b0.transect',
+           'b', 'b0', 'wA', 'wB', "wC",
+           'deltaA', 'deltaB', 'deltaC',
+           'sig.web', 'sig.transect', 'var.process',
+           'deviance')
+
+rhat_graph_fun(rhat2, parms = parms, rhat = 1.1)

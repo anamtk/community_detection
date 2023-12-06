@@ -54,7 +54,33 @@ plant_detect <- readRDS(here('04_nps_plants',
                              'outputs_yrsite',
                              'nps_p0_summary.RDS'))
 
+
+
+fish_ob <- read.csv(here('01_sbc_fish',
+                         'data_outputs',
+                         'MSAM',
+                         'all_fish_data.csv'))
+
+bird_ob <- read.csv(here('02_konza_birds',
+                         'data_outputs',
+                         'MSAM',
+                         'knz_tidy_data_for_model.csv'))
+
+hop_ob <- read.csv(here('03_sev_grasshoppers',
+                        'data_outputs',
+                        'MSAM',
+                        'sev_tidy_data_for_model.csv'))
+
+plant_ob <- read.csv(here('04_nps_plants',
+                          'data_outputs',
+                          'MSAM',
+                          'pfnp_tidy_data_for_model.csv'))
+
 # Prep for plotting -------------------------------------------------------
+
+
+# Modeled detection probs -------------------------------------------------
+
 
 fish_det2 <- as.data.frame(fish_detect$quantiles) %>%
   rownames_to_column(var = "parm") %>%
@@ -79,6 +105,85 @@ plant_det2 <- as.data.frame(plant_detect$quantiles) %>%
 detect_df <- fish_det2 %>%
   rbind(hop_det2, bird_det2, plant_det2)
 
+
+
+# Observed values ---------------------------------------------------------
+
+
+# Summarise to total abundances/detections --------------------------------
+
+colnames(fish_ob)
+
+fish_ob2 <- fish_ob %>%
+  group_by(specID) %>%
+  summarise(total = sum(COUNT, na.rm =T),
+            mean = mean(COUNT, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(dataset = "fish") %>%
+  dplyr::select(-specID)
+
+colnames(bird_ob)
+
+bird_ob2 <- bird_ob %>%
+  group_by(SpecID) %>%
+  summarise(total = sum(NOBS, na.rm =T),
+            mean = mean(NOBS, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(dataset = "birds") %>%
+  dplyr::select(-SpecID)
+
+colnames(hop_ob)  
+
+hop_ob2 <- hop_ob %>%
+  group_by(speciesID) %>%
+  summarise(total = sum(CNT, na.rm =T),
+            mean = mean(CNT, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(dataset = "hoppers") %>%
+  dplyr::select(-speciesID)
+
+colnames(plant_ob)  
+
+plant_ob2 <- plant_ob %>%
+  group_by(SpecID) %>%
+  summarise(total = sum(presence, na.rm =T),
+            mean = mean(presence, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(dataset = "plants") %>%
+  dplyr::select(-SpecID)
+
+
+#combine
+obs <- fish_ob2 %>%
+  bind_rows(bird_ob2, hop_ob2, plant_ob2) %>%
+  group_by(dataset) %>%
+  mutate(tot = scale(total),
+         mn = scale(mean)) %>%
+  ungroup()
+
+labs <- c("SBC fish", "SEV grasshoppers", "KNZ birds", "PFNP Plants")
+names(labs) <- c("fish", "hoppers", 'birds', 'plants')
+
+obs %>%
+  mutate(dataset = factor(dataset, levels = c("fish", 'birds',"hoppers", 'plants'))) %>%
+ggplot(aes(x = mn)) +
+  geom_histogram() +
+  facet_grid(dataset~., scales = "free",
+             labeller = labeller(dataset = labs))  +
+  theme(strip.background = element_rect(fill = "white"))
+
+(obsplot <- obs %>%
+  mutate(dataset = factor(dataset, levels = c("fish", 'birds',"hoppers", 'plants'))) %>%
+  ggplot(aes(x = dataset, y = mn)) +
+  geom_boxplot() +
+  labs(x = "Dataset", 
+       y = "Species-level \n scaled abundance/prevalence") +
+  scale_x_discrete(labels = labs) +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_y_sqrt() )
+  
+
 # Create histograms -------------------------------------------------------
 
 labs <- c("SBC fish", "SEV grasshoppers", "KNZ birds", "PFNP Plants")
@@ -94,20 +199,22 @@ ggplot(aes(x = `50%`)) +
        y = "Count") +
   theme(strip.background = element_rect(fill = "white"))
 
-detect_df %>%
+(detplot <- detect_df %>%
   mutate(dataset = factor(dataset, levels = c("fish", 'birds',"hoppers", 'plants'))) %>%
   ggplot(aes(x = dataset, y = `50%`)) +
   geom_boxplot() +
   labs(x = "Dataset", 
-       y = "Species-level detection probability") +
+       y = "Species-level \n detection probability") +
   scale_x_discrete(labels = labs) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+
+obsplot / detplot + plot_annotation(tag_levels = "A")
 
 ggsave(plot = last_plot(),
        filename = here("pictures",
                        "detection_models",
                        "species_detection_probabilities.jpg"),
-       height = 4,
+       height = 5,
        width = 5,
        units = "in")
 

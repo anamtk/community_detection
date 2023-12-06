@@ -56,7 +56,7 @@ m1 <- lm(diss.rep.Mean ~ diss,
 
 summary(m1)
 
-lb1 <- paste("R^2 == 0.76")
+lb1 <- paste("R^2 == 0.77")
 
 ggplot(diss.rep, aes(x = diss, y = diss.rep.Mean)) +
   geom_abline(slope = 1, intercept = 0) +

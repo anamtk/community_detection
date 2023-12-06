@@ -111,8 +111,8 @@ partial_plot_fun <- function(model, covariate, df, ID, yearID, start, end, weigh
                  values_to = "var") 
   
   #get mean and SD of OG data to back-transform stuff
-  mean <- mean(scale$var, na.rm = T)
-  sd <- sd(scale$var, na.rm = T)
+  Mean <- mean(scale$var, na.rm = T)
+  SD <- sd(scale$var, na.rm = T)
   
   #get weights per lag
   wt <- as.data.frame(model$quantiles) %>%
@@ -131,7 +131,7 @@ partial_plot_fun <- function(model, covariate, df, ID, yearID, start, end, weigh
   #revert Tmax to OG data scale
   regT <- regT %>%
     dplyr::select(Ant, diss) %>%
-    mutate(Var = Ant*sd + mean)
+    mutate(Var = Ant*SD + Mean)
   
   #regression prediction for Temperature
   regT <- regT %>%
