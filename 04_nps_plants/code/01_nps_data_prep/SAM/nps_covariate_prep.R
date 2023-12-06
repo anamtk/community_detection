@@ -57,9 +57,9 @@ ppt <- climate %>%
   pivot_longer(cols = ppt_monsoon:ppt_winter,
                names_to = "season",
                values_to = "PPT") %>%
-  mutate(season = case_when(season == "ppt_monsoon" ~ 1,
-                            season == "ppt_winter" ~ 2,
-                            season == "ppt_spring" ~ 3,
+  mutate(season = case_when(season == "ppt_spring" ~ 1,
+                            season == "ppt_earlysummer" ~ 2,
+                            season == "ppt_monsoon"~ 3,
                             TRUE ~ 4))
 
 # vpd --------------------------------------------------------------------
@@ -70,9 +70,9 @@ vpd <- climate %>%
   pivot_longer(cols = vpd_monsoon:vpd_winter,
                names_to = "season",
                values_to = "VPD") %>%
-  mutate(season = case_when(season == "vpd_monsoon" ~ 1,
-                            season == "vpd_winter" ~ 2,
-                            season == "vpd_spring" ~ 3,
+  mutate(season = case_when(season == "vpd_spring" ~ 1,
+                            season == "vpd_earlysummer" ~ 2,
+                            season == "vpd_monsoon" ~ 3,
                             TRUE ~ 4))
 
 
@@ -94,7 +94,7 @@ ppt_lags <- ppt %>%
                                                   'PPT_l20')))) %>%
   ungroup() %>%
   #start in monsoon, which is when sampling ended
-  filter(season == 1) %>%
+  filter(season == 3) %>%
   dplyr::select(-season)
 
 
@@ -115,7 +115,7 @@ vpd_lags <- vpd %>%
                                                   'VPD_l20')))) %>%
   ungroup() %>%
   #start in monsoon, which is when sampling ended
-  filter(season == 1) %>%
+  filter(season == 3) %>%
   dplyr::select(-season)
 
 
