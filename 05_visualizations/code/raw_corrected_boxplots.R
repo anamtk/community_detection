@@ -223,7 +223,13 @@ nps_turn <- nps_obs %>%
   rename(diss = turnover)
 
 
-all_diss <- rbind(sbc_bray, kz_bray, sev_bray, nps_turn )
+all_diss <- rbind(sbc_bray, kz_bray, sev_bray, nps_turn) %>% 
+  # making type labels nice
+  mutate(type_label = case_match(type, 
+    "modeled" ~ "Modeled",
+    "observed_all" ~ "Observed\n(all years)",
+    "observed_one" ~ "Observed\n(one year)"
+  ))
 
 
 # Visualize ---------------------------------------------------------------
@@ -274,37 +280,43 @@ boxplot_function <- function(dataset) {
   }
   
   if(dataset == "birds"){
-    title = "KNZ birds"
+    title = "(b) KNZ birds"
   } else if(dataset == "fish") {
-    title = "SBC fish"
+    title = "(a) SBC fish"
   } else if(dataset == "grasshoppers") {
-    title = "SEV grasshoppers"
+    title = "(c) SEV grasshoppers"
   } else if(dataset == "plants") {
-    title = "PFNP plants"
+    title = "(d) PFNP plants"
   }else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
   }
   
   df %>% 
-    ggplot(aes(x = type, y = diss, fill = type)) +
-    geom_violin() +
-    scale_fill_manual(values = c(modeled = modeled_col, observed = observed_col)) +
-    geom_boxplot(width = 0.1) +
+    ggplot(aes(x = type_label, y = diss, fill = type)) +
+    geom_violin(aes(color = type, fill = type), alpha = 0.7) +
+    scale_fill_manual(values = c(modeled = modeled_col, 
+                                 observed_all = observed_col, 
+                                 observed_one = observed_col)) +
+    scale_color_manual(values = c(modeled = modeled_col, 
+                                 observed_all = observed_col, 
+                                 observed_one = observed_col)) +
+    geom_boxplot(aes(fill = type), width = 0.1, outlier.size = 1, alpha = 0.9) +
     labs(x = "Type", y = "Dissimilarity", title = title) +
     scale_y_continuous(limits = c(0, 1)) +
     theme(legend.position = "none",
-          plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)) 
+          plot.title.position = "plot",
+          panel.grid = element_blank(),
+          axis.text = element_text(size = 6),
+          axis.title = element_text(size = 7),
+          plot.title = element_text(size = 8)) 
   
 }
 
-knz_boxplot <- boxplot_function("birds")
+knz_boxplot <- boxplot_function("birds") 
 knz_boxplot
 
-sbc_boxplot <- boxplot_function("fish") +
-  annotate(geom = "text", x = 1, y = 1, label = "More different") +
-  annotate(geom = "text", x = 1, y = 0, label = "More similar") 
+sbc_boxplot <- boxplot_function("fish") 
 sbc_boxplot
 
 sev_boxplot <- boxplot_function("grasshoppers")
@@ -315,17 +327,17 @@ nps_boxplot
 
 all_boxplot <- (sbc_boxplot | knz_boxplot) /
                (sev_boxplot | nps_boxplot)
-all_boxplot +
-  plot_annotation(tag_levels = "A")
+all_boxplot 
 
 
-ggsave(plot = last_plot(),
+ggsave(plot = all_boxplot,
        filename = here("pictures",
                        "detection_models",
                        "observed_modeled_violin.jpg"),
-       height = 5,
-       width = 8,
-       units = "in")
+       height = 12,
+       width = 16,
+       units = "cm",
+       dpi = 400)
 
 # Looking at differences across datasets ----------------------------------
 
