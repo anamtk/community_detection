@@ -115,7 +115,7 @@ ggsave(plot = last_plot(),
        filename = here('pictures',
                        'sam_models',
                        'sam_covariate_effects.jpg'),
-       height = 7, 
+       height = 8, 
        width = 6,
        units = "in")
 # Partial plots -----------------------------------------------------------
@@ -267,7 +267,54 @@ coldcol <- '#5ab4ac'
 
 (hopperpptgraphs <- hopperPPT + hopper_ppt_weights_plot)
 
+#NPP
 
+(hopperNPP <- partial_plot_fun(model = sev_sam, 
+                               covariate = 'b[3]', 
+                               df = sev_bray, 
+                               ID= 'site_web_trans', 
+                               yearID = 'YEAR', 
+                               start = 'NPP', 
+                               end = 'NPP_l5',
+                               weight = "wC",
+                               diss = as.name('bray')) +
+    labs(x = "Plant biomass",
+         y = "Bray-Curtis Dissimilarity",
+         title = "SEV grasshoppers") + 
+    theme(plot.title.position = "panel",
+          plot.title = element_text(hjust = 0.5)))
+
+###WEIGHTS
+hopper_npp_weights <- as.data.frame(sev_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wC")) %>%
+  mutate(season = case_when(parm %in% c("wC[1]", "wC[3]", "wC[5]", "wC[7]",
+                                        'wC[9]', 'wC[11]') ~ "Wet",
+                            parm %in% c("wC[2]", "wC[4]", "wC[6]",
+                                        'wC[8]', 'wC[10]') ~ "Dry")) %>%
+  mutate(year = case_when(parm %in% c("wC[1]", "wC[2]") ~ 0,
+                          parm %in% c('wC[3]', 'wC[4]') ~ 1,
+                          parm %in% c('wC[5]', 'wC[6]') ~ 2,
+                          parm %in% c('wC[7]', 'wC[8]') ~ 3,
+                          parm %in% c('wC[9]', 'wC[10]') ~ 4,
+                          parm %in% c('wC[11]') ~ 5))
+
+warmcol <- '#d8b365'
+coldcol <- '#5ab4ac'
+
+(hopper_npp_weights_plot <- hopper_npp_weights %>%
+    ggplot(aes(x = year, y= `50%`, shape = season)) +
+    geom_hline(yintercept = 1/12, linetype = 2) +
+    geom_point(position = position_dodge(width = 0.5), size = 3) +
+    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                  position = position_dodge(width = 0.5),
+                  width = 0) +
+    scale_x_continuous(breaks = c(0, 1,2,3,4,5)) +
+    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+    labs(x = "Years into the past",
+         y = "Importance weight\n(median and 95% BCI)"))
+
+(hoppernppgraphs <- hopperNPP + hopper_npp_weights_plot)
 
 # Plant partial plots -----------------------------------------------------
 
@@ -429,15 +476,15 @@ coldcol <- '#5ab4ac'
 
 # Export ------------------------------------------------------------------
 
-fishtgraphs/birdtgraphs/birdpgraphs/hoppertgraphs/hopperpptgraphs/plantpgraphs
-
-fishtgraphs / hoppertgraphs / hoppernppgraphs / birdtgraphs +
+fishtgraphs/birdtgraphs/birdpgraphs/hoppertgraphs/
+  hopperpptgraphs/plantpgraphs +
   plot_annotation(tag_levels = "A")
+
 
 ggsave(filename = here('pictures',
                        'sam_models',
                        'sam_partial_plots.jpg'),
-       height = 9,
+       height = 10,
        width = 8,
        units = "in")
 

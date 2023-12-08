@@ -46,18 +46,33 @@ bray <- observed$bray
 
 bray.rep <- as.data.frame(modeled$statistics) %>%
   rownames_to_column(var = 'parm') %>%
-  filter(str_detect(parm, "bray.rep")) %>%
+  filter(str_detect(parm, "beta.rep")) %>%
   rename(bray.rep.Mean = Mean,
          bray.rep.SD = SD) %>%
   cbind(bray)
-
-ggplot(bray.rep, aes(x = bray, y = bray.rep.Mean)) +
-  geom_abline(slope = 1, intercept = 0) +
-  geom_point() +
-  geom_errorbar(aes(ymin = bray.rep.Mean - bray.rep.SD,
-                    ymax = bray.rep.Mean + bray.rep.SD))
 
 m1 <- lm(bray.rep.Mean ~ bray,
          data = bray.rep)
 
 summary(m1)
+
+lb1 <- paste("R^2 == 0.43")
+
+ggplot(bray.rep, aes(x = bray, y = bray.rep.Mean)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_point() +
+  geom_errorbar(aes(ymin = bray.rep.Mean - bray.rep.SD,
+                    ymax = bray.rep.Mean + bray.rep.SD)) +
+  annotate(geom = 'text', x = 0.68, y = 0.3, label = lb1, parse = T) +
+  labs(x = 'observed', y = 'modeled', title = "SEV LTER grasshopper SAM GOF")
+
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "SEV_SAM_GOF_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
+

@@ -46,10 +46,19 @@ rhat4 <- readRDS(here('03_sev_grasshoppers',
 
 parms <- c('b0.web', 'b0.transect',
            'b', 'b0', 'wA', 'wB', "wC",
-           'deltaA', 'deltaB', 'deltaC',
            'sig.web', 'sig.transect', 'var.process',
            'deviance')
 
 rhat_graph_fun(rhat2, parms = parms, rhat = 1.1)
 
-rhat_graph_fun(rhat4, parms = parms, rhat = 1.1 )
+rhat_graph_fun(rhat4, parms = parms, rhat = 1.1 ) +
+  labs(title = "SEV LTER fish SAM Rhat")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "SEV_SAM_Rhat_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
