@@ -348,9 +348,9 @@ library(brms)
 #             Dam_binary + meanTemp + exc_y + (1|huc_2), 
 #           data = dat_amax_brms, family = gaussian())
 
-# m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
-#               data = all_diss,
-#               beta_family())
+m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
+              data = all_diss,
+              beta_family())
 
 m1 <- brm(diss ~ type*dataset + (1|site_year),
           data = all_diss,
