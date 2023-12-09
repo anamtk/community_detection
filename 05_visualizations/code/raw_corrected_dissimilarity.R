@@ -56,9 +56,6 @@ posterior_sbc <- posterior_sbc %>%
 
 # ⊣ birds -----------------------------------------------------------------
 
-#I output data for ABUR, transect 1 from the monthly fish survey
-#data from 2002 - 2022
-
 raw_knz <- readRDS(here("05_visualizations",
                          "viz_data",
                          "knz_N04D_raw_bray.RDS"))
@@ -188,13 +185,13 @@ timeseries_function <- function(dataset) {
   }
   
   if(dataset == "birds"){
-    title = "KNZ birds"
+    title = "(b) KNZ birds"
   } else if(dataset == "fish") {
-    title = "SBC fish"
+    title = "(a) SBC fish"
   } else if(dataset == "grasshoppers") {
-    title = "SEV grasshoppers"
+    title = "(c) SEV grasshoppers"
   } else if(dataset == "plants") {
-    title = "PFNP plants"
+    title = "(d) PFNP plants"
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -207,7 +204,20 @@ timeseries_function <- function(dataset) {
   } else if(dataset == "grasshoppers") {
     breaks = seq(from = 1993, to = 2019, by = 5)
   } else if(dataset == "plants") {
-    breaks = seq(from = 2007, to = 2022, by = 5)
+    breaks = seq(from = 2008, to = 2024, by = 3)
+  } else {
+    warning("Check your arguments! You may have specified the wrong dataset.")
+    return(NA)
+  }
+  
+  if(dataset == "birds"){
+    xlab = ""
+  } else if(dataset == "fish") {
+    xlab = ""
+  } else if(dataset == "grasshoppers") {
+    xlab = ""
+  } else if(dataset == "plants") {
+    xlab = "Year"
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -227,31 +237,34 @@ timeseries_function <- function(dataset) {
     geom_line(data = raw_df, 
               aes(x = year, y = raw_diss),
               color = observed_col, linewidth = 1) +
-    labs(x = "Year", y = "Dissimilarity",
+    labs(x = xlab, y = "Dissimilarity",
          title = title) +
     scale_x_continuous(breaks = breaks) +
-    theme(plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)) 
+    theme(legend.position = "none",
+          plot.title.position = "plot",
+          panel.grid = element_blank(),
+          axis.text = element_text(size = 6),
+          axis.title = element_text(size = 7),
+          plot.title = element_text(size = 8)) 
   
 }
 
 timeseries_sbc <- timeseries_function(dataset = "fish") +
-  coord_cartesian(xlim = c(2003, 2022))
+  coord_cartesian(xlim = c(2003, 2022)) 
 timeseries_knz <- timeseries_function(dataset = "birds") +
   coord_cartesian(xlim = c(1982, 2009))
 timeseries_sev <- timeseries_function(dataset = "grasshoppers") +
   coord_cartesian(xlim = c(1993, 2019))
 timeseries_nps <- timeseries_function(dataset = "plants") +
-  coord_cartesian(xlim = c(2007, 2022))
+  coord_cartesian(xlim = c(2008, 2022))
 
 timeseries_together <- timeseries_sbc / timeseries_knz / timeseries_sev / timeseries_nps
-timeseries_together +
-  plot_annotation(tag_levels = "A")
+timeseries_together 
 
-ggsave(plot = last_plot(),
+ggsave(plot = timeseries_together,
        filename = here("pictures",
                        "detection_models",
                        "observed_modeled_timeseries.jpg"),
-       height = 7,
-       width = 8,
-       units = "in")
+       height = 14,
+       width = 12,
+       units = "cm")
