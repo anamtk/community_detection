@@ -59,14 +59,17 @@ effects_plot_fun <- function(model){
     filter(!str_detect(parm, "b0")) %>%
     filter(!str_detect(parm, 'sig.web'))
   
-  beta_plot <- ggplot(betas, aes(x = parm, y= `50%`)) +
-    geom_hline(yintercept = 0, linetype = 2) +
+  beta_plot <- ggplot(betas, aes(x = `50%`, y= parm)) +
+    geom_vline(xintercept = 0, linetype = 2, alpha = 0.4) +
     geom_point() +
-    labs(x = "Covariate", y = "Covariate effect \n (Median and 95% BCI)") +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0) +
-    coord_flip() +
-    theme(axis.text = element_text(size = 12),
-          axis.title= element_text(size = 15))
+    labs(x = "Covariate effect", y = "") +
+    geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), width = 0) +
+    theme(axis.text = element_text(size = 6),
+          axis.title = element_text(size = 7),
+          plot.title = element_text(size = 8),
+          plot.title.position = "plot",
+          panel.grid = element_blank(),
+          axis.ticks.y = element_blank())
   
   return(beta_plot)
   

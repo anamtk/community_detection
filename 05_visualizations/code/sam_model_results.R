@@ -84,40 +84,37 @@ plant_diss <- plant_diss %>%
         remove = F)
 # Effect plots ------------------------------------------------------------
 
-(fisheffectsplot <- effects_plot_fun(fish_sam) +
-  labs(title = "SBC fish") +
-  scale_x_discrete(labels = c("Kelp Biomass", "Temperature")) +
-  theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5)))
+fisheffectsplot <- effects_plot_fun(fish_sam) +
+  labs(title = "(a) SBC fish") +
+  scale_x_continuous(limits = c(-0.5, 0.5)) +
+  scale_y_discrete(labels = c("Kelp biomass", "Temperature")) 
 
-(seveffectsplot <- effects_plot_fun(sev_sam)  +
-  labs(title = "SEV grasshoppers") +
-  scale_x_discrete(labels = c("Temperature", "Precipitation", "Plant biomass")) +
-  theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5)))
+birdeffectsplot <- effects_plot_fun(bird_sam) + 
+  labs(title = "(b) KNZ birds") +
+  scale_x_continuous(limits = c(-1.5, 1.5), breaks = seq(from = -1.5, to = 1.5, by = 0.5)) +
+  scale_y_discrete(labels = c("Precipitation", "Temperature"))
 
-(birdeffectsplot <- effects_plot_fun(bird_sam) + 
-  labs(title = "KNZ birds") +
-  scale_x_discrete(labels = c("Temperature", "Precipitation", "Plant biomass")) +
-  theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5)))
+seveffectsplot <- effects_plot_fun(sev_sam)  +
+  labs(title = "(c) SEV grasshoppers") +
+  scale_x_continuous(limits = c(-3.5, 3.5), breaks = seq(from = -3, to = 3, by = 1)) +
+  scale_y_discrete(labels = c("Temperature", "Precipitation", "Plant biomass")) 
 
-(planteffectsplot <- effects_plot_fun(plant_sam) +
-    labs(title = "PFNP plants") +
-    scale_x_discrete(labels = c("Vapor pressure deficit", "Precipitation")) +
-    theme(plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)))
+planteffectsplot <- effects_plot_fun(plant_sam) +
+    labs(title = "(d) PFNP plants") +
+  scale_x_continuous(limits = c(-2.5, 2.5)) +
+    scale_y_discrete(labels = c("Vapor pressure deficit", "Precipitation")) 
 
-fisheffectsplot /birdeffectsplot / seveffectsplot /planteffectsplot +
-  plot_annotation(tag_levels = "A")
+effectplots_together <- fisheffectsplot / birdeffectsplot / seveffectsplot / planteffectsplot
 
-ggsave(plot = last_plot(),
+ggsave(plot = effectplots_together,
        filename = here('pictures',
                        'sam_models',
                        'sam_covariate_effects.jpg'),
-       height = 8, 
-       width = 6,
-       units = "in")
+       height = 14, 
+       width = 8,
+       units = "cm",
+       dpi = 300)
+
 # Partial plots -----------------------------------------------------------
 
 
