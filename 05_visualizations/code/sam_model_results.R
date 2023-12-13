@@ -36,10 +36,10 @@ fish_sam <- readRDS(here('01_sbc_fish',
                          'fish_SAM_summary.RDS'))
 
 fish_bray <- read.csv(here("01_sbc_fish",
-                          "data_outputs",
-                          'SAM',
-                          'data_prep',
-                          "stability_metrics_with_covariates_long.csv"))
+                           "data_outputs",
+                           'SAM',
+                           'data_prep',
+                           "stability_metrics_with_covariates_long.csv"))
 
 sev_sam <- readRDS(here('03_sev_grasshoppers',
                         'monsoon',
@@ -100,41 +100,45 @@ seveffectsplot <- effects_plot_fun(sev_sam)  +
   scale_y_discrete(labels = c("Temperature", "Precipitation", "Plant biomass")) 
 
 planteffectsplot <- effects_plot_fun(plant_sam) +
-    labs(title = "(d) PFNP plants") +
+  labs(title = "(d) PFNP plants") +
   scale_x_continuous(limits = c(-2.5, 2.5)) +
-    scale_y_discrete(labels = c("Vapor pressure deficit", "Precipitation")) 
+  scale_y_discrete(labels = c("Vapor pressure deficit", "Precipitation")) 
 
 effectplots_together <- fisheffectsplot / birdeffectsplot / seveffectsplot / planteffectsplot
 
-ggsave(plot = effectplots_together,
-       filename = here('pictures',
-                       'sam_models',
-                       'sam_covariate_effects.jpg'),
-       height = 14, 
-       width = 8,
-       units = "cm",
-       dpi = 300)
+# ggsave(plot = effectplots_together,
+#        filename = here('pictures',
+#                        'sam_models',
+#                        'sam_covariate_effects.jpg'),
+#        height = 14, 
+#        width = 8,
+#        units = "cm",
+#        dpi = 300)
 
 # Partial plots -----------------------------------------------------------
 
 
 # Fish partial plots ------------------------------------------------------
 
+fish_title <- ggplot(data.frame(l = "SBC fish", x = 1, y = 1)) +
+  geom_text(aes(x, y, label = l), size = 4.5) + 
+  theme_void() +
+  coord_cartesian(clip = "off")
+
 #temperature
 fisht <- partial_plot_fun(model = fish_sam, 
-                 covariate = 'b[2]', 
-                 df = fish_bray, 
-                 ID= 'SITE_TRANS', 
-                 yearID = 'YEAR', 
-                 start = 'TEMP_C', 
-                 end = 'TEMP_C_l10',
-                 weight = "wB",
-                 diss = as.name('bray')) +
+                          covariate = 'b[2]', 
+                          df = fish_bray, 
+                          ID = 'SITE_TRANS', 
+                          yearID = 'YEAR', 
+                          start = 'TEMP_C', 
+                          end = 'TEMP_C_l10',
+                          weight = "wB",
+                          diss = as.name('bray')) +
   labs(x = "Temperature",
        y = "Bray-Curtis Dissimilarity",
-       title = "SBC fish") + 
-  theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5))
+       title = "(a)") + 
+  theme(plot.title.position = "plot")
 
 ###WEIGHTS
 fish_tweights <- as.data.frame(fish_sam$quantiles) %>%
@@ -155,38 +159,151 @@ fish_tweights <- as.data.frame(fish_sam$quantiles) %>%
 warmcol <- '#d8b365'
 coldcol <- '#5ab4ac'
 
-(fish_tweights_plot <- fish_tweights %>%
-  ggplot(aes(x = year, y= `50%`, shape = season)) +
+fish_tweights_plot <- fish_tweights %>%
+  ggplot(aes(x = year, y = `50%`, shape = season, color = season)) +
   geom_hline(yintercept = 1/11, linetype = 2) +
   geom_point(position = position_dodge(width = 0.5), size = 3) +
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
                 position = position_dodge(width = 0.5),
                 width = 0) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5)) +
-  scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
+  scale_color_manual(values = c("Warm" = warmcol, "Cold" = coldcol)) +
   labs(x = "Years into the past",
-       y = "Importance weight\n(median and 95% BCI)"))
+       y = "Importance weight",
+       shape = "Season", color = "Season",
+       title = "(b)") +
+  theme(plot.title.position = "plot",
+        panel.grid = element_blank())
 
-(fishtgraphs <- fisht + fish_tweights_plot)
+fish_tweights_plot
 
+fishtgraphs <- (fish_title) / (fisht + fish_tweights_plot) +
+  plot_layout(heights = c(1, 10))
 
-# Grasshopper partial plots -----------------------------------------------
+# Bird partial plots ------------------------------------------------------
+
+bird_title <- ggplot(data.frame(l = "KNZ birds", x = 1, y = 1)) +
+  geom_text(aes(x, y, label = l), size = 4.5) + 
+  theme_void() +
+  coord_cartesian(clip = "off")
 
 #temperature
-(hoppert <- partial_plot_fun(model = sev_sam, 
+birdt <- partial_plot_fun(model = bird_sam, 
                           covariate = 'b[1]', 
-                          df = sev_bray, 
-                          ID= 'site_web_trans', 
-                          yearID = 'YEAR', 
-                          start = 'Temp', 
-                          end = 'Temp_l5',
+                          df = bird_bray, 
+                          ID= 'WATERSHED', 
+                          yearID = 'RECYEAR', 
+                          start = 'TAVE', 
+                          end = 'TAVE_l5',
                           weight = "wA",
                           diss = as.name('bray')) +
   labs(x = "Temperature",
        y = "Bray-Curtis Dissimilarity",
-       title = "SEV grasshoppers") + 
-  theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5)))
+       title = "(c)") + 
+  theme(plot.title.position = "plot")
+
+birdt
+
+###WEIGHTS
+bird_tweights <- as.data.frame(bird_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wA")) %>%
+  mutate(season = case_when(parm %in% c("wA[1]", "wA[3]", "wA[5]") ~ "Cold",
+                            parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
+  mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
+                          parm %in% c('wA[3]', 'wA[4]') ~ 1,
+                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
+
+bird_tweights_plot <- bird_tweights %>%
+  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
+  geom_hline(yintercept = 1/6, linetype = 2) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                position = position_dodge(width = 0.5),
+                width = 0) +
+  scale_x_continuous(breaks = c(0, 1, 2)) +
+  scale_color_manual(values = c("Warm" = warmcol, "Cold" = coldcol)) +
+  labs(x = "Years into the past",
+       y = "Importance weight",
+       title = "(d)",
+       shape = "Season", color = "Season") +
+  theme(plot.title.position = "plot",
+        panel.grid = element_blank())
+
+birdtgraphs <- birdt + bird_tweights_plot
+
+#PPT
+
+#ppt
+birdp <- partial_plot_fun(model = bird_sam, 
+                          covariate = 'b[2]', 
+                          df = bird_bray, 
+                          ID = 'WATERSHED', 
+                          yearID = 'RECYEAR', 
+                          start = 'PPT', 
+                          end = 'PPT_l5',
+                          weight = "wB",
+                          diss = as.name('bray')) +
+  labs(x = "Precipitation",
+       y = "Bray-Curtis Dissimilarity",
+       title = "(e)")
+
+###WEIGHTS
+bird_pweights <- as.data.frame(bird_sam$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "wB")) %>%
+  mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Dry",
+                            parm %in% c("wB[2]", "wB[4]", "wB[6]") ~ "Wet")) %>%
+  mutate(year = case_when(parm %in% c("wB[1]", "wB[2]") ~ 0,
+                          parm %in% c('wB[3]', 'wB[4]') ~ 1,
+                          parm %in% c('wB[5]', 'wB[6]') ~ 2))
+
+drycol <- "#E6922D"
+wetcol <- "#465C66"
+
+bird_pweights_plot <- bird_pweights %>%
+  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
+  geom_hline(yintercept = 1/6, linetype = 2) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                position = position_dodge(width = 0.5),
+                width = 0) +
+  scale_x_continuous(breaks = c(0, 1, 2)) +
+  scale_color_manual(values = c("Dry" = drycol, "Wet" = wetcol)) +
+  labs(x = "Years into the past",
+       y = "Importance weight",
+       title = "(f)",
+       shape = "Season", color = "Season") +
+  theme(plot.title.position = "plot",
+        panel.grid = element_blank())
+
+(birdpgraphs <- birdp + bird_pweights_plot)
+
+birdpgraphs <- (bird_title) / (birdt + bird_tweights_plot) / (birdp + bird_pweights_plot) +
+  plot_layout(heights = c(1, 10, 10))
+
+# Grasshopper partial plots -----------------------------------------------
+
+hopper_title <- ggplot(data.frame(l = "SEV grasshoppers", x = 1, y = 1)) +
+  geom_text(aes(x, y, label = l), size = 4.5) + 
+  theme_void() +
+  coord_cartesian(clip = "off")
+
+#temperature
+hoppert <- partial_plot_fun(model = sev_sam, 
+                            covariate = 'b[1]', 
+                            df = sev_bray, 
+                            ID= 'site_web_trans', 
+                            yearID = 'YEAR', 
+                            start = 'Temp', 
+                            end = 'Temp_l5',
+                            weight = "wA",
+                            diss = as.name('bray')) +
+  labs(x = "Temperature",
+       y = "Bray-Curtis Dissimilarity",
+       title = "(g)")
+
+hoppert
 
 ###WEIGHTS
 hopper_tweights <- as.data.frame(sev_sam$quantiles) %>%
@@ -198,39 +315,42 @@ hopper_tweights <- as.data.frame(sev_sam$quantiles) %>%
                           parm %in% c('wA[3]', 'wA[4]') ~ 1,
                           parm %in% c('wA[5]', 'wA[6]') ~ 2))
 
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
+hopper_tweights_plot <- hopper_tweights %>%
+  ggplot(aes(x = year, y = `50%`, shape = season, color = season)) +
+  geom_hline(yintercept = 1/6, linetype = 2) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                position = position_dodge(width = 0.5),
+                width = 0) +
+  scale_x_continuous(breaks = c(0, 1, 2)) +
+  scale_color_manual(values = c("Warm" = warmcol, "Cold" = coldcol)) +
+  labs(x = "Years into the past",
+       y = "Importance weight",
+       shape = "Season", color = "Season",
+       title = "(h)") +
+  theme(plot.title.position = "plot",
+        panel.grid = element_blank())
 
-(hopper_tweights_plot <- hopper_tweights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/6, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1, 2)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
+hopper_tweights_plot
 
-(hoppertgraphs <- hoppert + hopper_tweights_plot)
+hoppertgraphs <- hoppert + hopper_tweights_plot
 
 #PPT
 
-(hopperPPT <- partial_plot_fun(model = sev_sam, 
-                             covariate = 'b[2]', 
-                             df = sev_bray, 
-                             ID= 'site_web_trans', 
-                             yearID = 'YEAR', 
-                             start = 'PPT', 
-                             end = 'PPT_l5',
-                             weight = "wB",
-                             diss = as.name('bray')) +
-    labs(x = "Precipitation",
-         y = "Bray-Curtis Dissimilarity",
-         title = "SEV grasshoppers") + 
-    theme(plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)))
+hopperPPT <- partial_plot_fun(model = sev_sam, 
+                              covariate = 'b[2]', 
+                              df = sev_bray, 
+                              ID= 'site_web_trans', 
+                              yearID = 'YEAR', 
+                              start = 'PPT', 
+                              end = 'PPT_l5',
+                              weight = "wB",
+                              diss = as.name('bray')) +
+  labs(x = "Precipitation",
+       y = "Bray-Curtis Dissimilarity",
+       title = "(i)")
+
+hopperPPT
 
 ###WEIGHTS
 hopper_ppt_weights <- as.data.frame(sev_sam$quantiles) %>%
@@ -247,90 +367,92 @@ hopper_ppt_weights <- as.data.frame(sev_sam$quantiles) %>%
                           parm %in% c('wB[9]', 'wB[10]') ~ 4,
                           parm %in% c('wB[11]') ~ 5))
 
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
-
-(hopper_ppt_weights_plot <- hopper_ppt_weights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/12, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1,2,3,4,5)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
+hopper_ppt_weights_plot <- hopper_ppt_weights %>%
+  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
+  geom_hline(yintercept = 1/12, linetype = 2) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                position = position_dodge(width = 0.5),
+                width = 0) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
+  scale_color_manual(values = c("Dry" = drycol, "Wet" = wetcol)) +
+  labs(x = "Years into the past",
+       y = "Importance weight",
+       title = "(j)",
+       shape = "Season", color = "Season") +
+  theme(panel.grid = element_blank())
 
 (hopperpptgraphs <- hopperPPT + hopper_ppt_weights_plot)
 
+hopperpptgraphs <- (hopper_title) / (hoppert + hopper_tweights_plot) / (hopperPPT + hopper_ppt_weights_plot) +
+  plot_layout(heights = c(1, 10, 10))
+
 #NPP
 
-(hopperNPP <- partial_plot_fun(model = sev_sam, 
-                               covariate = 'b[3]', 
-                               df = sev_bray, 
-                               ID= 'site_web_trans', 
-                               yearID = 'YEAR', 
-                               start = 'NPP', 
-                               end = 'NPP_l5',
-                               weight = "wC",
-                               diss = as.name('bray')) +
-    labs(x = "Plant biomass",
-         y = "Bray-Curtis Dissimilarity",
-         title = "SEV grasshoppers") + 
-    theme(plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)))
+# hopperNPP <- partial_plot_fun(model = sev_sam, 
+#                               covariate = 'b[3]', 
+#                               df = sev_bray, 
+#                               ID = 'site_web_trans', 
+#                               yearID = 'YEAR', 
+#                               start = 'NPP', 
+#                               end = 'NPP_l5',
+#                               weight = "wC",
+#                               diss = as.name('bray')) +
+#   labs(x = "Plant biomass",
+#        y = "Bray-Curtis Dissimilarity",
+#        title = "SEV grasshoppers") + 
+#   theme(plot.title.position = "panel",
+#         plot.title = element_text(hjust = 0.5))
 
 ###WEIGHTS
-hopper_npp_weights <- as.data.frame(sev_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wC")) %>%
-  mutate(season = case_when(parm %in% c("wC[1]", "wC[3]", "wC[5]", "wC[7]",
-                                        'wC[9]', 'wC[11]') ~ "Wet",
-                            parm %in% c("wC[2]", "wC[4]", "wC[6]",
-                                        'wC[8]', 'wC[10]') ~ "Dry")) %>%
-  mutate(year = case_when(parm %in% c("wC[1]", "wC[2]") ~ 0,
-                          parm %in% c('wC[3]', 'wC[4]') ~ 1,
-                          parm %in% c('wC[5]', 'wC[6]') ~ 2,
-                          parm %in% c('wC[7]', 'wC[8]') ~ 3,
-                          parm %in% c('wC[9]', 'wC[10]') ~ 4,
-                          parm %in% c('wC[11]') ~ 5))
+# hopper_npp_weights <- as.data.frame(sev_sam$quantiles) %>%
+#   rownames_to_column(var = "parm") %>%
+#   filter(str_detect(parm, "wC")) %>%
+#   mutate(season = case_when(parm %in% c("wC[1]", "wC[3]", "wC[5]", "wC[7]",
+#                                         'wC[9]', 'wC[11]') ~ "Wet",
+#                             parm %in% c("wC[2]", "wC[4]", "wC[6]",
+#                                         'wC[8]', 'wC[10]') ~ "Dry")) %>%
+#   mutate(year = case_when(parm %in% c("wC[1]", "wC[2]") ~ 0,
+#                           parm %in% c('wC[3]', 'wC[4]') ~ 1,
+#                           parm %in% c('wC[5]', 'wC[6]') ~ 2,
+#                           parm %in% c('wC[7]', 'wC[8]') ~ 3,
+#                           parm %in% c('wC[9]', 'wC[10]') ~ 4,
+#                           parm %in% c('wC[11]') ~ 5))
 
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
+# (hopper_npp_weights_plot <- hopper_npp_weights %>%
+#     ggplot(aes(x = year, y= `50%`, shape = season)) +
+#     geom_hline(yintercept = 1/12, linetype = 2) +
+#     geom_point(position = position_dodge(width = 0.5), size = 3) +
+#     geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+#                   position = position_dodge(width = 0.5),
+#                   width = 0) +
+#     scale_x_continuous(breaks = c(0, 1,2,3,4,5)) +
+#     scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
+#     labs(x = "Years into the past",
+#          y = "Importance weight\n(median and 95% BCI)"))
 
-(hopper_npp_weights_plot <- hopper_npp_weights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/12, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1,2,3,4,5)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
-
-(hoppernppgraphs <- hopperNPP + hopper_npp_weights_plot)
+# (hoppernppgraphs <- hopperNPP + hopper_npp_weights_plot)
 
 # Plant partial plots -----------------------------------------------------
 
+plant_title <- ggplot(data.frame(l = "PFNP plants", x = 1, y = 1)) +
+  geom_text(aes(x, y, label = l), size = 6) + 
+  theme_void() +
+  coord_cartesian(clip = "off")
 
 #temperature
 plantp <- partial_plot_fun(model = plant_sam, 
-                          covariate = 'b[2]', 
-                          df = plant_diss, 
-                          ID= 'plot_trans_quad', 
-                          yearID = 'EventYear', 
-                          start = 'PPT', 
-                          end = 'PPT_l20',
-                          weight = "wB",
-                          diss = as.name('mean')) +
+                           covariate = 'b[2]', 
+                           df = plant_diss, 
+                           ID= 'plot_trans_quad', 
+                           yearID = 'EventYear', 
+                           start = 'PPT', 
+                           end = 'PPT_l20',
+                           weight = "wB",
+                           diss = as.name('mean')) +
   labs(x = "Precipitation",
        y = "Community turnover",
-       title = "PFNP plants") + 
-  theme(plot.title.position = "panel",
-        plot.title = element_text(hjust = 0.5))
+       title = "(k)") 
 
 ###WEIGHTS
 
@@ -359,119 +481,45 @@ plant_pweights <- as.data.frame(plant_sam$quantiles) %>%
                           parm %in% c('wB[19]', 'wB[20]', "wB[21]") ~ 5,
                           TRUE ~ NA_real_))
 
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
-
-1/21
-
-(plant_pweights_plot <- plant_pweights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/21, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
+plant_pweights_plot <- plant_pweights %>%
+  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
+  geom_hline(yintercept = 1/21, linetype = 2) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
+                position = position_dodge(width = 0.5),
+                width = 0) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
+  scale_shape_manual(values = c("Early Summer" = 15, 
+                                "Monsoon" = 16,
+                                "Spring" = 17,
+                                "Winter" = 18)) +
+  scale_color_manual(values = c("Early Summer" = "#014034", 
+                                "Monsoon" = "#A68B03",
+                                "Spring" = "#F29F05",
+                                "Winter" = "#D95204")) +
+  labs(x = "Years into the past",
+       y = "Importance weight",
+       shape = "Season", color = "Season",
+       title = "(l)") +
+  theme(panel.grid = element_blank(),
+        plot.title.position = "plot")
 
 (plantpgraphs <- plantp + plant_pweights_plot)
 
+plantpgraphs <- (plant_title) / (plantp + plant_pweights_plot) +
+  plot_layout(heights = c(1, 10))
 
 
-# Bird partial plots ------------------------------------------------------
-
-
-#temperature
-(birdt <- partial_plot_fun(model = bird_sam, 
-                             covariate = 'b[1]', 
-                             df = bird_bray, 
-                             ID= 'WATERSHED', 
-                             yearID = 'RECYEAR', 
-                             start = 'TAVE', 
-                             end = 'TAVE_l5',
-                             weight = "wA",
-                             diss = as.name('bray')) +
-   labs(x = "Temperature",
-        y = "Bray-Curtis Dissimilarity",
-        title = "KNZ birds") + 
-   theme(plot.title.position = "panel",
-         plot.title = element_text(hjust = 0.5)))
-
-###WEIGHTS
-bird_tweights <- as.data.frame(bird_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wA")) %>%
-  mutate(season = case_when(parm %in% c("wA[1]", "wA[3]", "wA[5]") ~ "Cold",
-                            parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
-  mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
-                          parm %in% c('wA[3]', 'wA[4]') ~ 1,
-                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
-
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
-
-(bird_tweights_plot <- bird_tweights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/6, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1, 2)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
-
-(birdtgraphs <- birdt + bird_tweights_plot)
-
-#PPT
-
-#ppt
-(birdp <- partial_plot_fun(model = bird_sam, 
-                           covariate = 'b[2]', 
-                           df = bird_bray, 
-                           ID= 'WATERSHED', 
-                           yearID = 'RECYEAR', 
-                           start = 'PPT', 
-                           end = 'PPT_l5',
-                           weight = "wB",
-                           diss = as.name('bray')) +
-    labs(x = "Precipitation",
-         y = "Bray-Curtis Dissimilarity",
-         title = "KNZ birds") + 
-    theme(plot.title.position = "panel",
-          plot.title = element_text(hjust = 0.5)))
-
-###WEIGHTS
-bird_pweights <- as.data.frame(bird_sam$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wB")) %>%
-  mutate(season = case_when(parm %in% c("wB[1]", "wB[3]", "wB[5]") ~ "Dry",
-                            parm %in% c("wB[2]", "wB[4]", "wB[6]") ~ "Wet")) %>%
-  mutate(year = case_when(parm %in% c("wB[1]", "wB[2]") ~ 0,
-                          parm %in% c('wB[3]', 'wB[4]') ~ 1,
-                          parm %in% c('wB[5]', 'wB[6]') ~ 2))
-
-warmcol <- '#d8b365'
-coldcol <- '#5ab4ac'
-
-(bird_pweights_plot <- bird_pweights %>%
-    ggplot(aes(x = year, y= `50%`, shape = season)) +
-    geom_hline(yintercept = 1/6, linetype = 2) +
-    geom_point(position = position_dodge(width = 0.5), size = 3) +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                  position = position_dodge(width = 0.5),
-                  width = 0) +
-    scale_x_continuous(breaks = c(0, 1, 2)) +
-    scale_color_manual(values = c(Warm = warmcol, Cold = coldcol)) +
-    labs(x = "Years into the past",
-         y = "Importance weight\n(median and 95% BCI)"))
-
-(birdpgraphs <- birdp + bird_pweights_plot)
 
 # Export ------------------------------------------------------------------
+
+(fish_title) / (fisht + fish_tweights_plot) / 
+  (bird_title) / (birdt + bird_tweights_plot) /
+  (birdp + bird_pweights_plot) /
+  (hopper_title) / (hoppert + hopper_tweights_plot) /
+  (hopperPPT + hopper_ppt_weights_plot) /
+  (plant_title) / (plantp + plant_pweights_plot) +
+  plot_layout(heights = c(1, 10, 1, 10, 10, 1, 10, 10, 1, 10))
 
 fishtgraphs/birdtgraphs/birdpgraphs/hoppertgraphs/
   hopperpptgraphs/plantpgraphs +
@@ -480,7 +528,7 @@ fishtgraphs/birdtgraphs/birdpgraphs/hoppertgraphs/
 
 ggsave(filename = here('pictures',
                        'sam_models',
-                       'sam_partial_plots.jpg'),
+                       'sam_partial_plots_v2.jpg'),
        height = 10,
        width = 8,
        units = "in")

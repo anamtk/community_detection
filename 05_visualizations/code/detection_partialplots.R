@@ -84,11 +84,6 @@ fishdetect <- ggplot(fish_effects, aes(x = `50%`, y = parm)) +
 
 fishdetect
 
-fish_title <- ggplot(data.frame(l = "SBC fish", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 4.5) + 
-  theme_void() +
-  coord_cartesian(clip = "off")
-
 # ggsave(plot = fishdetect,
 #        filename = here('pictures',
 #                        'detection_models',
@@ -128,11 +123,6 @@ birddetect <- ggplot(bird_effects, aes(x = `50%`, y = parm)) +
   geom_hline(yintercept = 0.4)
 
 birddetect
-
-bird_title <- ggplot(data.frame(l = "KNZ birds", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 4.5) + 
-  theme_void() +
-  coord_cartesian(clip = "off")
 
 
 # Plants ------------------------------------------------------------------
@@ -201,11 +191,6 @@ plantdetect2 <- ggplot(plant_effects2, aes(x = `50%`, y = new_parm)) +
   geom_hline(yintercept = 0.4)
 
 plantdetect2
-
-plant_title <- ggplot(data.frame(l = "PFNP plants", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 6) + 
-  theme_void() +
-  coord_cartesian(clip = "off")
 
 # String them together ----------------------------------------------------
 

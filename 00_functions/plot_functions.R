@@ -142,9 +142,12 @@ partial_plot_fun <- function(model, covariate, df, ID, yearID, start, end, weigh
            plogisreg = plogis(reg))
   
   plot <- ggplot(regT) +
-    geom_point(aes(x = Var, y = .data[[diss]]), alpha = 0.5,
+    geom_point(aes(x = Var, y = .data[[diss]]), 
+               alpha = 0.4, shape = 1,
                position = position_jitter()) +
-    geom_line(aes(x = Var, y = plogisreg), size = 1) 
+    geom_line(aes(x = Var, y = plogisreg), size = 1) +
+    theme(panel.grid = element_blank(),
+          plot.title.position = "plot")
   
   return(plot)
   
