@@ -63,9 +63,9 @@ fish_effects <- as.data.frame(fish_sum$quantiles) %>%
   ))
 
 fishdetect <- ggplot(fish_effects, aes(x = `50%`, y = parm)) +
-  geom_vline(xintercept = 0, linetype = 3, size = 0.75, alpha = 0.4) +
-  geom_point(size = 2) +
-  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.75, width = 0, alpha = 0.6) +
+  geom_vline(xintercept = 0, linetype = 2, linewidth = 0.3, alpha = 0.4) +
+  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.4, width = 0, alpha = 0.6) +
+  geom_point(size = 1.5, fill = "#FFFFFF", shape = 21, stroke = 0.5) +
   scale_x_continuous(limits = c(-3.25, 3.25), breaks = c(-3, -2, -1, 0, 1, 2, 3)) +
   labs(x = "Covariate effect",
        y = "SBC fish",
@@ -104,9 +104,9 @@ bird_effects <- as.data.frame(bird_sum$quantiles) %>%
   ))
 
 birddetect <- ggplot(bird_effects, aes(x = `50%`, y = parm)) +
-  geom_vline(xintercept = 0, linetype = 3, size = 0.75, alpha = 0.4) +
-  geom_point(size = 2) +
-  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.75, width = 0, alpha = 0.6) +
+  geom_vline(xintercept = 0, linetype = 2, linewidth = 0.3, alpha = 0.4) +
+  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.4, width = 0, alpha = 0.6) +
+  geom_point(size = 1.5, fill = "#FFFFFF", shape = 21, stroke = 0.5) +
   scale_x_continuous(limits = c(-1.6, 1.6), breaks = c(-1.5, -1, -0.5, 0, 0.5, 1, 1.5)) +
   labs(x = "Covariate effect",
        y = "",
@@ -147,9 +147,9 @@ plant_effects1 <- plant_effects %>%
   filter(parm == "a1.Cover")
 
 plantdetect1 <- ggplot(plant_effects1, aes(x = `50%`, y = new_parm)) +
-  geom_vline(xintercept = 0, linetype = 3, size = 0.75, alpha = 0.4) +
-  geom_point(size = 2) +
-  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.75, width = 0) +
+  geom_vline(xintercept = 0, linetype = 2, linewidth = 0.3, alpha = 0.4) +
+  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.4, width = 0, alpha = 0.6) +
+  geom_point(size = 1.5, fill = "#FFFFFF", shape = 21, stroke = 0.5) +
   scale_x_continuous(limits = c(-1.75, 1.75), breaks = c(-1.5, -1, -0.5, 0, 0.5, 1, 1.5)) +
   labs(x = "Covariate effect",
        y = "",
@@ -172,9 +172,9 @@ plant_effects2 <- plant_effects %>%
   filter(parm != "a2.LifeGroup[1]")
 
 plantdetect2 <- ggplot(plant_effects2, aes(x = `50%`, y = new_parm)) +
-  geom_vline(xintercept = 0, linetype = 3, size = 0.75, alpha = 0.4) +
-  geom_point(size = 2) +
-  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.75, width = 0) +
+  geom_vline(xintercept = 0, linetype = 2, linewidth = 0.3, alpha = 0.4) +
+  geom_errorbar(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.4, width = 0, alpha = 0.6) +
+  geom_point(size = 1.5, fill = "#FFFFFF", shape = 21, stroke = 0.5) +
   scale_x_continuous(limits = c(-10, 40)) +
   labs(x = "Covariate effect",
        y = "",
@@ -203,7 +203,7 @@ ggsave(plot = detect_together,
        filename = here("pictures",
                        "detection_models",
                        "detection_covariate_effects.jpg"),
-       height = 14,
+       height = 16,
        width = 10,
        units = "cm",
        dpi = 300)
