@@ -143,7 +143,7 @@ partial_plot_fun <- function(model, covariate, df, ID, yearID, start, end, weigh
   
   plot <- ggplot(regT) +
     geom_point(aes(x = Var, y = .data[[diss]]), 
-               alpha = 0.4, shape = 1,
+               alpha = 0.2, shape = 1,
                position = position_jitter()) +
     geom_line(aes(x = Var, y = plogisreg), size = 1) +
     theme(panel.grid = element_blank(),

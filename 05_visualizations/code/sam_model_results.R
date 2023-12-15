@@ -20,7 +20,16 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-theme_set(theme_bw())
+theme_set(theme_classic())
+theme_update(plot.title.position = "plot",
+             panel.grid = element_blank(),
+             axis.title = element_text(size = 6),
+             axis.text = element_text(size = 5),
+             plot.title = element_text(size = 7),
+             legend.text = element_text(size = 4),
+             legend.key.size = unit(0.25, "cm"),
+             legend.key = element_blank(),
+             legend.background = element_blank())
 
 source(here('00_functions',
             'tidy_functions.R'))
@@ -121,7 +130,7 @@ effectplots_together <- fisheffectsplot / birdeffectsplot / seveffectsplot / pla
 # Fish partial plots ------------------------------------------------------
 
 fish_title <- ggplot(data.frame(l = "SBC fish", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 4.5) + 
+  geom_text(aes(x, y, label = l), size = 4) + 
   theme_void() +
   coord_cartesian(clip = "off")
 
@@ -154,36 +163,44 @@ fish_tweights <- as.data.frame(fish_sam$quantiles) %>%
                           parm %in% c("wB[6]", 'wB[7]') ~ 3,
                           parm %in% c("wB[8]", 'wB[9]') ~ 4,
                           parm %in% c("wB[10]", 'wB[11]') ~ 5,
-                          TRUE ~ NA_real_))
+                          TRUE ~ NA_real_)) %>% 
+  mutate(above = case_when(
+    `50%` > 1/11 ~ "yes",
+    TRUE ~ "no"
+  )) %>% 
+  complete(season, year) %>% 
+  unite("color", season, above, sep = "-", remove = FALSE)
 
 warmcol <- '#d8b365'
 coldcol <- '#5ab4ac'
 
+warmalpha <- '#f0e1c4'
+coldalpha <- '#c2e1df'
+
 fish_tweights_plot <- fish_tweights %>%
-  ggplot(aes(x = year, y = `50%`, shape = season, color = season)) +
-  geom_hline(yintercept = 1/11, linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                position = position_dodge(width = 0.5),
-                width = 0) +
+  ggplot(aes(x = year, y = `50%`, color = color, shape = color)) +
+  geom_hline(yintercept = 1/11, linetype = 2, linewidth = 0.1) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`),
+                  position = position_dodge(width = 0.5), size = 0.4) +
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
-  scale_color_manual(values = c("Warm" = warmcol, "Cold" = coldcol)) +
+  scale_color_manual(values = c("Warm-yes" = warmcol, "Cold-yes" = coldcol,
+                                "Warm-no" = warmalpha, "Cold-no" = coldalpha),
+                     breaks = c("Warm-yes", "Cold-yes"),
+                     labels = c("Warm-yes" = "Warm", "Cold-yes" = "Cold")) +
+  scale_shape_manual(values = c("Warm-yes" = 17, "Cold-yes" = 16,
+                                "Warm-no" = 17, "Cold-no" = 16),
+                     breaks = c("Warm-yes", "Cold-yes"),
+                     labels = c("Warm-yes" = "Warm", "Cold-yes" = "Cold")) +
   labs(x = "Years into the past",
        y = "Importance weight",
-       shape = "Season", color = "Season",
+       shape = "", color = "",
        title = "(b)") +
-  theme(plot.title.position = "plot",
-        panel.grid = element_blank())
-
-fish_tweights_plot
-
-fishtgraphs <- (fish_title) / (fisht + fish_tweights_plot) +
-  plot_layout(heights = c(1, 10))
+  theme(legend.position = c(0.92, 1.1))
 
 # Bird partial plots ------------------------------------------------------
 
 bird_title <- ggplot(data.frame(l = "KNZ birds", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 4.5) + 
+  geom_text(aes(x, y, label = l), size = 4) + 
   theme_void() +
   coord_cartesian(clip = "off")
 
@@ -199,10 +216,7 @@ birdt <- partial_plot_fun(model = bird_sam,
                           diss = as.name('bray')) +
   labs(x = "Temperature",
        y = "Bray-Curtis Dissimilarity",
-       title = "(c)") + 
-  theme(plot.title.position = "plot")
-
-birdt
+       title = "(c)") 
 
 ###WEIGHTS
 bird_tweights <- as.data.frame(bird_sam$quantiles) %>%
@@ -212,25 +226,33 @@ bird_tweights <- as.data.frame(bird_sam$quantiles) %>%
                             parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
   mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
                           parm %in% c('wA[3]', 'wA[4]') ~ 1,
-                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
+                          parm %in% c('wA[5]', 'wA[6]') ~ 2)) %>% 
+  mutate(above = case_when(
+    `50%` > 1/6 ~ "yes",
+    TRUE ~ "no"
+  )) %>% 
+  complete(season, year) %>% 
+  unite("color", season, above, sep = "-", remove = FALSE)
 
 bird_tweights_plot <- bird_tweights %>%
-  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
-  geom_hline(yintercept = 1/6, linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                position = position_dodge(width = 0.5),
-                width = 0) +
-  scale_x_continuous(breaks = c(0, 1, 2)) +
-  scale_color_manual(values = c("Warm" = warmcol, "Cold" = coldcol)) +
+  ggplot(aes(x = year, y = `50%`, color = color, shape = color)) +
+  geom_hline(yintercept = 1/6, linetype = 2, linewidth = 0.1) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`),
+                  position = position_dodge(width = 0.5), size = 0.4) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
+  scale_color_manual(values = c("Warm-yes" = warmcol, "Cold-yes" = coldcol,
+                                "Warm-no" = warmalpha, "Cold-no" = coldalpha),
+                     breaks = c("Warm-yes", "Cold-yes"),
+                     labels = c("Warm-yes" = "Warm", "Cold-yes" = "Cold")) +
+  scale_shape_manual(values = c("Warm-yes" = 17, "Cold-yes" = 16,
+                                "Warm-no" = 17, "Cold-no" = 16),
+                     breaks = c("Warm-yes", "Cold-yes"),
+                     labels = c("Warm-yes" = "Warm", "Cold-yes" = "Cold")) +
   labs(x = "Years into the past",
        y = "Importance weight",
-       title = "(d)",
-       shape = "Season", color = "Season") +
-  theme(plot.title.position = "plot",
-        panel.grid = element_blank())
-
-birdtgraphs <- birdt + bird_tweights_plot
+       shape = "", color = "",
+       title = "(d)") +
+  theme(legend.position = c(0.92, 1.1))
 
 #PPT
 
@@ -256,36 +278,44 @@ bird_pweights <- as.data.frame(bird_sam$quantiles) %>%
                             parm %in% c("wB[2]", "wB[4]", "wB[6]") ~ "Wet")) %>%
   mutate(year = case_when(parm %in% c("wB[1]", "wB[2]") ~ 0,
                           parm %in% c('wB[3]', 'wB[4]') ~ 1,
-                          parm %in% c('wB[5]', 'wB[6]') ~ 2))
+                          parm %in% c('wB[5]', 'wB[6]') ~ 2)) %>% 
+  mutate(above = case_when(
+    `50%` > 1/6 ~ "yes",
+    TRUE ~ "no"
+  )) %>% 
+  complete(season, year) %>% 
+  unite("color", season, above, sep = "-", remove = FALSE)
 
 drycol <- "#E6922D"
 wetcol <- "#465C66"
 
-bird_pweights_plot <- bird_pweights %>%
-  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
-  geom_hline(yintercept = 1/6, linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                position = position_dodge(width = 0.5),
-                width = 0) +
-  scale_x_continuous(breaks = c(0, 1, 2)) +
-  scale_color_manual(values = c("Dry" = drycol, "Wet" = wetcol)) +
+dryalpha <- "#f5d6b5"
+wetalpha <- "#bdc2c5"
+
+bird_pweights_plot <- bird_pweights %>%  
+  ggplot(aes(x = year, y = `50%`, color = color, shape = color)) +
+  geom_hline(yintercept = 1/6, linetype = 2, linewidth = 0.1) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`),
+                  position = position_dodge(width = 0.5), size = 0.4) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
+  scale_color_manual(values = c("Dry-yes" = drycol, "Wet-yes" = wetcol,
+                                "Dry-no" = dryalpha, "Wet-no" = wetalpha),
+                     breaks = c("Dry-yes", "Wet-yes"),
+                     labels = c("Dry-yes" = "Dry", "Wet-yes" = "Wet")) +
+  scale_shape_manual(values = c("Dry-yes" = 15, "Wet-yes" = 18,
+                                "Dry-no" = 15, "Wet-no" = 18),
+                     breaks = c("Dry-yes", "Wet-yes"),
+                     labels = c("Dry-yes" = "Dry", "Wet-yes" = "Wet")) +
   labs(x = "Years into the past",
        y = "Importance weight",
-       title = "(f)",
-       shape = "Season", color = "Season") +
-  theme(plot.title.position = "plot",
-        panel.grid = element_blank())
-
-(birdpgraphs <- birdp + bird_pweights_plot)
-
-birdpgraphs <- (bird_title) / (birdt + bird_tweights_plot) / (birdp + bird_pweights_plot) +
-  plot_layout(heights = c(1, 10, 10))
+       shape = "", color = "",
+       title = "(f)") +
+  theme(legend.position = c(0.92, 1.1))
 
 # Grasshopper partial plots -----------------------------------------------
 
 hopper_title <- ggplot(data.frame(l = "SEV grasshoppers", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 4.5) + 
+  geom_text(aes(x, y, label = l), size = 4) + 
   theme_void() +
   coord_cartesian(clip = "off")
 
@@ -303,8 +333,6 @@ hoppert <- partial_plot_fun(model = sev_sam,
        y = "Bray-Curtis Dissimilarity",
        title = "(g)")
 
-hoppert
-
 ###WEIGHTS
 hopper_tweights <- as.data.frame(sev_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
@@ -313,27 +341,33 @@ hopper_tweights <- as.data.frame(sev_sam$quantiles) %>%
                             parm %in% c("wA[2]", "wA[4]", "wA[6]") ~ "Warm")) %>%
   mutate(year = case_when(parm %in% c("wA[1]", "wA[2]") ~ 0,
                           parm %in% c('wA[3]', 'wA[4]') ~ 1,
-                          parm %in% c('wA[5]', 'wA[6]') ~ 2))
+                          parm %in% c('wA[5]', 'wA[6]') ~ 2)) %>% 
+  mutate(above = case_when(
+    `50%` > 1/6 ~ "yes",
+    TRUE ~ "no"
+  )) %>% 
+  complete(season, year) %>% 
+  unite("color", season, above, sep = "-", remove = FALSE)
 
 hopper_tweights_plot <- hopper_tweights %>%
-  ggplot(aes(x = year, y = `50%`, shape = season, color = season)) +
-  geom_hline(yintercept = 1/6, linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                position = position_dodge(width = 0.5),
-                width = 0) +
-  scale_x_continuous(breaks = c(0, 1, 2)) +
-  scale_color_manual(values = c("Warm" = warmcol, "Cold" = coldcol)) +
+  ggplot(aes(x = year, y = `50%`, color = color, shape = color)) +
+  geom_hline(yintercept = 1/6, linetype = 2, linewidth = 0.1) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`),
+                  position = position_dodge(width = 0.5), size = 0.4) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
+  scale_color_manual(values = c("Warm-yes" = warmcol, "Cold-yes" = coldcol,
+                                "Warm-no" = warmalpha, "Cold-no" = coldalpha),
+                     breaks = c("Warm-yes", "Cold-yes"),
+                     labels = c("Warm-yes" = "Warm", "Cold-yes" = "Cold")) +
+  scale_shape_manual(values = c("Warm-yes" = 17, "Cold-yes" = 16,
+                                "Warm-no" = 17, "Cold-no" = 16),
+                     breaks = c("Warm-yes", "Cold-yes"),
+                     labels = c("Warm-yes" = "Warm", "Cold-yes" = "Cold")) +
   labs(x = "Years into the past",
        y = "Importance weight",
-       shape = "Season", color = "Season",
+       shape = "", color = "",
        title = "(h)") +
-  theme(plot.title.position = "plot",
-        panel.grid = element_blank())
-
-hopper_tweights_plot
-
-hoppertgraphs <- hoppert + hopper_tweights_plot
+  theme(legend.position = c(0.92, 1.1))
 
 #PPT
 
@@ -350,8 +384,6 @@ hopperPPT <- partial_plot_fun(model = sev_sam,
        y = "Bray-Curtis Dissimilarity",
        title = "(i)")
 
-hopperPPT
-
 ###WEIGHTS
 hopper_ppt_weights <- as.data.frame(sev_sam$quantiles) %>%
   rownames_to_column(var = "parm") %>%
@@ -365,27 +397,33 @@ hopper_ppt_weights <- as.data.frame(sev_sam$quantiles) %>%
                           parm %in% c('wB[5]', 'wB[6]') ~ 2,
                           parm %in% c('wB[7]', 'wB[8]') ~ 3,
                           parm %in% c('wB[9]', 'wB[10]') ~ 4,
-                          parm %in% c('wB[11]') ~ 5))
+                          parm %in% c('wB[11]') ~ 5)) %>% 
+  mutate(above = case_when(
+    `50%` > 1/12 ~ "yes",
+    TRUE ~ "no"
+  )) %>% 
+  complete(season, year) %>% 
+  unite("color", season, above, sep = "-", remove = FALSE)
 
-hopper_ppt_weights_plot <- hopper_ppt_weights %>%
-  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
-  geom_hline(yintercept = 1/12, linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                position = position_dodge(width = 0.5),
-                width = 0) +
+hopper_ppt_weights_plot <- hopper_ppt_weights %>%  
+  ggplot(aes(x = year, y = `50%`, color = color, shape = color)) +
+  geom_hline(yintercept = 1/12, linetype = 2, linewidth = 0.1) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`),
+                  position = position_dodge(width = 0.5), size = 0.4) +
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
-  scale_color_manual(values = c("Dry" = drycol, "Wet" = wetcol)) +
+  scale_color_manual(values = c("Dry-yes" = drycol, "Wet-yes" = wetcol,
+                                "Dry-no" = dryalpha, "Wet-no" = wetalpha),
+                     breaks = c("Dry-yes", "Wet-yes"),
+                     labels = c("Dry-yes" = "Dry", "Wet-yes" = "Wet")) +
+  scale_shape_manual(values = c("Dry-yes" = 15, "Wet-yes" = 18,
+                                "Dry-no" = 15, "Wet-no" = 18),
+                     breaks = c("Dry-yes", "Wet-yes"),
+                     labels = c("Dry-yes" = "Dry", "Wet-yes" = "Wet")) +
   labs(x = "Years into the past",
        y = "Importance weight",
-       title = "(j)",
-       shape = "Season", color = "Season") +
-  theme(panel.grid = element_blank())
-
-(hopperpptgraphs <- hopperPPT + hopper_ppt_weights_plot)
-
-hopperpptgraphs <- (hopper_title) / (hoppert + hopper_tweights_plot) / (hopperPPT + hopper_ppt_weights_plot) +
-  plot_layout(heights = c(1, 10, 10))
+       shape = "", color = "",
+       title = "(j)") +
+  theme(legend.position = c(0.92, 1.1))
 
 #NPP
 
@@ -436,7 +474,7 @@ hopperpptgraphs <- (hopper_title) / (hoppert + hopper_tweights_plot) / (hopperPP
 # Plant partial plots -----------------------------------------------------
 
 plant_title <- ggplot(data.frame(l = "PFNP plants", x = 1, y = 1)) +
-  geom_text(aes(x, y, label = l), size = 6) + 
+  geom_text(aes(x, y, label = l), size = 4) + 
   theme_void() +
   coord_cartesian(clip = "off")
 
@@ -479,59 +517,77 @@ plant_pweights <- as.data.frame(plant_sam$quantiles) %>%
                           parm %in% c('wB[11]', 'wB[12]', 'wB[13]', 'wB[14]') ~ 3,
                           parm %in% c('wB[15]', 'wB[16]', "wB[17]", 'wB[18]') ~ 4,
                           parm %in% c('wB[19]', 'wB[20]', "wB[21]") ~ 5,
-                          TRUE ~ NA_real_))
+                          TRUE ~ NA_real_)) %>% 
+  mutate(above = case_when(
+    `50%` > 1/21 ~ "yes",
+    TRUE ~ "no"
+  )) %>% 
+  complete(season, year) %>% 
+  unite("color", season, above, sep = "-", remove = FALSE)
+
+escol <- "#014034"
+mocol <- "#A68B03"
+spcol <- "#F29F05"
+wicol <- "#D95204"
+
+esalpha <- "#c6d1cf"
+moalpha <- "#e6e0c4"
+spalpha <- "#fbe1b4"
+wialpha <- "#f5d3c6"
 
 plant_pweights_plot <- plant_pweights %>%
-  ggplot(aes(x = year, y= `50%`, shape = season, color = season)) +
-  geom_hline(yintercept = 1/21, linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                position = position_dodge(width = 0.5),
-                width = 0) +
+  ggplot(aes(x = year, y = `50%`, color = color, shape = color)) +
+  geom_hline(yintercept = 1/21, linetype = 2, linewidth = 0.1) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`),
+                  position = position_dodge(width = 0.5), size = 0.4) +
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5)) +
-  scale_shape_manual(values = c("Early Summer" = 15, 
-                                "Monsoon" = 16,
-                                "Spring" = 17,
-                                "Winter" = 18)) +
-  scale_color_manual(values = c("Early Summer" = "#014034", 
-                                "Monsoon" = "#A68B03",
-                                "Spring" = "#F29F05",
-                                "Winter" = "#D95204")) +
+  scale_color_manual(values = c("Early Summer-yes" = escol, 
+                                "Monsoon-yes" = mocol,
+                                "Spring-yes" = spcol,
+                                "Winter-yes" = wicol,
+                                "Early Summer-no" = esalpha,
+                                "Monsoon-no" = moalpha,
+                                "Spring-no" = spalpha,
+                                "Winter-no" = wialpha),
+                     breaks = c("Early Summer-yes", "Monsoon-yes", 
+                                "Spring-yes", "Winter-yes"),
+                     labels = c("Early Summer", "Monsoon", 
+                                "Spring", "Winter")) +
+  scale_shape_manual(values = c("Early Summer-yes" = 15, 
+                                "Monsoon-yes" = 16,
+                                "Spring-yes" = 17,
+                                "Winter-yes" = 18,
+                                "Early Summer-no" = 15,
+                                "Monsoon-no" = 16,
+                                "Spring-no" = 17,
+                                "Winter-no" = 18),
+                     breaks = c("Early Summer-yes", "Monsoon-yes", 
+                                "Spring-yes", "Winter-yes"),
+                     labels = c("Early Summer", "Monsoon", 
+                                "Spring", "Winter")) +
   labs(x = "Years into the past",
        y = "Importance weight",
-       shape = "Season", color = "Season",
+       shape = "", color = "",
        title = "(l)") +
-  theme(panel.grid = element_blank(),
-        plot.title.position = "plot")
-
-(plantpgraphs <- plantp + plant_pweights_plot)
-
-plantpgraphs <- (plant_title) / (plantp + plant_pweights_plot) +
-  plot_layout(heights = c(1, 10))
-
-
+  theme(legend.position = c(0.92, 1.1))
 
 # Export ------------------------------------------------------------------
 
-(fish_title) / (fisht + fish_tweights_plot) / 
-  (bird_title) / (birdt + bird_tweights_plot) /
-  (birdp + bird_pweights_plot) /
-  (hopper_title) / (hoppert + hopper_tweights_plot) /
-  (hopperPPT + hopper_ppt_weights_plot) /
+sam_partial_plots <- 
+  (fish_title) / (fisht + fish_tweights_plot) / 
+  (bird_title) / (birdt + bird_tweights_plot) / (birdp + bird_pweights_plot) /
+  (hopper_title) / (hoppert + hopper_tweights_plot) / (hopperPPT + hopper_ppt_weights_plot) /
   (plant_title) / (plantp + plant_pweights_plot) +
-  plot_layout(heights = c(1, 10, 1, 10, 10, 1, 10, 10, 1, 10))
-
-fishtgraphs/birdtgraphs/birdpgraphs/hoppertgraphs/
-  hopperpptgraphs/plantpgraphs +
-  plot_annotation(tag_levels = "A")
-
+  plot_layout(heights = c(1.5, 5, 1.5, 5, 5, 1.5, 5, 5, 1.5, 5))
 
 ggsave(filename = here('pictures',
                        'sam_models',
                        'sam_partial_plots_v2.jpg'),
-       height = 10,
-       width = 8,
-       units = "in")
+       sam_partial_plots, 
+       height = 24,
+       width = 18,
+       units = "cm",
+       dpi = 300)
 
 # Interaction -------------------------------------------------------------
 
