@@ -227,8 +227,8 @@ all_diss <- rbind(sbc_bray, kz_bray, sev_bray, nps_turn) %>%
   # making type labels nice
   mutate(type_label = case_match(type, 
     "modeled" ~ "Modeled",
-    "observed_all" ~ "Observed\n(all years)",
-    "observed_one" ~ "Observed\n(one year)"
+    "observed_all" ~ "Observed\n(all surveys)",
+    "observed_one" ~ "Observed\n(one survey)"
   ))
 
 
@@ -237,28 +237,6 @@ all_diss <- rbind(sbc_bray, kz_bray, sev_bray, nps_turn) %>%
 
 modeled_col <- "#E88C23"
 observed_col <- "#438AA8"
-
-# ggplot(all_diss, aes(x = dataset, y = diss)) +
-#   #geom_jitter(aes(group = type, color = type), alpha = 0.2, width = 0.2) +
-#   geom_boxplot(aes(color = type),  outlier.shape = NA) + 
-#   geom_point(aes(color = type), position = position_jitterdodge())+ 
-#   labs(x = "Dataset",
-#        y = "Dissimilarity") +
-#   annotate(geom = "text", x = 0.75, y = 1, label = "More different") +
-#   annotate(geom = "text", x = 0.75, y = 0, label = "More similar") +
-#   scale_fill_manual(values = c(NA, NA)) + 
-#   scale_color_manual(values = c(modeled = modeled_col, observed = observed_col))  
-
-# ggplot(all_diss, aes(x = type, y = diss)) +
-#   #geom_jitter(aes(group = type, color = type), alpha = 0.2, width = 0.2) +
-#   geom_violin(aes(fill = type)) + 
-#  # geom_point(aes(color = type), position = position_jitterdodge())+ 
-#   labs(x = "Dataset",
-#        y = "Dissimilarity") +
-#   annotate(geom = "text", x = 0.75, y = 1, label = "More different") +
-#   annotate(geom = "text", x = 0.75, y = 0, label = "More similar") +
-#   scale_fill_manual(values = c(modeled = modeled_col, observed = observed_col)) +
-#   facet_wrap(~ dataset)
 
 boxplot_function <- function(dataset) {
   
