@@ -21,6 +21,9 @@ for(i in package.list){library(i, character.only = T)}
 source(here('00_functions',
             'plot_functions.R'))
 
+source(here('00_functions',
+            'tidy_functions.R'))
+
 # Load Data ---------------------------------------------------------------
 
 rhat <- readRDS(here('03_sev_grasshoppers',
