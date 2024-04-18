@@ -15,7 +15,7 @@ model{
     #correction model) 
     #and var.process is something we're tryign to estimate,
     #basically, the rest of the variation not accounted for
-    phi[i] <- (((1-mu[i])*mu[i])/(var.estimate[i] + var.process))-1
+    phi[i] <- (((1-mu[i])*mu[i])/(var.process))-1
     
     #alpha and beta are based on mu and phi values
     #sometimes these values send alpha and beta outside
@@ -32,7 +32,7 @@ model{
     #to get a good estimate of a prior for var.process, we
     #track the difference between these two values for each
     #data point
-    diff[i] <- (1-mu[i])*mu[i] - var.estimate[i]
+    #diff[i] <- (1-mu[i])*mu[i] - var.estimate[i]
     
     #Regression of mu, which is dependent on antecedent
     #temperature, precipitation and npp
@@ -152,7 +152,7 @@ model{
   tau.transect <- 1/pow(sig.transect,2)
   
   #PRior for overall process error
-  var.process ~ dunif(0, min(diff[]))
+  var.process ~ dunif(0, 100)
   
   #MISSING DATA PRIORS
   mu.temp ~ dunif(-10, 10)
