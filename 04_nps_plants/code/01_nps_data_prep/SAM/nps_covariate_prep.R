@@ -37,6 +37,9 @@ IDs <- read.csv(here('04_nps_plants',
                      'metadata',
                      'site_year_IDs.csv'), row.names=1)
 
+obs_nps <- readRDS(here('05_visualizations',
+                        'viz_data',
+                        'nps_observed_jaccard.RDS'))
 
 # Get response data in order ----------------------------------------------
 
@@ -126,6 +129,18 @@ all_data <- stability2 %>%
   left_join(vpd_lags, by = c("Plot", "EventYear"))
 
 
+# Combine with observed data ----------------------------------------------
+obs_nps2 <- obs_nps %>%
+  pivot_wider(names_from = "type",
+              values_from = "turnover") %>%
+  separate(plot_trans_quad,
+           into = c("Plot", "Transect", "Quadrat"),
+            sep = "_") %>%
+  mutate(Quadrat = as.numeric(Quadrat))
+
+all_data2 <- all_data %>%
+  left_join(obs_nps2, by = c("Plot", "Transect", "Quadrat", "EventYear"))
+
 # Check for correlation ---------------------------------------------------
 
 library(ggcorrplot)
@@ -139,7 +154,7 @@ ggcorrplot(cor(dat1, use = "complete.obs"),
 
 # Export ------------------------------------------------------------------
 
-write.csv(all_data,
+write.csv(all_data2,
           here("04_nps_plants",
                "data_outputs",
                'SAM',
