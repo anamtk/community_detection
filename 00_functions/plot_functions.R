@@ -154,4 +154,85 @@ partial_plot_fun <- function(model, covariate, df, ID, yearID, start, end, weigh
 }  
 
 
+# SAM Partial Dataframe Function ------------------------------------------
+
+
+partial_df_fun <- function(model, covariate, df, ID, yearID, start, end, weight, diss){
+  
+  beta <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parm") %>%
+    filter(parm == covariate) %>%
+    dplyr::select(`50%`) %>%
+    as_vector()
+  
+  b0 <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parm") %>%
+    filter(str_detect(parm, "b0")) %>%
+    dplyr::select(`50%`) %>%
+    summarise(b0 = mean(`50%`, na.rm = T)) %>%
+    as_vector()
+  
+  temp <- df %>%
+    dplyr::select(ID, yearID, start:end) %>% #adjust if needed
+    pivot_longer(start:end,
+                 names_to = "lag",
+                 values_to = "var") %>%
+    mutate(var = scale(var)) %>%
+    pivot_wider(names_from = "lag",
+                values_from = "var") %>%
+    dplyr::select(-ID, -yearID) %>%
+    as.matrix()
+  
+  #make scaled data long format to get mean and sd
+  scale <- df %>%
+    dplyr::select(ID, yearID, start:end) %>% #adjust if needed
+    pivot_longer(start:end,
+                 names_to = "lag",
+                 values_to = "var") 
+  
+  #get mean and SD of OG data to back-transform stuff
+  Mean <- mean(scale$var, na.rm = T)
+  SD <- sd(scale$var, na.rm = T)
+  
+  #get weights per lag
+  wt <- as.data.frame(model$quantiles) %>%
+    rownames_to_column(var = "parameter") %>%
+    filter(str_detect(parameter, weight)) %>%
+    dplyr::select(`50%`) %>%
+    as_vector()
+  
+  #get tmax dataset
+  regT <- df %>%
+    dplyr::select(ID, yearID, diss, start:end)
+  
+  #multiply months by their weights
+  regT$Ant <- apply(temp, MARGIN = 1, FUN = function(x){sum(x*wt)})
+  
+  #revert Tmax to OG data scale
+  regT <- regT %>%
+    dplyr::select(Ant, diss) %>%
+    mutate(Var = Ant*SD + Mean)
+  
+  #regression prediction for Temperature
+  regT <- regT %>%
+    mutate(reg = b0 + beta*Ant,
+           plogisreg = plogis(reg))
+  
+  return(regT)
+  
+  # plot <- ggplot(regT) +
+  #   geom_point(aes(x = Var, y = .data[[diss]]), 
+  #              alpha = 0.2, shape = 1,
+  #              position = position_jitter()) +
+  #   geom_line(aes(x = Var, y = plogisreg), size = 1) +
+  #   theme(panel.grid = element_blank(),
+  #         plot.title.position = "plot")
+  # 
+  # return(plot)
+  
+}  
+
+
+
+
 
