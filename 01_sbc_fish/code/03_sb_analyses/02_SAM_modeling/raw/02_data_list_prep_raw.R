@@ -31,10 +31,16 @@ all_data <- read.csv(here('01_sbc_fish',
 
 # Prep data for jags ------------------------------------------------------
 
+
+# Remove missing data -----------------------------------------------------
+
+all_data <- all_data %>%
+  filter(!is.na(observed_all))
+
 n.data <- nrow(all_data)
 
-bray <- as.vector(all_data$bray)
-var.estimate <- as.vector(all_data$SD^2)
+#transform like: https://stats.stackexchange.com/questions/31300/dealing-with-0-1-values-in-a-beta-regression
+bray <- as.vector((all_data$observed_all*(n.data-1) + 0.5)/n.data)
 
 n.transects <- length(unique(all_data$SITE_TRANS))
 
@@ -111,7 +117,6 @@ data <- list(n.data = n.data,
              Year.ID = Year.ID,
              Site.ID = Site.ID,
              bray = bray,
-             var.estimate = var.estimate,
              n.kelplag = n.kelplag,
              Kelp = Kelp,
              n.templag = n.templag,
@@ -122,6 +127,6 @@ saveRDS(data, here('01_sbc_fish',
                    "data_outputs",
                    'SAM',
                    "model_inputs",
-                   "bray_SAM_input_data_long.RDS"))
+                   "bray_SAM_input_data_raw.RDS"))
 
 

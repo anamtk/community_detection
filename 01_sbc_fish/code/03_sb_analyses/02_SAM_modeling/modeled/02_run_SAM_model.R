@@ -34,6 +34,7 @@ params <- c('b0.transect',
             'b',
             'wA',
             'wB',
+            'diff',
             'sig.transect',
             'sig.site',
             'var.process')
@@ -46,6 +47,7 @@ model <- here('01_sbc_fish',
               "code", 
               "03_sb_analyses",
               '02_SAM_modeling',
+              'modeled',
               "jags",
               "fish_SAM.R")
 
@@ -66,7 +68,7 @@ Sys.time()
 #mcmcplot(mod$samples)
 # 
 # gelman.diag(mod$samples, multivariate = F)
-# 
+
 # 
 # # Look at some plots ------------------------------------------------------
 # 

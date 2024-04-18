@@ -57,6 +57,10 @@ stability <- readRDS(here("01_sbc_fish",
                            "outputs",
                            "fish_bray_meanSD.RDS"))
 
+sbc_obs <- readRDS(here('05_visualizations',
+                        'viz_data',
+                        'sbc_observed_bray.RDS'))
+
 IDs <- read.csv(here('01_sbc_fish',
                       "data_outputs",
                       "metadata",
@@ -105,9 +109,18 @@ stability2 <- as.data.frame(stability) %>%
   left_join(IDs, by = c("siteID", "yrID"))
 
 
+# Combine raw data --------------------------------------------------------
+
+sbc_obs2 <- sbc_obs %>%
+  pivot_wider(names_from = 'type',
+              values_from = "bray")
+
+stability3 <- stability2 %>%
+  left_join(sbc_obs2, by = c("yrID", "siteID"))
+
 # Get site and transect IDs -----------------------------------------------
 
-sites <- stability2 %>%
+sites <- stability3 %>%
   distinct(siteID, SITE_TRANS) %>%
   separate(SITE_TRANS, into= c("SITE", "TRANSECT"),
            sep = "_",
@@ -214,7 +227,7 @@ chla_lags2 <- chla_lags %>%
 
 # Combine all data --------------------------------------------------------
 
-all_data <- stability2 %>%
+all_data <- stability3 %>%
   left_join(bio_lags, by = c("YEAR",
                              "SITE_TRANS")) %>%
   left_join(temp_lags2, by = c("SITE", "YEAR")) %>%
@@ -227,7 +240,7 @@ write.csv(all_data, here("01_sbc_fish",
                          'data_prep',
                         "stability_metrics_with_covariates.csv"))
 
-all_data2 <- stability2 %>%
+all_data2 <- stability3 %>%
   left_join(bio_lags, by = c("YEAR",
                              "SITE_TRANS")) %>%
   left_join(temp_lags_l2, by = c("SITE", "YEAR")) %>%
