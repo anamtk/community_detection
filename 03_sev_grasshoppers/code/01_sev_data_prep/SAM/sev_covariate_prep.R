@@ -85,6 +85,9 @@ IDs <- read.csv(here('03_sev_grasshoppers',
                      'metadata',
                      'sev_site_year_IDs.csv'))
 
+raw_dat <- readRDS(here('05_visualizations',
+                        'viz_data',
+                        'sev_observed_bray.RDS'))
 
 # Get response data in order ----------------------------------------------
 
@@ -277,6 +280,14 @@ all_data <- stability2 %>%
   left_join(ppt_lags2, by = c("YEAR" = "Year")) %>%
   left_join(npp_lags, by = c("site", "web", "YEAR" = "year"))
 
+# Prep observed data to bind ----------------------------------------------
+
+raw_obs2 <- raw_dat %>%
+  pivot_wider(names_from = "type",
+              values_from = "bray")
+
+all_data2 <- all_data %>%
+  left_join(raw_obs2, by = c("yrID", "siteID"))
 
 # Check for correlation ---------------------------------------------------
 
@@ -301,7 +312,7 @@ ggcorrplot(cor(dat3, use = "complete.obs"),
            type = "upper", lab = TRUE)
 # Export ------------------------------------------------------------------
 
-write.csv(all_data,
+write.csv(all_data2,
           here("03_sev_grasshoppers",
                "data_outputs",
                'SAM',
