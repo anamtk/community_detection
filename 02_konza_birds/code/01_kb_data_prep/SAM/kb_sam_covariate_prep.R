@@ -50,6 +50,10 @@ IDs <- read.csv(here('02_konza_birds',
                      "metadata",
                      "site_year_IDs.csv"))
 
+konza_obs <- readRDS(here('05_visualizations',
+                          'viz_data',
+                          'konza_observed_bray.RDS'))
+
 # Summarize monthly climate values ----------------------------------------
 
 #average mean temp for the month
@@ -140,7 +144,9 @@ ppt_lags <- ppt2 %>%
   arrange(RECYEAR, season) %>%
   #this creates a column for every lag this season (winter) and 5 seasons ago
   do(data.frame(., setNames(shift(.$PPT, 1:11), c("PPT_l1", 'PPT_l2', "PPT_l3",
-                                                   "PPT_l4", "PPT_l5")))) %>%
+                                                   "PPT_l4", "PPT_l5", "PPT_l6",
+                                                  "PPT_l7", "PPT_l8", "PPT_l9",
+                                                  "PPT_l10", "PPT_l11")))) %>%
   ungroup() %>%
   filter(season == "winter") %>%
   dplyr::select(-season)
@@ -207,6 +213,15 @@ all_data <- stability2 %>%
   left_join(ppt_lags, by = c("RECYEAR")) 
 
 
+# Prep observed data to bind ----------------------------------------------
+
+konza_obs2 <- konza_obs %>%
+  pivot_wider(names_from = "type",
+              values_from = "bray")
+
+all_data2 <- all_data %>%
+  left_join(konza_obs2, by = c("yrID", "TransID"))
+
 # Check for correlation in predictors -------------------------------------
 
 corr_check <- all_data %>%
@@ -220,7 +235,7 @@ ggcorrplot(cor(corr_check), type = "lower", lab = T)
 
 
 
-write.csv(all_data, here("02_konza_birds",
+write.csv(all_data2, here("02_konza_birds",
                          "data_outputs",
                          'SAM',
                          'data_prep',
