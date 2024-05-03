@@ -15,12 +15,15 @@ model{
     #and var.process is something we're tryign to estimate
     phi[i] <- (((1-mu[i])*mu[i])/var.process)-1
     
+    #var.process[i] <- ((1-mu[i])*mu[i])/(1 + phi)
     #alpha and beta are based on mu and phi values
     #sometimes these values send alpha and beta outside
     #the domain, so we have extra code below to get them to
     #stay where they belong
     alphaX[i] <- mu[i] * phi[i]
     betaX[i] <- (1 - mu[i]) * phi[i]
+    # alphaX[i] <- mu[i] * phi
+    # betaX[i] <- (1 - mu[i]) * phi
     
     #here is where we get alpha and beta to stay in their
     #domain
@@ -142,8 +145,9 @@ model{
   tau.temp <- pow(sig.temp, -2)
 
   #PRior for overall process error
-  sig.process ~ dunif(0, 10)
-  var.process <- pow(sig.process, 2)
-    
+  # sig.process ~ dunif(0, 10)
+  # var.process <- pow(sig.process, 2)
+  var.process ~ dunif(0, 100)
+  #phi ~ dgamma(1,1)
 
 }

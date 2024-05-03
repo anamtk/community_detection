@@ -46,7 +46,9 @@ data_list <- list(n.data = data$n.data,
 # Parameters to save ------------------------------------------------------
 
 params <- c('b0.transect',
-            'b',
+            'b','b0',
+            'deltaA',
+            'deltaB',
             'wA',
             'wB',
             'sig.transect',
@@ -66,8 +68,8 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter =  10000,
-                    n.burnin = 1000,
+                    n.iter =  4000,
+                    #n.burnin = 2000,
                     n.thin = 2,
                     DIC = TRUE)
 
@@ -88,7 +90,7 @@ mcmcplot(mod$samples,
 
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/sbc_fish/SAM/raw/raw_fish_SAM_model_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/sbc_fish/SAM/raw/outputs/raw_fish_SAM_model_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------
