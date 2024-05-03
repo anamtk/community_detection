@@ -65,7 +65,7 @@ n.transects <- length(unique(all_data2$transect_num))
 n.plots <- length(unique(all_data2$Plot))
 
 n.lag <- all_data2 %>%
-  dplyr::select(PPT:PPT_l20) %>%
+  dplyr::select(PPT:PPT_l7) %>%
   ncol()
 
 
@@ -92,28 +92,28 @@ Quad.ID <- as.vector(all_data2$Quad.ID)
 # Covariates --------------------------------------------------------------
 
 PPT <- all_data2  %>%
-  dplyr::select(quadnum, EventYear, PPT:PPT_l20) %>%
-  pivot_longer(PPT:PPT_l20,
+  dplyr::select(quadnum, EventYear, PPT:PPT_l7) %>%
+  pivot_longer(PPT:PPT_l7,
                names_to = 'lag',
                values_to = 'ppt') %>%
   mutate(ppt = scale(ppt)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "ppt") %>%
-  dplyr::select(PPT:PPT_l20) %>%
+  dplyr::select(PPT:PPT_l7) %>%
   as.matrix()
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
 #~8% missing data
 
 VPD <- all_data2 %>%
-  dplyr::select(quadnum, EventYear, VPD:VPD_l20) %>%
-  pivot_longer(VPD:VPD_l20,
+  dplyr::select(quadnum, EventYear, VPD:VPD_l7) %>%
+  pivot_longer(VPD:VPD_l7,
                names_to = 'lag',
                values_to = 'vpd') %>%
   mutate(vpd = scale(vpd)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "vpd") %>%
-  dplyr::select(VPD:VPD_l20) %>%
+  dplyr::select(VPD:VPD_l7) %>%
   as.matrix()
 
 sum(is.na(VPD))/(sum(is.na(VPD)) + sum(!is.na(VPD)))
