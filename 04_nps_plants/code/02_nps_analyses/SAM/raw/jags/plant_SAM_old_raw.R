@@ -46,9 +46,9 @@ model{
     
     #Regression of mu, which is dependent on antecedent
     #VPD and PPT
-    logit(mu[i]) <- b0.quad[Quad.ID[i]] +
+    logit(mu[i]) <- b0.transect[Transect.ID[i]] +
       b[1]*AntVPD[i] +
-      b[2]*AntPPT[i]
+      b[2]*AntPPT[i] 
     #maybe also check the interaction - but I've been finding
     #that it overfits the data when I do this. 
     
@@ -129,10 +129,10 @@ model{
   #OPTION 2: (if we add more quads - i added all quads on
   #transects with repeat measurements on at least one quadrat)
   # #hierarchical centering of quads on transects on plots on b0
-  for(q in 1:n.quads){
-    b0.quad[q] ~ dnorm(b0.transect[Transect.ID[q]], tau.quad)
-  }
-
+  # for(q in 1:n.quads){
+  #   b0.quad[q] ~ dnorm(b0.transect[Transect.ID[q]], tau.quad)
+  # }
+  # 
   for(t in 1:n.transects){
     b0.transect[t] ~ dnorm(b0, tau.transect)
   }
@@ -157,11 +157,11 @@ model{
   
   #for low # of levels, from Gellman paper - define sigma
   # as uniform and then precision in relation to this sigma
-  sig.quad ~ dunif(0, 10)
+  #sig.quad ~ dunif(0, 10)
   sig.transect ~ dunif(0, 10)
   #sig.plot ~ dunif(0, 10)
   
-  tau.quad <- 1/pow(sig.quad,2)
+  #tau.quad <- 1/pow(sig.quad,2)
   tau.transect <- 1/pow(sig.transect,2)
   #tau.plot <- 1/pow(sig.plot,2)
   

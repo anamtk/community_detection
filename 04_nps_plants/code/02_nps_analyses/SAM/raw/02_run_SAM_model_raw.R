@@ -62,9 +62,9 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.burnin = 2000,
+                    n.burnin = 15000,
                     n.thin = 2, 
-                    n.iter = 6000, #4000,
+                    n.iter = 25000, #4000,
                     DIC = TRUE)
 
 Sys.time()

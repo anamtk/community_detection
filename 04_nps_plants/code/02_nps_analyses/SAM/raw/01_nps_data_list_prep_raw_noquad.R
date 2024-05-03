@@ -66,14 +66,9 @@ n.transects <- length(unique(all_data2$transect_num))
 
 n.plots <- length(unique(all_data2$Plot))
 
-#going back 2 years
 n.lag <- all_data2 %>%
-  dplyr::select(PPT:PPT_l7) %>%
+  dplyr::select(PPT:PPT_l20) %>%
   ncol()
-
-# n.lag <- all_data2 %>%
-#   dplyr::select(PPT:PPT_l20) %>%
-#   ncol()
 
 
 # Response data -----------------------------------------------------------
@@ -92,38 +87,33 @@ Plot.ID  <- all_data2 %>%
 
 Transect.ID <- as.vector(all_data2$Transect.ID)
 
-# Transect.ID  <- all_data2 %>%
-#   distinct(Quad.ID, Transect.ID) %>%
-#   dplyr::select(Transect.ID) %>%
-#   as_vector()
-
 Quad.ID <- as.vector(all_data2$Quad.ID)
 
 # Covariates --------------------------------------------------------------
 
 PPT <- all_data2  %>%
-  dplyr::select(quadnum, EventYear, PPT:PPT_l7) %>%
-  pivot_longer(PPT:PPT_l7,
+  dplyr::select(quadnum, EventYear, PPT:PPT_l20) %>%
+  pivot_longer(PPT:PPT_l20,
                names_to = 'lag',
                values_to = 'ppt') %>%
   mutate(ppt = scale(ppt)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "ppt") %>%
-  dplyr::select(PPT:PPT_l7) %>%
+  dplyr::select(PPT:PPT_l20) %>%
   as.matrix()
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
 #~8% missing data
 
 VPD <- all_data2 %>%
-  dplyr::select(quadnum, EventYear, VPD:VPD_l7) %>%
-  pivot_longer(VPD:VPD_l7,
+  dplyr::select(quadnum, EventYear, VPD:VPD_l20) %>%
+  pivot_longer(VPD:VPD_l20,
                names_to = 'lag',
                values_to = 'vpd') %>%
   mutate(vpd = scale(vpd)) %>%
   pivot_wider(names_from = 'lag',
               values_from = "vpd") %>%
-  dplyr::select(VPD:VPD_l7) %>%
+  dplyr::select(VPD:VPD_l20) %>%
   as.matrix()
 
 sum(is.na(VPD))/(sum(is.na(VPD)) + sum(!is.na(VPD)))
@@ -150,5 +140,5 @@ saveRDS(data, here('04_nps_plants',
                    "data_outputs",
                    'SAM',
                    "model_inputs",
-                   "nps_diss_SAM_input_data_raw.RDS"))
+                   "nps_diss_SAM_input_data_raw_noquad.RDS"))
 
