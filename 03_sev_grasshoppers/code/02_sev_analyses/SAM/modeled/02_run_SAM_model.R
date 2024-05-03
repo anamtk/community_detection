@@ -25,7 +25,7 @@ data_list <- readRDS(here('03_sev_grasshoppers',
                           "data_outputs",
                           'SAM',
                           "model_inputs",
-                          "sev_bray_SAM_input_data.RDS"))
+                          "sev_bray_SAM_input_data_notrans.RDS"))
 
 
 # Parameters to save ------------------------------------------------------
@@ -52,8 +52,9 @@ model <- here('03_sev_grasshoppers',
               "code", 
               "02_sev_analyses",
               'SAM',
+              'modeled',
               "jags",
-              "sev_SAM.R")
+              "sev_SAM_notrans.R")
 
 Sys.time()
 mod <- jagsUI::jags(data = data_list,
@@ -62,7 +63,8 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 1,
+                    n.burnin = 1500,
+                    n.iter = 2835,
                     DIC = TRUE)
 
 Sys.time()

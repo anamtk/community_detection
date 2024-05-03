@@ -35,6 +35,12 @@ rhat2 <- readRDS(here('03_sev_grasshoppers',
                      'outputs',
                      'sev_SAM_model_Rhat2.RDS'))
 
+rhat3 <- readRDS(here('03_sev_grasshoppers',
+                        'monsoon',
+                        'SAM',
+                        'outputs',
+                        'sev_SAM_model_Rhat3_notrans.RDS'))
+
 
 rhat4 <- readRDS(here('03_sev_grasshoppers',
                       'monsoon',
@@ -49,10 +55,10 @@ parms <- c('b0.web', 'b0.transect',
            'sig.web', 'sig.transect', 'var.process',
            'deviance')
 
-rhat_graph_fun(rhat2, parms = parms, rhat = 1.1)
+rhat_graph_fun(rhat3, parms = parms, rhat = 1.1)
 
-rhat_graph_fun(rhat4, parms = parms, rhat = 1.1 ) +
-  labs(title = "SEV LTER fish SAM Rhat")
+rhat_graph_fun(rhat3, parms = parms, rhat = 1.1 ) +
+  labs(title = "SEV LTER grasshopper SAM Rhat: \n modeled data")
 
 ggsave(plot = last_plot(),
        filename = here("pictures",
@@ -62,3 +68,5 @@ ggsave(plot = last_plot(),
        height = 4,
        width = 6,
        units = "in")
+
+
