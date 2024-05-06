@@ -33,5 +33,3 @@ sum <- summary(mod$samples)
 
 saveRDS(sum, 
         file = "/scratch/sml665/nps_plants/SAM/outputs/nps_SAM_summary.RDS")
-
-

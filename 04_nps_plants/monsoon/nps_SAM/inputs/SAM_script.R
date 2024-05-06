@@ -47,16 +47,16 @@ data_list <- list(n.data = data$n.data,
 
 # Parameters to save ------------------------------------------------------
 
-params <- c('b0.quad',
-            'b0.transect',
-            #'b0.plot',
-            'b',
-            'wA',
-            'wB',
-            'sig.quad',
-            'sig.transect',
-            #'sig.plot',
-            'var.process')
+params <- c(#'b0.quad',
+  'b0.transect',
+  #'b0.plot',
+  'b',
+  'wA',
+  'wB',
+  #'sig.quad',
+  'sig.transect',
+  #'sig.plot',
+  'var.process')
 
 # INits -------------------------------------------------------------------
 
@@ -67,12 +67,12 @@ params <- c('b0.quad',
 mod <- jagsUI::jags(data = data_list,
                     #inits = inits,
                     inits = NULL,
-                    model.file = '/scratch/sml665/nps_plants/SAM/inputs/plant_SAM.R',
+                    model.file = '/scratch/sml665/nps_plants/SAM/inputs/plant_SAM_old.R',
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
                     n.burnin = 1000,
-                    n.iter =  31000,
+                    n.iter =  41000,
                     n.thin = 7,
                     DIC = TRUE)
 
