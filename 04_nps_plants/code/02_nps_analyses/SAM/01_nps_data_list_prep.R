@@ -103,7 +103,8 @@ PPT <- all_data2  %>%
   as.matrix()
 
 sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
-#~8% missing data
+#~0.6% missing data (new - 5/6/24)
+#~8% missing data (old)
 
 VPD <- all_data2 %>%
   dplyr::select(quadnum, EventYear, VPD:VPD_l7) %>%
@@ -117,7 +118,8 @@ VPD <- all_data2 %>%
   as.matrix()
 
 sum(is.na(VPD))/(sum(is.na(VPD)) + sum(!is.na(VPD)))
-#~8% missing data
+#~0.6% missing data (new - 5/6/24)
+#~8% missing data (old)
 
 
 # Combine data into a data list -------------------------------------------

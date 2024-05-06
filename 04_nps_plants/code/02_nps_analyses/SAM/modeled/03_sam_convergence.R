@@ -34,12 +34,13 @@ rhat <- readRDS(here('04_nps_plants',
 
 #rhat_graph_fun(rhat)
 
-parm <- c('b0.quad',
+
+parm <- c(#'b0.quad',
             'b0.transect',
             'b',
             'wA',
             'wB',
-            'sig.quad',
+            #'sig.quad',
             'sig.transect',
             'var.process', 
           'deviance')

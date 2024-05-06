@@ -27,16 +27,15 @@ data_list <- readRDS(here('04_nps_plants',
                           "model_inputs",
                           "nps_diss_SAM_input_data.RDS"))
 
-
 # Parameters to save ------------------------------------------------------
 
-params <- c('b0.quad',
+params <- c(#'b0.quad',
             'b0.transect',
             #'b0.plot',
             'b',
             'wA',
             'wB',
-            'sig.quad',
+            #'sig.quad',
             'sig.transect',
             #'sig.plot',
             'var.process')
@@ -49,6 +48,7 @@ model <- here('04_nps_plants',
               "code", 
               "02_nps_analyses",
               'SAM',
+              'modeled',
               "jags",
               "plant_SAM_old.R")
 
