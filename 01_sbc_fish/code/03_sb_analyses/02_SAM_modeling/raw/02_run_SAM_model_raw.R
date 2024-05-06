@@ -59,7 +59,7 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 2835,
+                    n.iter = 5000,
                     n.burnin = 1500,
                     DIC = TRUE)
 
@@ -73,53 +73,18 @@ gelman.diag(mod$samples, multivariate = F)
 
 rhat_graph_fun(list = mod$Rhat, parms = params, rhat = 1.1)
 # 
-# # Look at some plots ------------------------------------------------------
-# 
+
+# Save summary ------------------------------------------------------------
+
 sum <- summary(mod$samples)
-# 
-med <- as.data.frame(sum$quantiles) %>%
-  rownames_to_column(var = "parameter") %>%
-  dplyr::select(parameter, `2.5%`, `50%`, `97.5%`) %>%
-  filter(parameter != "deviance")
-# 
-write.csv(med, here("01_sbc_fish",
-                    "data_outputs",
-                    "SAM",
-                    "model_outputs",
-                    "fish_SAM_summary_raw.csv"))
 
 saveRDS(sum, here("01_sbc_fish",
                   "data_outputs",
                   "SAM",
                   "model_outputs",
                   "fish_SAM_summary_raw.RDS"))
-# 
-# 
-# # Quick plots -------------------------------------------------------------
-# 
-# med2 <- med %>%
-#   filter(parameter %in% c("b[1]", 'b[2]'))
-# 
-# ggplot(med2, aes(x = parameter, y= `50%`)) +
-#   geom_hline(yintercept = 0, linetype = 2) +
-#   geom_point() +
-#   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-#   labs(y = "Median (and 95% BCI)", x = "Covariate") +
-#   scale_x_discrete(labels = c("Kelp", "Temperature")) +
-#   coord_flip()
-# 
-# weights <- med %>%
-#   filter(str_detect(parameter, "wB"))
-# 
-# 1/11
-# ggplot(weights, aes(x = parameter, y = `50%`)) +
-#   geom_hline(yintercept = 1/11, linetype = 2) +
-#   geom_point() +
-#   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), width = 0.2) +
-#   scale_x_discrete(labels = c("Current season (summer)", "Winter - 1",
-#                               "Summer - 1", "Winter - 2",
-#                               "Summer - 2", "Winter - 3",
-#                               'Summer - 4', 'Winter - 5',
-#                               'Summer - 6', 'Winter - 7',
-#                               'Summer - 8')) +
-#   theme(axis.text.x = element_text(angle = 45, hjust =1))
+
+
+# GOF ---------------------------------------------------------------------
+
+
