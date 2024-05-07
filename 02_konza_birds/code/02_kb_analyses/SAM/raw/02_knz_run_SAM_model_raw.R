@@ -18,6 +18,8 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
+source(here("00_functions",
+            'plot_functions.R'))
 
 # Load data ---------------------------------------------------------------
 
@@ -56,8 +58,8 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 2835,
-                    n.burnin = 1500,
+                    n.iter = 7000,
+                    n.burnin = 3000,
                     DIC = TRUE)
 
 Sys.time()
