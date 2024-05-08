@@ -45,12 +45,6 @@ fish_sam <- readRDS(here('01_sbc_fish',
                          'outputs',
                          'fish_SAM_summary.RDS'))
 
-fish_sam_raw <- readRDS(here("01_sbc_fish",
-                             "data_outputs",
-                             "SAM",
-                             "model_outputs",
-                             "fish_SAM_summary_raw.RDS"))
-
 fish_bray <- read.csv(here("01_sbc_fish",
                            "data_outputs",
                            'SAM',
@@ -75,11 +69,6 @@ bird_sam <- readRDS(here('02_konza_birds',
                          'model_outputs',
                          'knz_SAM_summary.RDS'))
 
-bird_sam_raw <- readRDS(here('02_konza_birds',
-                             'data_outputs',
-                             'SAM',
-                             'model_outputs',
-                             'knz_SAM_summary_raw.RDS'))
 
 bird_bray <- read.csv(here('02_konza_birds',
                            'data_outputs',
