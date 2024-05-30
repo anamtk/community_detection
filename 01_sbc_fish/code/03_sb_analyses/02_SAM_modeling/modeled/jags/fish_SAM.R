@@ -51,7 +51,7 @@ model{
 
     #Regression of mu, which is dependent on antecedent
     #kelp biomass, temperature, and chl-a
-      logit(mu[i]) <- b0.transect[Transect.ID[i]] +
+      logit(mu[i]) <- b0.site[Site.ID[i]] +
         b[1]*AntKelp[i] +
         b[2]*AntTemp[i]# +
         #removed due to overfitting:
@@ -125,9 +125,9 @@ model{
   #BETA PRIORS
   #HIERARCHICAL STRUCTURE PRIORS
   #hierarchical centering of transects on sites on b0
-   for(t in 1:n.transects){
-     b0.transect[t] ~ dnorm(b0.site[Site.ID[t]], tau.transect)
-   }
+   # for(t in 1:n.transects){
+   #   b0.transect[t] ~ dnorm(b0.site[Site.ID[t]], tau.transect)
+   # }
    
    for(s in 1:n.sites){
      b0.site[s] ~ dnorm(b0, tau.site)
@@ -142,11 +142,11 @@ model{
   
   #for low # of levels, from Gellman paper - define sigma
   # as uniform and then precision in relation to this sigma
-  sig.transect ~ dunif(0, 10)
+  #sig.transect ~ dunif(0, 10)
   sig.site ~ dunif(0, 10)
   #sig.year ~ dunif(0, 10)
   
-  tau.transect <- 1/pow(sig.transect,2)
+  #tau.transect <- 1/pow(sig.transect,2)
   tau.site <- 1/pow(sig.site,2)
   #tau.year <- 1/pow(sig.year, 2)
   

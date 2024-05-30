@@ -33,6 +33,7 @@ data_list <- readRDS(here('01_sbc_fish',
 # Parameters to save ------------------------------------------------------
 
 params <- c('b0.transect',
+            'b0.site',
             'b',
             'wA',
             'wB',
@@ -71,7 +72,17 @@ mcmcplot(mod$samples)
 # 
 gelman.diag(mod$samples, multivariate = F)
 
-rhat_graph_fun(list = mod$Rhat, parms = params, rhat = 1.1)
+rhat_graph_fun(list = mod$Rhat, parms = params, rhat = 1.1) +
+  labs(title = "SBC LTER fish SAM Rhat: \n observed data")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "SBC_SAM_raw_Rhat_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
 # 
 
 # Save summary ------------------------------------------------------------
@@ -87,4 +98,16 @@ saveRDS(sum, here("01_sbc_fish",
 
 # GOF ---------------------------------------------------------------------
 
+parms2 <- c('bray.rep', 'resid')
 
+mod2 <- update(mod,
+               parameters.to.save = parms2,
+               n.iter = 500)
+
+sum2 <- summary(mod2$samples)
+
+saveRDS(sum2, here("01_sbc_fish",
+                  "data_outputs",
+                  "SAM",
+                  "model_outputs",
+                  "fish_SAM_GOF_summary_raw.RDS"))

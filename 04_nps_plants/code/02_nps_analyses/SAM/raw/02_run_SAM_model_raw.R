@@ -75,4 +75,39 @@ mcmcplot(mod$samples)
 # 
 gelman.diag(mod$samples, multivariate = F)
 # 
-rhat_graph_fun(list = mod$Rhat, parms = params, rhat = 1.1)
+rhat_graph_fun(list = mod$Rhat, parms = params, rhat = 1.1) +
+  labs(title = "NPS plant SAM Rhat: \n observed data")
+
+ggsave(plot = last_plot(),
+       filename = here("pictures",
+                       "supplementary",
+                       'SAM',
+                       "NPS_SAM_raw_Rhat_graph.jpg"),
+       height = 4,
+       width = 6,
+       units = "in")
+
+sum <- summary(mod$samples)
+
+saveRDS(sum, here('04_nps_plants',
+                  'data_outputs',
+                  'SAM',
+                  'model_outputs',
+                  'nps_SAM_summary_raw.RDS'))
+
+
+# GOF ---------------------------------------------------------------------
+
+params2 <- c("diss.rep", "resid")
+
+mod2 <- update(mod,
+               parameters.to.save = params2,
+               n.iter = 1000)
+
+sumGOF <- summary(mod2$samples)
+
+saveRDS(sumGOF, here('04_nps_plants',
+                     'data_outputs',
+                     'SAM',
+                     'model_outputs',
+                     'nps_SAM_GOF_summary_raw.RDS'))
