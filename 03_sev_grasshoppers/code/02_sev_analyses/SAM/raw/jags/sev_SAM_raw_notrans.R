@@ -109,6 +109,7 @@ model{
     #and follow a relatively uninformative gamma prior
     deltaA[t] ~ dgamma(1,1)
     
+    cumm.tempwt[t] <- sum(wA[1:t])
 
   }
   
@@ -117,6 +118,8 @@ model{
     wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
     deltaB[t] ~ dgamma(1,1)
+    
+    cumm.pptwt[t] <- sum(wB[1:t])
     
   }
   
@@ -130,6 +133,8 @@ model{
     #the weights for npp
     wC[t] <- deltaC[t]/sumC
     deltaC[t] ~ dgamma(1,1)
+    
+    cumm.nppwt[t] <- sum(wC[1:t])
   }
   
 

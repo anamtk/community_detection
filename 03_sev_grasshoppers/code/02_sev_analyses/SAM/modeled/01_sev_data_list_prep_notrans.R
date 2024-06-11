@@ -78,7 +78,7 @@ var.estimate <- as.vector(all_data2$SD^2)
 
 Web.ID <- as.vector(all_data2$Web.ID)
 
-#Transect.ID <- as.vector(all_data2$siteID)
+Transect.ID <- as.vector(all_data2$siteID)
 
 # Covariates --------------------------------------------------------------
 

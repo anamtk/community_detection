@@ -42,7 +42,10 @@ params <- c('b0.web',
             'deltaC',
             'sig.web',
             'sig.transect',
-            'var.process')
+            'var.process',
+            'cumm.tempwt',
+            'cumm.pptwt',
+            'cumm.nppwt')
 
 
 
