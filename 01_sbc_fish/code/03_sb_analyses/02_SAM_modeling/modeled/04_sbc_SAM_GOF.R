@@ -28,15 +28,15 @@ theme_set(theme_bw())
 
 
 observed <- readRDS(here('01_sbc_fish',
-                   "data_outputs",
-                   'SAM',
-                   "model_inputs",
-                   "bray_SAM_input_data.RDS"))
+                         "data_outputs",
+                         'SAM',
+                         "model_inputs",
+                         "bray_SAM_input_data_long.RDS"))
 
 modeled <- readRDS(here('01_sbc_fish',
-                        'monsoon',
+                        'data_outputs',
                         'SAM',
-                        'outputs',
+                        'model_outputs',
                         'fish_SAM_GOF_summary.RDS'))
 
 
@@ -74,4 +74,37 @@ ggsave(plot = last_plot(),
        height = 4,
        width = 6,
        units = "in")
+
+
+# Check for autocorrelation -----------------------------------------------
+
+auto_check <- as.data.frame(cbind(observed$Transect.ID, 
+                                  observed$Year.ID)) %>%
+  rename("Transect.ID" = "V1",
+         "Year.ID" = "V2")
+
+resid <- as.data.frame(modeled$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "resid")) %>%
+  mutate(id = str_sub(parm, 7, (nchar(parm)-1))) %>%
+  dplyr::select(id, `50%`)
+
+auto_check <- auto_check %>%
+  bind_cols(resid) %>%
+  arrange(Transect.ID, Year.ID)
+
+auto_function <- function(site){
+  
+  df <- auto_check %>%
+    filter(Transect.ID == site)
+  
+  auto <- acf(df$`50%`, type = "correlation")
+
+  return(auto)
+}
+
+sites <- unique(auto_check$Transect.ID)
+site_list <- lapply(sites, auto_function)
+#low autocorrelation for a few sites (~7/43)
+
 

@@ -108,6 +108,8 @@ model{
     wA[t] <- deltaA[t]/sumA
     #and follow a relatively uninformative gamma prior
     deltaA[t] ~ dgamma(1,1)
+    
+    cumm.kelpwt[t] <- sum(wA[1:t])
   }
   
   #Sum of the weights for temp lag
@@ -120,6 +122,8 @@ model{
     wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
     deltaB[t] ~ dgamma(1,1)
+    
+    cumm.tempwt[t] <- sum(wB[1:t])
   }
   
   #BETA PRIORS

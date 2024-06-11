@@ -81,7 +81,7 @@ model <- here("01_sbc_fish",
               "03_sb_analyses",
               '01_MSAM_modeling',
               "models",
-              "MSOM_simple_siteyearRE.R")
+              "MSAM_simple_siteyearRE.R")
 
 (st.time <- Sys.time())
 mod <- jagsUI::jags(data = data,

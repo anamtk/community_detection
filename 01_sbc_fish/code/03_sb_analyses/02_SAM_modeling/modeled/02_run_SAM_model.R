@@ -32,12 +32,14 @@ data_list <- readRDS(here('01_sbc_fish',
 
 params <- c('b0.transect',
             'b',
+            'b0',
             'wA',
             'wB',
-            'diff',
             'sig.transect',
             'sig.site',
-            'var.process')
+            'var.process',
+            'cumm.kelpwt',
+            'cumm.tempwt')
 
 
 
