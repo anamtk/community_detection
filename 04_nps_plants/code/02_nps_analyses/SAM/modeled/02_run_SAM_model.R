@@ -33,6 +33,7 @@ params <- c(#'b0.quad',
             'b0.transect',
             #'b0.plot',
             'b',
+            'b0',
             'wA',
             'wB',
             #'sig.quad',
@@ -59,7 +60,9 @@ mod <- jagsUI::jags(data = data_list,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 1335, #4000,
+                    n.burnin = 1000,
+                    n.iter =  41000,
+                    n.thin = 7,
                     DIC = TRUE)
 
 Sys.time()
@@ -71,3 +74,10 @@ mcmcplot(mod$samples)
 gelman.diag(mod$samples, multivariate = F)
 # 
 #
+sum <- summary(mod$samples)
+
+saveRDS(sum, here('04_nps_plants',
+                  'data_outputs',
+                  'SAM',
+                  'model_outputs',
+                  'nps_SAM_summary.RDS'))

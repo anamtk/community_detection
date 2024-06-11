@@ -35,6 +35,7 @@ data_list <- readRDS(here('04_nps_plants',
 params <- c('b0.quad',
             'b0.transect',
             #'b0.plot',
+            'b0',
             'b',
             'wA',
             'wB',
@@ -63,8 +64,8 @@ mod <- jagsUI::jags(data = data_list,
                     parallel = TRUE,
                     n.chains = 3,
                     n.burnin = 15000,
-                    n.thin = 2, 
-                    n.iter = 25000, #4000,
+                    n.thin = 7, 
+                    n.iter = 41000, #4000,
                     DIC = TRUE)
 
 Sys.time()
