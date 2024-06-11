@@ -74,3 +74,34 @@ ggsave(plot = last_plot(),
        width = 6,
        units = "in")
 
+
+# Check for autocorrelation -----------------------------------------------
+
+
+auto_check <- as.data.frame(cbind(observed$Transect.ID)) %>%
+  rename("Transect.ID" = "V1")
+
+resid <- as.data.frame(modeled$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "resid")) %>%
+  mutate(id = str_sub(parm, 7, (nchar(parm)-1))) %>%
+  dplyr::select(id, `50%`)
+
+auto_check <- auto_check %>%
+  bind_cols(resid) %>%
+  arrange(Transect.ID, id)
+
+auto_function <- function(site){
+  
+  df <- auto_check %>%
+    filter(Transect.ID == site)
+  
+  auto <- acf(df$`50%`, type = "correlation")
+  
+  return(auto)
+}
+
+sites <- unique(auto_check$Transect.ID)
+par(mfrow = c(2,2))
+site_list <- lapply(sites, auto_function)
+#autocorrelation in all three sites UGH
