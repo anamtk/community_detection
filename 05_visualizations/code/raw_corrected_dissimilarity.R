@@ -185,13 +185,13 @@ timeseries_function <- function(dataset) {
   }
   
   if(dataset == "birds"){
-    title = "(b) KNZ birds"
+    title = "(b) Birds"
   } else if(dataset == "fish") {
-    title = "(a) SBC fish"
+    title = "(a) Fish"
   } else if(dataset == "grasshoppers") {
-    title = "(c) SEV grasshoppers"
+    title = "(c) Grasshoppers"
   } else if(dataset == "plants") {
-    title = "(d) PFNP plants"
+    title = "(d) Plants"
   } else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
@@ -225,19 +225,19 @@ timeseries_function <- function(dataset) {
   
   ggplot() +
     geom_line(data = samples_df,
-              aes(x = year, y = diss, group = iter),
+              aes(x = year, y = 1-diss, group = iter),
               color = modeled_col, alpha = 0.05) +
     theme(panel.grid = element_blank()) +
     geom_ribbon(data = posterior_df,
-                aes(x = year, y = mean, ymax = mean + sd, ymin = mean - sd), 
+                aes(x = year, y = 1-mean, ymax = 1-(mean + sd), ymin = 1-(mean - sd)), 
                 fill = modeled_col, alpha = 0.3) +
     geom_line(data = posterior_df,
-              aes(x = year, y = mean),
+              aes(x = year, y = 1- mean),
               color = modeled_col, linewidth = 1) +
     geom_line(data = raw_df, 
-              aes(x = year, y = raw_diss),
+              aes(x = year, y = 1-raw_diss),
               color = observed_col, linewidth = 1) +
-    labs(x = xlab, y = "Dissimilarity",
+    labs(x = xlab, y = "Stability\n(1 - dissimilarity metric)",
          title = title) +
     scale_x_continuous(breaks = breaks) +
     theme(legend.position = "none",
@@ -265,6 +265,6 @@ ggsave(plot = timeseries_together,
        filename = here("pictures",
                        "detection_models",
                        "observed_modeled_timeseries.jpg"),
-       height = 14,
+       height = 16,
        width = 12,
        units = "cm")

@@ -226,9 +226,9 @@ nps_turn <- nps_obs %>%
 all_diss <- rbind(sbc_bray, kz_bray, sev_bray, nps_turn) %>% 
   # making type labels nice
   mutate(type_label = case_match(type, 
-    "modeled" ~ "Modeled",
-    "observed_all" ~ "Observed\n(all surveys)",
-    "observed_one" ~ "Observed\n(one survey)"
+    "modeled" ~ "Modeled\n(imperfect detection)",
+    "observed_all" ~ "Empirical\n(maximum)",
+    "observed_one" ~ "Empirical\n(single survey)"
   ))
 
 
@@ -258,20 +258,20 @@ boxplot_function <- function(dataset) {
   }
   
   if(dataset == "birds"){
-    title = "(b) KNZ birds"
+    title = "(b) Birds"
   } else if(dataset == "fish") {
-    title = "(a) SBC fish"
+    title = "(a) Fish"
   } else if(dataset == "grasshoppers") {
-    title = "(c) SEV grasshoppers"
+    title = "(c) Grasshoppers"
   } else if(dataset == "plants") {
-    title = "(d) PFNP plants"
+    title = "(d) Plants"
   }else {
     warning("Check your arguments! You may have specified the wrong dataset.")
     return(NA)
   }
   
   df %>% 
-    ggplot(aes(x = type_label, y = diss, fill = type)) +
+    ggplot(aes(x = type_label, y = 1-diss, fill = type)) +
     geom_violin(aes(color = type, fill = type), alpha = 0.7) +
     scale_fill_manual(values = c(modeled = modeled_col, 
                                  observed_all = observed_col, 
@@ -280,7 +280,7 @@ boxplot_function <- function(dataset) {
                                  observed_all = observed_col, 
                                  observed_one = observed_col)) +
     geom_boxplot(aes(fill = type), width = 0.1, outlier.size = 1, alpha = 0.9) +
-    labs(x = "Type", y = "Dissimilarity", title = title) +
+    labs(x = "Type", y = "Stability\n(1 - dissimilarity metric)", title = title) +
     scale_y_continuous(limits = c(0, 1)) +
     theme(legend.position = "none",
           plot.title.position = "plot",
@@ -326,9 +326,6 @@ library(brms)
 #             Dam_binary + meanTemp + exc_y + (1|huc_2), 
 #           data = dat_amax_brms, family = gaussian())
 
-m1 <- glmmTMB(diss ~ type*dataset + (1|site_year),
-              data = all_diss,
-              beta_family())
 
 m1 <- brm(diss ~ type*dataset + (1|site_year),
           data = all_diss,

@@ -24,10 +24,10 @@ for(i in package.list){library(i, character.only = T)}
 theme_set(theme_classic())
 theme_update(plot.title.position = "plot",
              panel.grid = element_blank(),
-             axis.title = element_text(size = 6),
-             axis.text = element_text(size = 5),
-             plot.title = element_text(size = 7),
-             legend.text = element_text(size = 4),
+             axis.title = element_text(size = 11),
+             axis.text = element_text(size = 10),
+             plot.title = element_text(size = 12),
+             legend.text = element_text(size = 9),
              legend.key.size = unit(0.25, "cm"),
              legend.key = element_blank(), 
              legend.title=element_blank(),
@@ -169,10 +169,14 @@ b0_df <- bind_rows(b0_list, .id = "id") %>%
                           levels = c("SBC fish", 
                                      "KNZ birds", 
                                      "SEV grasshoppers", 
-                                     "PFNP plants")))
+                                     "PFNP plants"))) %>%
+  mutate(datasetID = case_when(dataset == "SBC fish" ~ "Fish",
+                               dataset == "KNZ birds" ~ "Birds",
+                               dataset == "SEV grasshoppers" ~ "Grasshoppers",
+                               dataset == "PFNP plants" ~ "Plants"))
 
 intercept_plot <- ggplot(b0_df) +
-  geom_pointrange(aes(x = dataset,
+  geom_pointrange(aes(x = datasetID,
                       y = median,
                       ymin = LCI,
                       ymax = UCI,
@@ -180,7 +184,7 @@ intercept_plot <- ggplot(b0_df) +
                   position=position_dodge(width=0.5),
                   size = 0.4) +
   scale_color_manual(values = c(modeled_col, observed_col),
-                     labels = c("Modeled", "Observed \n (all surveys)")) +
+                     labels = c("Modeled", "Empirical \n (maximum)")) +
   labs(x = "Dataset", y = "Baseline dissimilarity (intercept) \n (median and 95% BCI)")
 # Effect plots ------------------------------------------------------------
 
@@ -224,7 +228,7 @@ sam_plot_fun <- function(model_model, model_raw){
                     position=position_dodge(width=0.5),
                     size = 0.4) +
     scale_color_manual(values = c(modeled_col, observed_col),
-                       labels = c("Modeled", "Observed \n (all surveys)")) +
+                       labels = c("Modeled", "Empirical \n (maximum)")) +
     scale_shape_manual(values = c('nonsig' = 1, 'sig' = 19)) +
     labs(x = "Covariate effect \n (Median and 95% BCI)", y = "") 
   
@@ -236,29 +240,29 @@ sam_plot_fun <- function(model_model, model_raw){
 
 (fish_plot <- sam_plot_fun(model_model = fish_sam, model_raw = fish_sam_raw)  +
   scale_y_discrete(labels = c("Kelp biomass", "Temperature")) + 
-  labs(title = "SBC fish"))
+  labs(title = "Fish"))
 
 # birds -------------------------------------------------------------------
 
 bird_plot <- sam_plot_fun(model_model = bird_sam, model_raw = bird_sam_raw) +
   scale_y_discrete(labels = c("Temperature", "Precipitation")) + 
-  labs(title = "KNZ birds")
+  labs(title = "Birds")
 
 # grasshoppers ------------------------------------------------------------
 
 hop_plot <- sam_plot_fun(model_model = sev_sam, model_raw = sev_sam_raw) +
   scale_y_discrete(labels = c("Temperature","Precipitation", "Plant biomass")) + 
-  labs(title = "SEV grasshoppers")
+  labs(title = "Grasshoppers")
 
 # Plant -------------------------------------------------------------------
 
 plant_plot <- sam_plot_fun(model_model = plant_sam, model_raw = plant_sam_raw) +
   scale_y_discrete(labels = c("VPD","Precipitation")) + 
-  labs(title = "PFNP plants") 
+  labs(title = "Plants") 
 
 # combine -----------------------------------------------------------------
 
-(effects_plots_all <- intercept_plot + (fish_plot + bird_plot) / (hop_plot + plant_plot) + 
+(effects_plots_all <- intercept_plot / ((fish_plot + bird_plot) / (hop_plot + plant_plot)) + 
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'a',
                   tag_prefix = "(",
@@ -268,7 +272,7 @@ ggsave(filename = here('pictures',
                        'sam_models',
                        'sam_effects_plots.jpg'),
        effects_plots_all, 
-       height = 8,
+       height = 20,
        width = 20,
        units = "cm",
        dpi = 300)
@@ -352,7 +356,7 @@ weights_fun <- function(model_m, model_r, weightID,
                              #nlag = 6,
                              var = "Temperature",
                              datasetID = "SBC fish") +
-    labs(title = "SBC fish - temperature") +
+    labs(title = "Fish:\ntemperature") +
     scale_x_continuous(limits = c(1,11), 
                        breaks = seq(1, 11, by = 1),
                        labels = c(0:10)))
@@ -377,7 +381,7 @@ sevwts_ppt <- sev_sam_ppt %>%
   ylim(0, 1.01) +
   labs(x = "Seasons into the past", 
        y = "Cumulative seasonal weights \n posterior median and 95% BCI") +
-    labs(title = "SEV grasshoppers - precipitation") +
+    labs(title = "Grasshoppers:\nprecipitation") +
     scale_x_continuous(limits = c(1,6), 
                        breaks = seq(1, 6, by = 1),
                        labels = c(0:5)) +
@@ -402,7 +406,7 @@ sevwts_temp <- sev_sam_temp %>%
               linewidth = 0.6) +
     labs(x = "Seasons into the past", 
          y = "Cumulative seasonal weights \n posterior median and 95% BCI") +
-    labs(title = "SEV grasshoppers - temperature") +
+    labs(title = "Grasshoppers:\ntemperature") +
     scale_x_continuous(limits = c(1,6), 
                        breaks = seq(1, 6, by = 1),
                        labels = c(0:5))) +
@@ -416,7 +420,7 @@ fishwts_temp +  sevwts_pptp + sevwts_tempp +
 ggsave(filename = here('pictures',
                        'sam_models',
                        'sam_weight_plots.jpg'),
-       height = 8,
+       height = 8.5,
        width = 20,
        units = "cm",
        dpi = 300)
