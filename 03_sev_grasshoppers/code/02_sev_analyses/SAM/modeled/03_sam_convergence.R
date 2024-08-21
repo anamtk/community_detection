@@ -27,7 +27,7 @@ rhat <- readRDS(here('03_sev_grasshoppers',
                      'monsoon',
                      'SAM',
                      'outputs',
-                     'sev_SAM_model_Rhat.RDS'))
+                     'sev_SAM_model_Rhat_notrans.RDS'))
 
 rhat2 <- readRDS(here('03_sev_grasshoppers',
                      'monsoon',

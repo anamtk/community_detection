@@ -28,7 +28,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS( file ="/scratch/atm234/sev_hoppers/outputs/sevMSAMnocov_model2.RDS")
+mod <- readRDS(file ="/scratch/atm234/sev_hoppers/outputs/a0/sev_MSAM_nocovRE_model.RDS")
 
 
 
