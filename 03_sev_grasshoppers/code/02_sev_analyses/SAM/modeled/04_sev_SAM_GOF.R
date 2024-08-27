@@ -56,7 +56,7 @@ m1 <- lm(bray.rep.Mean ~ bray,
 
 summary(m1)
 
-lb1 <- paste("R^2 == 0.43")
+lb1 <- paste("R^2 == 0.41")
 
 ggplot(bray.rep, aes(x = bray, y = bray.rep.Mean)) +
   geom_abline(slope = 1, intercept = 0) +

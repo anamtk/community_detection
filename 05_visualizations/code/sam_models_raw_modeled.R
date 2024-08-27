@@ -96,6 +96,12 @@ sev_sam_ppt <- readRDS(here('03_sev_grasshoppers',
                              'outputs',
                              'sev_SAM_cummppt.RDS'))
 
+sev_sam_npp <- readRDS(here('03_sev_grasshoppers',
+                            'monsoon',
+                            'SAM',
+                            'outputs',
+                            'sev_SAM_cummnpp.RDS'))
+
 sev_sam_temp_raw <- readRDS(here('03_sev_grasshoppers',
                              'monsoon',
                              'SAM',
@@ -109,6 +115,13 @@ sev_sam_ppt_raw <- readRDS(here('03_sev_grasshoppers',
                              'raw',
                              'outputs',
                              'sev_SAM_cummppt_raw.RDS'))
+
+sev_sam_npp_raw <- readRDS(here('03_sev_grasshoppers',
+                            'monsoon',
+                            'SAM',
+                            'raw',
+                            'outputs',
+                            'sev_SAM_cummnpp_raw.RDS'))
 
 
 #plant datasets:
@@ -412,7 +425,34 @@ sevwts_temp <- sev_sam_temp %>%
                        labels = c(0:5))) +
   theme(axis.title.y = element_blank())
 
+sevwts_npp <- sev_sam_npp %>%
+  left_join(sev_sam_npp_raw, by = c("lag", "variable",
+                                     'dataset'))
+
+(sevwts_nppp <- ggplot(sevwts_npp) +
+    geom_ribbon(aes(x = lag, ymin = LCI_obs,
+                    ymax = UCI_obs),
+                fill = observed_col, alpha = 0.5) +
+    geom_line(aes(x = lag, y = median_obs), 
+              color = observed_col, alpha = 0.5) +
+    geom_pointrange(aes(x = lag, y = median,
+                        ymin = LCI, 
+                        ymax = UCI),
+                    color = modeled_col) +    
+    geom_line(aes(x = lag, y = median), 
+              color = modeled_col, alpha = 0.5,
+              linewidth = 0.6) +
+    labs(x = "Seasons into the past", 
+         y = "Cumulative seasonal weights \n posterior median and 95% BCI") +
+    labs(title = "Grasshoppers:\nPlant biomass") +
+    scale_x_continuous(limits = c(1,11), 
+                       breaks = seq(1, 11, by = 1),
+                       labels = c(0:10))) +
+  theme(axis.title.y = element_blank())
+
+
 fishwts_temp +  sevwts_pptp + sevwts_tempp +
+  sevwts_nppp +
   plot_annotation(tag_levels = 'a',
                   tag_prefix = "(",
                   tag_suffix = ")")
@@ -420,7 +460,7 @@ fishwts_temp +  sevwts_pptp + sevwts_tempp +
 ggsave(filename = here('pictures',
                        'sam_models',
                        'sam_weight_plots.jpg'),
-       height = 8.5,
+       height = 20,
        width = 20,
        units = "cm",
        dpi = 300)
