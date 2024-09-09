@@ -188,17 +188,17 @@ b0_df <- bind_rows(b0_list, .id = "id") %>%
                                dataset == "SEV grasshoppers" ~ "Grasshoppers",
                                dataset == "PFNP plants" ~ "Plants"))
 
-intercept_plot <- ggplot(b0_df) +
+(intercept_plot <- ggplot(b0_df) +
   geom_pointrange(aes(x = datasetID,
-                      y = median,
-                      ymin = LCI,
-                      ymax = UCI,
+                      y = 1-median,
+                      ymin = 1-LCI,
+                      ymax = 1-UCI,
                       color = type),
                   position=position_dodge(width=0.5),
                   size = 0.4) +
   scale_color_manual(values = c(modeled_col, observed_col),
                      labels = c("Modeled", "Empirical \n (maximum)")) +
-  labs(x = "Dataset", y = "Baseline dissimilarity (intercept) \n (median and 95% BCI)")
+  labs(x = "Dataset", y = "Baseline stability (1-intercept) \n (median and 95% BCI)"))
 # Effect plots ------------------------------------------------------------
 
 #option for a main figure of effects plots per model
