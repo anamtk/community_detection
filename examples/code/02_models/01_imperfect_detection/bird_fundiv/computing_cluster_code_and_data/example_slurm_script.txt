@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH --job-name=konza_MSAM
+#SBATCH --output=/scratch/user/birds/outputs/modelmsam.out                            # this is the file your output and errors go to
+#SBATCH --time=48:00:00                                                                 # 24 hours
+#SBATCH --chdir=/scratch/user/birds/inputs                                   # your work directory
+#SBATCH --mem=85000                                                                     # 45GB of memory
+#SBATCH --mail-type=FAIL
+#SBATCH --cpus-per-task=3
+
+# load modules for R and JAGS
+module load R/4.1.2
+module --ignore-cache load 'jags/4.3.0-cg2qbw6'
+
+# Run the application: precede the application command with 'srun'
+# This script is the script that has the jags wrapper for running JAGS
+srun Rscript MSAM_script.R
