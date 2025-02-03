@@ -1,0 +1,62 @@
+LATIN NAME,CODE,FAMILY,SUBFAMILY,Lifeform,LifeHistory,MacrohabitatMicrohabitat ,Diet,Comments
+Acrolophitus hirtipes,ACHI,Acrididae,Gomphocerinae,H,SU,"grassland, forbes",forbs,
+Acantherus piperatus,ACPI,Acrididae,Gomphocerinae,G,SU,"shrubland, grass/shrubs",grass; Muhlenbergia porteri,associated with both MUPO (food) and shrubs (substrate)
+Ageneotettix deorum,AGDE,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Amphitornus coloradus,AMCO,Acrididae,Gomphocerinae,G,SU,"grassland, tall grass ",grass ,
+Arphia conspersa,ARCO,Acrididae,Oedipodinae,T,SP,"grassland, soil",mixed grass/forb,
+Arphia pseudonietana,ARPS,Acrididae,Oedipodinae,T,SU,"grassland, soil",mixed grass/forb,
+Aulocara elliotti,AUEL,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Aulocara femoratum,AUFE,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Bootettix argentatus,BOAR,Acrididae,Gomphocerinae,TG,MV,"creostebush shrubland, Larrea",shrub; Larrea tridentata,monophagous on Larrea
+Boopedon nubilum,BONU,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Brachystola magna,BRMA,Romaleidae,Romaleinae,TG,SU,"grassland, grass/soil",forbs,
+Cibolacris parviceps,CIPA,Acrididae,Gomphocerinae,T,SP,"shrubland, gravelly soil",mixed grass/forb,
+Cordillacris crenulata,COCR,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Cordillacris occipitalis,COOC,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Conozoa texana,COTE,Acrididae,Gomphocerinae,T,SU,"shrubland, soil",mixed grass/forb,
+Dactylotum bicolor,DABI,Acrididae,Melanoplinae,TG,SU,"grassland, forbs/soil",forbs,
+Encoptolophus costalis,ENCO,Acrididae,Oedipodinae,T,SU,"riparian or swales, bare damp soil",mixed grass/forb,restricted to ephemeral wetlands and swales
+Encoptolophus subgracilis,ENCO,Acrididae,Oedipodinae,T,SU,"riparian or swales, bare damp soil",mixed grass/forb,restricted to ephemeral wetlands and swales
+Eritettix simplex,ERSI,Acrididae,Gomphocerinae,G,SP,"grassland, dense grass",grass,
+Hadrotettix magnificus,HAMA,Acrididae,Oedipodinae,T,SU,"grassland, soil",mixed grass/forb,rare Blue Grama Site
+Hadrotettix trifasciatus,HATR,Acrididae,Oedipodinae,T,SU,"grassland, soil",mixed grass/forb,
+Heliaula rufa,HERU,Acrididae,Gomphocerinae,T,SU,"grassland, soil",mixed grass/forb,
+Hesperotettix viridis,HEVI,Acrididae,Melanoplinae,A,SU,"grassland, snakeweed",shrub; Gutierrezia sarothrae ,monophagous on Gutierrezia
+Hippopedon capito,HICA,Acrididae,Oedipodinae,T,SU,"shrubland, soil",mixed grass/forb,
+Leprus wheeleri,LEWH,Acrididae,Oedipodinae,T,SU,"grassland/shrubland, rocky soil",mixed grass/forb,
+Melanoplus aridus,MEAR,Acrididae,Melanoplinae,A,SU,"grassland/shrubland, subshrubs",forbs,
+Melanoplus arizonae,MEAR2,Acrididae,Melanoplinae,TG,SU,"grassland, grass/soil",forbs,
+Melanoplus bowditchi,MEBO,Acrididae,Melanoplinae,A,SU,"grassland, composite shrubs",forbs,
+Melanoplus flavidus,MEFL,Acrididae,Melanoplinae,TG,MV,"grassland, sandy soils",forbs,
+Melanoplus gladstoni,MEGL,Acrididae,Melanoplinae,TG,SU,"grassland, grass/soil",forbs,
+Melanoplus lakinus,MELA,Acrididae,Melanoplinae,H,SU,"grassland, forbs/soil",forbs,
+Melanoplus occidentalis,MEOC,Acrididae,Melanoplinae,TG,SU,"grassland, grass/soil",forbs,
+Metator pardalinus,MEPA,Acrididae,Oedipodinae,T,SU,"grassland, soil",mixed grass/forb,
+Mestobregma plattei,MEPL,Acrididae,Oedipodinae,T,SU,"pinyon/juniper, soil",mixed grass/forb,
+Melanopluls regalis,MERE,Acrididae,Melanoplinae,TG,SU,"grassland, grass/soil",forbs,
+Melanoplus sanguinipes,MESA,Acrididae,Melanoplinae,H,MV,"grassland, grass/forbs/soil",forbs,
+Melanoplus splendidus,MESP,Acrididae,Melanoplinae,H,SU,"pinyon-juniper woodland, juniper",shrub; Juniperus monosperma,"lives in JUMO, may feed on forbs at night"
+Mermeria texana,METE,Acrididae,Gomphocerinae,G,SU,"pinyon-juniper, grassland, tall grass ",grass,
+Mestobregma terricolor,METE2,Acrididae,Oedipodinae,T,SU,"grassland, soil",mixed grass/forb,
+Melanoplus thomasi,METH,Acrididae,Melanoplinae,H,SU,"grassland/shrubland, forbs, shrubs",forbs,
+Opeia obscura,OPOB,Acrididae,Gomphocerinae,G,SU,"grassland, dense grass",grass,
+Paropomala pallida,PAPA,Acrididae,Gomphocerinae,G,SU,"grassland, black grama",grass,strongly associated with BOER at the Sevilleta
+Paropomala wyomingensis,PAWY,Acrididae,Gomphocerinae,G,SU,"grassland, Sprolobolus spp.",grass,strongly associated with Sporobolus spp. at the Sevilleta
+Phoetaliotes nebrascensis,PHNE,Acrididae,Melanoplinae,GH,SU,"grassland, grass",grass,
+Phlibostroma quadrimaculatum,PHQU,Acrididae,Gomphocerinae,TG,SU,"grassland, grass/soil",grass,
+Phrynotettix robustus,PHRO,Romaleidae,Romaleinae,T,SP,"shrubland, rocky soil",forbs,
+Psoloessa delicatula,PSDE,Acrididae,Gomphocerinae,TG,SP,"grassland, grass/soil",grass,
+Psoloessa texana,PSTE,Acrididae,Gomphocerinae,TG,SP,"grassland, grass/soil",mixed grass/forb,
+Schistocerca nitens,SCNI,Acrididae,Cyrtacanthacridinae,A,MV,"grassland/shrubland,large shrubs",general, 
+Spharagemon equale,SPEQ,Acrididae,Oedipodinae,T,SU,"grassland, soil",mixed grass/forb,rare Blue Grama Site
+Syrbula montezuma,SYMO,Acrididae,Gomphocerinae,G,SU,"grassland, tall grass ",grass,
+Trachyrhachis aspera,TRAS,Acrididae,Oedipodinae,T,SU,"pinyon-juniper woodland, soil",mixed grass/forb,
+Trachyrhachis kiowa,TRKI,Acrididae,Oedipodinae,T,SU,"grassland, soil",grass,
+Trimerotropis californicus,TRCA,Acrididae,Oedipodinae,T,SU,"grassland/shrubland, rocky soil",mixed grass/forb,
+Tropidolophus formosus,TRFO,Acrididae,Oedipodinae,H,SU,"grassland, Spharalcea",Spharalcea foliage,
+Trimerotropis fraturcula,TRFR,Acrididae,Oedipodinae,T,SU,"pinyon-juniper woodland, rocky soil",mixed grass/forb,
+Trimerotropis melanoptera,TRME,Acrididae,Oedipodinae,T,SU,"grassland, soil",grass,
+Trimerotropis pallidipennis,TRPA,Acrididae,Oedipodinae,T,MV,"grassland/shrubland, bare soil",mixed grass/forb,
+Trimerotropis pistrinaria,TRPI,Acrididae,Oedipodinae,T,SU,"grassland/shrubland, rocky soil",grass,
+Xanthippus corallipes,XACO,Acrididae,Oedipodinae,T,SP,"grassland, soil",grass,
+Xanthippus montanus,XAMO,Acrididae,Oedipodinae,T,SP,"grassland, sandy soils",mixed grass/forb,"Black Butte area, sandy soil, not at LTER core sites"
