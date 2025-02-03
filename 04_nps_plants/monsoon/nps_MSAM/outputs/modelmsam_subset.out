@@ -1,50 +1,0 @@
-[1] "2023-11-08 11:03:39 MST"
-
-Attaching package: ‘coda’
-
-The following object is masked from ‘package:jagsUI’:
-
-    traceplot
-
-
-Attaching package: ‘dplyr’
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union
-
-
-Attaching package: ‘tidyr’
-
-The following object is masked from ‘package:magrittr’:
-
-    extract
-
-
-Processing function input....... 
-
-Done. 
- 
-Beginning parallel processing using 3 cores. Console output will be suppressed.
-
-Parallel processing completed.
-
-Calculating statistics....... 
-Warning in doTryCatch(return(expr), name, parentenv, handler) :
-  At least one Rhat value could not be calculated.
-
-Done. 
-[1] "2023-11-08 11:05:22 MST"
-                                                                                Preparing plots for psi.mean.  6% complete.                                                                                Preparing plots for sig.lpsi.  12% complete.                                                                                Preparing plots for mu.a0.  19% complete.                                                                                Preparing plots for sig.a0.  25% complete.                                                                                Preparing plots for a1.Cover.  31% complete.                                                                                Preparing plots for deviance.  38% complete.                                                                                Preparing plots for a2.LifeGroup.  44% complete.                                                                                Preparing plots for a2.LifeGroup.  50% complete.                                                                                Preparing plots for a2.LifeGroup.  56% complete.                                                                                Preparing plots for a2.LifeGroup.  62% complete.                                                                                Preparing plots for a2.LifeGroup.  69% complete.                                                                                Preparing plots for a2.LifeGroup.  75% complete.                                                                                Preparing plots for a2.LifeGroup.  81% complete.                                                                                Preparing plots for a2.LifeGroup.  88% complete.                                                                                Preparing plots for a2.LifeGroup.  94% complete.                                                                                Preparing plots for a2.LifeGroup.  100% complesh: /usr/bin/firefox: No such file or directory
-te.                                                                                # A tibble: 1 × 3
-  iterations_90 iterations_95   max
-          <dbl>         <dbl> <dbl>
-1        35527.        52233. 59507
-# A tibble: 1 × 1
-  `max(iterations, na.rm = T)`
-                         <dbl>
-1                          698
