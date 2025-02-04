@@ -197,6 +197,11 @@ samples <- readRDS(here('examples',
 
 # Prep modeled N dataset --------------------------------------------------
 
+#n for some species is abnormally large,
+#but how to get it down to a reasonable size - 
+#maybe sample from the values of that species 
+#across other years???
+
 ndf <- as.data.frame.table(samples$N) %>%
   mutate(Iteration = as.numeric(as.factor(Var1)),
          SpecID = as.numeric(as.factor(Var2)),
@@ -204,6 +209,30 @@ ndf <- as.data.frame.table(samples$N) %>%
          yrID = as.numeric(as.factor(Var4))) %>%
   rename(N = Freq) %>%
   dplyr::select(Iteration, SpecID, TransID, yrID, N)
+
+
+# Set extremely high values to be more realistic --------------------------
+
+#get the max raw by species plus sd
+#when non-observed removed
+#set values > than that in model to:
+## rnorm(max+sd, sd)
+bird_stats <- birds %>%
+  filter(NOBS > 0) %>%
+  group_by(SpecID) %>%
+  summarise(max = max(NOBS, na.rm = T),
+            var = var(NOBS, na.rm = T),
+            sd = sd(NOBS, na.rm = T)) %>%
+  mutate(sd = case_when(is.na(sd) ~ max,
+                        TRUE ~ sd),
+         var = case_when(is.na(var) ~ max,
+                         TRUE ~ var))
+
+ndf2 <- ndf %>%
+  left_join(bird_stats, by = "SpecID") %>%
+  mutate(N = case_when(N > (max+var) ~ rnorm(1, (max+sd), sd),
+                       TRUE ~ N)
+         )
 
 # Site x species matrix ---------------------------------------------------
 

@@ -27,7 +27,7 @@ for(i in package.list){library(i, character.only = T)}
 
 #load the formatted data for the JAGS model
 #data <- readRDS("/scratch/sml665/nps_plants/inputs/nps_msam_multisite.RDS")
-data <- readRDS("/scratch/atm234/nps_plants/inputs/nps_msam_multisite_subset.RDS")
+data <- readRDS("/scratch/atm234/nps_plants/inputs/nps_msom_multisite_subset.RDS")
 
 # Compile data ------------------------------------------------------------
 
@@ -103,7 +103,7 @@ Sys.time()
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod$samples,
-         dir = "/scratch/atm234/nps_plants/outputs/mcmcplots/MSAM_RE")
+         dir = "/scratch/atm234/nps_plants/outputs/mcmcplots/MSOM_RE")
 
 # Get RHat per parameter ------------------------------------------------
 
@@ -111,7 +111,7 @@ mcmcplot(mod$samples,
 # to plot per-parameter convergence
 Rhat <- mod$Rhat
 
-saveRDS(Rhat, "/scratch/atm234/nps_plants/outputs/nps_MSAM_model_RE_Rhat.RDS")
+saveRDS(Rhat, "/scratch/atm234/nps_plants/outputs/nps_MSOM_model_RE_Rhat.RDS")
 
 
 # Get Raftery diag --------------------------------------------------------

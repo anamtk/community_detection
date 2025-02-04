@@ -2,7 +2,8 @@
 # Load packages -----------------------------------------------------------
 
 
-package.list <- c("here", "tidyverse", 'ratdat')
+package.list <- c("here", "tidyverse", 'ratdat',
+                  'patchwork')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -15,40 +16,45 @@ theme_set(theme_bw())
 
 # Load data ---------------------------------------------------------------
 
-fish <- read.csv(here('01_sbc_fish',
-                      'data_outputs',
-                      'MSAM',
-                      'all_fish_data.csv'))
+#get link to this dataset from sbc lter
+fish <- read.csv(here('examples',
+                      'data_raw',
+                      'other_datasets',
+                      'sbc_fish_data.csv'))
 
-birds <- read.csv(here('02_konza_birds',
-                            'data_outputs',
-                            'MSAM',
-                            'knz_tidy_data_for_model.csv'))
+birds <- read.csv(here('examples',
+                       'data_output',
+                       'bird_fundiv',
+                       'tidy_data',
+                       'bird_msam_tidy_data.csv'))
 
-hoppers <- read.csv(here('03_sev_grasshoppers',
-                         'data_outputs',
-                         'MSAM',
-                         'sev_tidy_data_for_model.csv'))
+hoppers <- read.csv(here('examples',
+                         'data_output',
+                         'grasshopper_stability',
+                         'tidy_data',
+                         'grasshopper_msam_tidy_data.csv'))
 
-plants <- read.csv(here('04_nps_plants',
-                        "data_outputs",
-                        "MSAM",
-                        'pfnp_tidy_data_for_model.csv'))
-
-# ebirdco <- read_delim(here('other_datasets',
-#                          'ebd_co_filtered.txt'))
+plants <- read.csv(here('examples',
+                        'data_output',
+                        'plant_turnover',
+                        'tidy_data',
+                        'plant_msom_tidy_data.csv'))
 
 rodents <- ratdat::surveys
 
 #from Phoenix LTER:
 #https://globalfutures.asu.edu/caplter/
 #https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-cap.627.9
-herps <- read.csv(here('other_datasets',
+herps <- read.csv(here('examples',
+                       'data_raw',
+                       'other_datasets',
                        '627_herp_survey_observations.csv'))
 
 #ants
 #https://esajournals.onlinelibrary.wiley.com/doi/full/10.1002/ecy.1682#support-information-section
-ants <- read.csv(here('other_datasets',
+ants <- read.csv(here('examples',
+                      'data_raw',
+                      'other_datasets',
                       'Gibb et al. Ecology - observations data.csv'))
 # Summarise rarity --------------------------------------------------------
 
@@ -56,103 +62,6 @@ ants <- read.csv(here('other_datasets',
 #low abundance overall 
 #low frequency of occurrence across space/time
 
-# Abundances --------------------------------------------------------------
-
-abund_fun <- function(df, speciesID, countID, title){
-  df2 <- df %>%
-    group_by({{speciesID}}) %>%
-    summarise(mean = mean({{countID}}),
-              sd = sd({{countID}}),
-              total = n(),
-              se = sd/sqrt(total)) %>%
-    ungroup() %>%
-    mutate(dataset = title) %>%
-    dplyr::select(-{{speciesID}})
-  
-  plot <- ggplot(df2) +
-    geom_histogram(aes(x = mean)) +
-    labs(x = "Mean abundance",
-         y = "Number of species",
-         title = title) 
-  
-  return(df2)
-}
-
-fish_abund <- abund_fun(df = fish,
-          speciesID = SP_CODE,
-          countID = COUNT,
-          title = "fish")
-
-bird_abund <- abund_fun(df = birds,
-          speciesID = SpecID,
-          countID = NOBS,
-          title = "birds")
-
-hopper_abund <- abund_fun(df = hoppers,
-          speciesID = speciesID,
-          countID = CNT,
-          title = "grasshoppers")
-
-rodent_abund <- rodents %>%
-  group_by(month, day, year, plot_id, species_id) %>%
-  summarise(count = n()) %>%
-  ungroup()%>%
-  mutate(species_id = as.factor(species_id)) %>%
-  group_by(month, day, year, plot_id) %>%
-  complete(species_id) %>%
-  replace_na(list(count = 0)) %>%
-  ungroup() %>%
-  group_by(species_id) %>%
-  summarise(mean = mean(count),
-            sd = sd(count),
-            total = n(),
-            se = sd/sqrt(total)) %>%
-  ungroup() %>%
-  mutate(dataset = 'rodents') %>%
-  dplyr::select(-species_id)
-
-herps_abund <- herps %>%
-  filter(!is.na(common_name)) %>%
-  group_by(reach, transect, location, 
-                observation_date,common_name) %>%
-  summarise(count = n()) %>%
-  ungroup() %>%
-  mutate(common_name = as.factor(common_name)) %>%
-  group_by(reach, transect, location, 
-           observation_date)%>%
-  complete(common_name) %>%
-  ungroup()  %>%
-  replace_na(list(count = 0)) %>%
-  group_by(common_name) %>%
-  summarise(mean = mean(count),
-            sd = sd(count),
-            total = n(),
-            se = sd/sqrt(total)) %>%
-  ungroup() %>%
-  mutate(dataset = 'herps') %>%
-  dplyr::select(-common_name)
-
-abund_df <- bind_rows(fish_abund, bird_abund, 
-                      hopper_abund, rodent_abund,
-                      herps_abund)
-
-ggplot(abund_df) + 
-  geom_histogram(aes(x = mean, fill = dataset),
-                 position = position_dodge()) +
-  scale_x_sqrt() +
-  facet_grid(dataset~.) +
-  labs(x = "Mean abundance",
-       y = "Number of species") +
-  theme(legend.position = "none",
-        strip.background = element_rect(fill = "white"))
-
-ggplot(abund_df) + 
-  geom_density(aes(x = mean, fill = dataset), alpha = 0.3) +
-  scale_x_sqrt() +
-  labs(x = "Mean abundance",
-       y = "Number of species") +
-  theme(legend.position = "none",
-        strip.background = element_rect(fill = "white"))
 # Frequency through space time --------------------------------------------
 
 freq_fun <- function(df, yearID, siteID, repID, countID, speciesID, title){
@@ -262,12 +171,12 @@ freq_df <- bind_rows(fish_freq, hopper_freq,
                      bird_freq, plant_freq,
                      herp_freq, rodent_freq)
 
-ggplot(freq_df) + 
+b <- ggplot(freq_df) + 
   geom_histogram(aes(x = freq, fill = dataset),
                  position = position_dodge()) +
   scale_x_sqrt() +
-  facet_grid(dataset~.) +
-  labs(x = "Frequency of observation",
+  facet_grid(dataset~., scales = "free_y") +
+  labs(x = "Frequency of observation \n(proportion of surveys)",
        y = "Number of species") +
   theme(legend.position = 'none',
         strip.background = element_rect(fill = "white"))
@@ -275,7 +184,7 @@ ggplot(freq_df) +
 ggplot(freq_df) + 
   geom_density(aes(x = freq, fill = dataset), alpha = 0.3) +
   scale_x_sqrt() +
-  labs(x = "Frequency of observation",
+  labs(x = "Frequency of observation \n(proportion of surveys)",
        y = "Number of species") +
   theme(legend.position = 'none',
         strip.background = element_rect(fill = "white"))
@@ -356,8 +265,14 @@ all_counts <- bind_rows(fish_all, hop_all,
                         bird_all, rodent_all,
                         herps_all, ant_all)
 
-ggplot(all_counts,aes(x = COUNT, fill = dataset)) + 
+a <- ggplot(all_counts,aes(x = COUNT, fill = dataset)) + 
   geom_histogram(alpha = 0.5) +
-  scale_x_log10() +
-  facet_wrap(~dataset, scales = "free")
-  
+  scale_y_sqrt() +
+  facet_wrap(~dataset, scales = "free") +
+  labs(x = "Number of individuals",
+       y = "Number of surveys") +
+  theme(legend.position = "none",
+        strip.background = element_rect(fill = "white"))
+
+
+a +b
