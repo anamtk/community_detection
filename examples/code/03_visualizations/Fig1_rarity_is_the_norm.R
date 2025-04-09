@@ -12,7 +12,19 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-theme_set(theme_bw())
+
+theme_set(theme_classic())
+theme_update(plot.title.position = "plot",
+             panel.grid = element_blank(),
+             axis.title = element_text(size = 11),
+             axis.text = element_text(size = 10),
+             plot.title = element_text(size = 12),
+             legend.text = element_text(size = 9),
+             legend.key.size = unit(0.25, "cm"),
+             legend.key = element_blank(), 
+             legend.title=element_blank(),
+             legend.background = element_blank())
+
 
 # Load data ---------------------------------------------------------------
 
@@ -171,7 +183,7 @@ freq_df <- bind_rows(fish_freq, hopper_freq,
                      bird_freq, plant_freq,
                      herp_freq, rodent_freq)
 
-b <- ggplot(freq_df) + 
+(b <- ggplot(freq_df) + 
   geom_histogram(aes(x = freq, fill = dataset),
                  position = position_dodge()) +
   scale_x_sqrt() +
@@ -179,10 +191,21 @@ b <- ggplot(freq_df) +
   labs(x = "Frequency of observation \n(proportion of surveys)",
        y = "Number of species") +
   theme(legend.position = 'none',
-        strip.background = element_rect(fill = "white"))
+        strip.background = element_rect(fill = "white")))
 
+#all separate?
 ggplot(freq_df) + 
   geom_density(aes(x = freq, fill = dataset), alpha = 0.3) +
+  scale_x_sqrt() +
+  scale_fill_viridis_d() +
+  labs(x = "Frequency of observation \n(proportion of surveys)",
+       y = "Number of species") +
+  theme(legend.position = 'none',
+        strip.background = element_rect(fill = "white"))
+
+#all together??
+ggplot(freq_df) + 
+  geom_density(aes(x = freq), alpha = 0.3) +
   scale_x_sqrt() +
   labs(x = "Frequency of observation \n(proportion of surveys)",
        y = "Number of species") +
@@ -241,6 +264,7 @@ ants_fun <- function(Source){
           c("Genus", "Species"),
           sep = " ",
           remove = F) %>%
+    filter(Measurement.Type == "Abundance") %>%
     mutate(Abundance = as.numeric(Abundance)) %>%
     filter(Source.ID == {{Source}}) %>%
     mutate(Species2 = as.factor(Species2)) %>%
@@ -276,3 +300,47 @@ a <- ggplot(all_counts,aes(x = COUNT, fill = dataset)) +
 
 
 a +b
+
+
+# Another way -------------------------------------------------------------
+
+#order: birds, fish, grasshoppers, herps, plants, rodents
+(c <- ggplot(freq_df) + 
+   geom_histogram(aes(x = freq),
+                  position = position_dodge()) +
+   scale_x_sqrt() +
+   facet_grid(dataset~., scales = "free_y") +
+   labs(x = "Frequency of observation \n(proportion of surveys)",
+        y = "Number of species") +
+   theme(legend.position = 'none',
+         strip.background = element_rect(fill = "white"),
+         strip.text = element_blank()))
+
+#order: ants, birds, fish, grasshoppers, herps, rodents
+(d <- ggplot(all_counts,aes(x = COUNT)) + 
+  geom_histogram() +
+  scale_y_sqrt() +
+  facet_wrap(~dataset, scales = "free") +
+  labs(x = "Number of individuals\n(per species)",
+       y = "Number of surveys") +
+  theme(legend.position = "none",
+        strip.background = element_rect(fill = "white"),
+        strip.text = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)))
+
+d + c + 
+  plot_layout(widths = c(2,1)) +
+  plot_annotation(tag_levels = "a",
+                  tag_suffix = ")")
+
+ggsave(here('examples',
+            'pictures',
+            'original_R',
+            'Fig1_rarity_is_the_norm.pdf'),
+       height = 5, 
+       width = 10,
+       units = "in")
+
+
+
+

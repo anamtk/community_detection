@@ -203,7 +203,16 @@ check_missing <- occ2 %>%
   group_by(quadnum) %>%
   tally()
 
+plant_id <- occ2 %>%
+  group_by(CurrentSpecies) %>%
+  filter(presence > 0) %>%
+  tally()
 
+write.csv(plant_id, here('examples',
+                         'data_output',
+                         'plant_turnover',
+                         'tidy_data',
+                         'plant_species_frequency.csv'))
 
 # Prep data structure for JAGS --------------------------------------------
 

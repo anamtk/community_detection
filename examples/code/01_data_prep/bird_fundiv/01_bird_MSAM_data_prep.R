@@ -154,6 +154,7 @@ bird_id2 <- birds2 %>%
 #78 species
 
 
+
 # Manupulate data to abundance structure ----------------------------------
 
 #Data are individuals seen at different distances from a line transect
@@ -215,6 +216,16 @@ birds4 %>%
   tally()
 #transect 18 started in 1982
 
+bird_list <- birds4 %>%
+  filter(NOBS > 0) %>%
+  group_by(COMMONNAME) %>%
+  tally()
+
+write.csv(bird_list, here('examples',
+                         'data_output',
+                         'bird_fundiv',
+                         'tidy_data',
+                         'bird_species_list.csv'))
 
 # Covariates for detection ------------------------------------------------
 

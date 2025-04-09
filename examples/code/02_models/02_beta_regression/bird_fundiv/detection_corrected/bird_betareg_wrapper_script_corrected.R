@@ -157,7 +157,9 @@ params <- c('b',
             'wA',
             'wB',
             #'wC',
-            'var.process')
+            'var.process',
+            'cumm.tempwt',
+            'cumm.pptwt')
 
 
 

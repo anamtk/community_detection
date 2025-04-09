@@ -1,0 +1,312 @@
+---
+title: ""
+format:
+  docx:
+    reference-doc: custom-reference-doc.docx
+editor: visual
+bibliography: references.bib
+csl: global-change-biology.csl
+---
+
+**Supporting Information for:** If you're rare, should I care? How imperfect detection changes relationships between biodiversity and global change drivers
+
+**Author List:** Ana Miller-ter Kuile^1,2^, An Bui^3^, Austen Apigo^4^, Shelby Lamm^1^, Megan Swan^5^, Jamie S. Sanderlin^2^, Kiona Ogle^1^
+
+**Author Emails:**
+
+[ana.miller-ter-kuile\@nau.edu](mailto:ana.miller-ter-kuile@nau.edu) (ORCID: 0000-0003-2599-5158)
+
+[an_bui\@ucsb.edu](mailto:an_bui@ucsb.edu) (ORCID: 0000-0002-9548-7776)
+
+[aaapigo\@uci.edu](mailto:aaapigo@uci.edu) (ORCID: 0000-0002-2525-0394)
+
+[shelby.lamm\@nau.edu](mailto:shelby.lamm@nau.edu) (ORCID: 0000-0002-9710-9023)
+
+[megan_swan\@nps.gov](mailto:megan_swan@nps.gov) (ORCID: 0009-0000-3467-022X)
+
+[jamie.l.sanderlin\@usda.gov](mailto:jamie.l.sanderlin@usda.gov) (ORCID: 0000-0001-8651-9804)
+
+[kiona.ogle\@nau.edu](mailto:kiona.ogle@nau.edu) (ORCID: 0000-0002-0652-8397)
+
+**Author Affiliations:**
+
+1 Northern Arizona University, School of Informatics, Computing and Cyber Systems, Flagstaff, Arizona, USA
+
+2 USDA Forest Service Rocky Mountain Research Station, Flagstaff, Arizona, USA
+
+3 University of California, Santa Barbara, Department of Ecology, Evolution, and Marine Biology, Santa Barbara, California, USA
+
+4 University of California, Irvine, Department of Ecology and Evolutionary Biology, Irvine, California, USA
+
+5 National Park Service Southern Colorado Plateau Inventory and Monitoring Network, Flagstaff, Arizona, USA
+
+**Data availability:** Code for data preparation, analysis, and visualization can be found on Zenodo (https://doi.org/10.5281/zenodo.13737499).
+
+\newpage
+
+```{r}
+#| echo: false
+#| include: false
+#| warning: false
+#| message: false
+
+
+package.list <- c("here", "tidyverse")
+
+## Installing them if they aren't already on the computer
+new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+## And loading them
+for(i in package.list){library(i, character.only = T)}
+```
+
+**1 \| Material and methods**
+
+**1.1 \| Overview of modeling process**
+
+Our modeling process quantifies biodiversity metrics and the effects of environmental covariates on biodiversity following a two-part modeling process (SI Figure 5). First, we modeled latent ("true") abundance or occupancy for all species in a community using either a multi-species abundance ("MSAM") or occupancy ("MSOM") model [@dorazio2006b; @iknayan2014a]. We extended the MSAM and MSOM approach by simultaneously computing derived values for indices of biodiversity (including alpha and beta diversity and taxonomic and functional diversity) Then, we used the posterior mean and standard deviation estimates of the biodiversity indices in a subsequent beta-regression model (e.g., [@dasilva2018] to examine the concurrent and lagged effects of environmental variables on biodiversity [@ogle2015]. We used three case studies that represent a diversity of taxa and environments, and for which we could apply our modeling approach (SI Table 1). We applied our modeling framework to real data (not simulated communities) because previous studies demonstrate that accounting for imperfect detection better represents biodiversity estimates for both real and simulated datasets [@tingley2020].
+
+**1.2 \| Part 1: MSAM and MSOM: models that account for imperfect detection**
+
+To account for imperfect detection, we developed a Bayesian multi-species model, either a MSAM or MSOM, depending on data type (SI Figure 5A). This type of model requires that 1) at least some sites are surveyed more than once in a year, enabling estimation of detection probabilities for each species, and 2) there is "closure" within a sampling period (i.e. no change in the community within the sampling period). The models include two parts: 1) a biological process model that estimates latent occupancy or abundance and 2) an observation model where the likelihood of observed data is modeled in relation to detection probabilities and the latent biological process. The biological process model and observation model are linked via the relationship between detection and abundance or presence. We assumed that most species in the community were detected at least once throughout the time series, so we did not augment with unknown species [@devarajan2020; @royle2009; @tingley2020]; we verified this assumption using rarefaction (\>95% coverage for all datasets; SI Figure 1).
+
+For both model structures (MSAM and MSOM), the biological process is similar. Key quantities depend on species *s*, site *t*, year *y*, and replicate survey *r*. For MSAMs, observed abundance data, *y~s,t,y,r~*, is assumed to follow a binomial likelihood:
+
+$$
+y_{s,t,y,r} \sim Binomial(p_{s,t,y,r}, N_{s,t,y})
+$$ {#eq-1}
+
+where *p~s,t,y,r~* is a species-level detection probability that can vary by any combination of site, year, and replicate. *N~s,t,y~* is the latent ("true") abundance, which is modeled as a stochastic quantity arising from a Poisson distribution with rate parameter, 𝜆~*s,t,y*~ (expected latent abundance), which also varies by species, site, and year:
+
+$$
+N_{s,t,y} \sim Poisson(\lambda_{s,t,y})
+$$ {#eq-2}
+
+For MSOMs, observed presence-absence data, *y~s,t,y,r~*, are based on a Bernoulli likelihood:
+
+$$
+y_{s,t,y,r} \sim Bernoulli(p_{s,t,y,r} \times z_{s,t,y})
+$$ {#eq-3}
+
+where *p~s,t,y,r~* is the species-level detection probability. Here, *z~s,t,y~* is latent ("true") presence (present: *z~s,t,y~* = 1; absent: *z~s,t,y~* = 0), which is modeled as a stochastic quantity that depends on occupancy probability, 𝜓~*s,t,y*~:
+
+$$
+z_{s,t,y} \sim Bernoulli(\psi_{s,t,y})
+$$ {#eq-4}
+
+We used a linear model to describe both 𝜆~*s,t,y*~ and 𝜓~*s,t,y*~, which includes a species-level fixed effect (intercept), and random effects for site within species and for year within species. An appropriate link function is used such that 𝜆~*s,t,y*~ is modeled on the log scale and 𝜓~*s,t,y*~ on the logit scale. For example, the model for 𝜆~*s,t,y*~ is given by:
+
+$$
+log(\lambda_{s,t,y}) = \beta_s + \epsilon_{s,t} + \gamma_{s,y}
+$$ {#eq-5}
+
+We specified a model of the same form for logit(𝜓~*s,t,y*~). Further, we assigned the random effects of site within species, *𝜀~s,t~*, and year within species, *γ~s,y~*, zero-centered normal priors with associated standard deviation terms that describe variability among sites or among years within each species. We implemented post-sweeping of the random effects to obtain identifiable estimates of the random effects and the species-level intercept, $\beta_s$ [@ogle2020]. We modeled the species-level intercepts, $\beta_s$, hierarchically:
+
+$$
+\beta_s \sim Normal(\mu_{\beta},\sigma_{\beta})
+$$ {#eq-6}
+
+where 𝜇~𝛽~ represents the community-level mean log-scale expected abundance or logit-scale expected occupancy, and the standard deviation, 𝜎~𝛽~, describes variability among species within the community.
+
+We modeled detection probabilities, *p~s,t,y,r~*, similarly for both MSAMs and MSOMs, with some minor differences among the different community datasets, related to whether or not continuous or categorical covariates are included in the model. For datasets where covariates were available, we specified a linear model for *p~s,t,y,r~* on the logit-scale:
+
+$$
+logit(p_{s,t,y,r}) = \alpha_{0,s} + \sum_{j=1}^J\alpha_jX_{j,s,t,y,r}
+$$ {#eq-7}
+
+where 𝛼~*0,s*~ is a species-level intercept and the coefficients *α*~1*,*~ *α*~2*,*~ *\...,α~J~* denote the effect of each covariate, *X~j,s,t,y,r~*, on the detection probability, for *j =* 1, 2, ..., *J* covariates (*J* is typically 1-3). The covariates are often linked to some combination of species identity *s*, site *t*, year *y*, and survey replicate *r*. We assigned a hierarchical prior to the species-level intercepts similar to Equation (6):
+
+$$
+\alpha_{0,s} \sim Normal(\mu_{\alpha}, \sigma_{alpha})
+$$ {#eq-8}
+
+Finally, to complete the specification of the Bayesian model, we assigned all community-level parameters relatively non-informative priors; e.g., vague normal priors for $\mu_{\beta}$ and $\mu_{\alpha}$ and wide uniform priors for $\sigma_{\beta}$ and $\sigma_{\alpha}$. We assigned the covariate effects, *α*~1*,*~ *α*~2*,*~ *\...,α~J~* relatively non-informative normal priors. When covariates were lacking for the detection probability model for a given dataset (e.g., for the grasshopper case study, see Section 1.5.3), we reduced equation to logit(*p~s,t,y,r~*) = *α*~0*,s*~, with the prior for *α*~0*,s*~ given by equation .
+
+**1.3 \| Computing indices of community stability**
+
+After accounting for imperfect detection, we calculated relevant indices of biodiversity (SI Figure 5A). We computed different biodiversity metrics for each dataset to highlight the general patterns that emerge across datasets and metrics. For metrics describing beta diversity (or stability), we focused comparison of community stability on change from one year to the next (i.e., year *y* to *y*+1). In the case where data were not collected on an annual basis (plant case study, described in Section 2.5.4), we considered the change over the reported sampling period, from *y* to *y +* Δ*y*, where Δ*y* was often \> 1 year. For the bird example, we calculated both an abundance and occurrence-based metric of functional richness (functional richness and Rao's quadratic entropy). For the plant example, we calculated species gains and losses, which are derivations of species turnover [@hallett2016]. For the grasshopper dataset, we calculated Bray-Curtis dissimilarity for a site from time *y* to *y+1* [@oksanen2020]. For all of these metrics, indices are constrained between 0 and 1, with values closer to 1 corresponding to greater alpha diversity or greater degrees of change through time in beta diversity (smaller values indicate more stable communities).
+
+Both functional richness and Rao's quadratic entropy describe functional richness -- functional richness considers presence-absence data; Rao's quadratic entropy uses abundance data. Species turnover uses the latent presence values, *z~s,t,y~*, and is the proportion of species present only in *y (B)* or *y+1 (C)* relative to all species ever present in either community (*B, C,* and shared species, *A*):
+
+$$
+turnover = \frac{B + C}{A + B+ C}
+$$ {#eq-9}
+
+Gains and losses are computed similarly by including either *B* (losses) or *C* (gains) in the denominator.
+
+Bray-Curtis dissimilarity uses the latent abundance values, N~s,t,y~, and describes the proportion of individuals (abundance) unique to *y (B)* and *y+1* *(C)* relative to all individuals ever present in the community (*B*, *C*, and shared individuals, *A*):
+
+$$
+BC = \frac{B+C}{2A+B+C}
+$$ {#eq-10}
+
+Based on the posterior samples (see Section 2.2) for *z~s,t,y~* or *N~s,t,y~*, we calculated posterior means and standard deviations for the biodiversity estimates, for each site and year within each case study, based on 500-4000 independent MCMC samples, depending on the size of the case study dataset. We used the posterior mean, $\bar{d}_{t,y}$~*t,y*~, and standard deviation, $\hat{\sigma}_{t,y}$~*t,y*~, values of the biodiversity indices for each site *t* and year *y* in subsequent regression models to evaluate the environmental drivers of biodiversity, considering each site as a "community".
+
+**1.4 \| Part 2: Evaluating environmental influences on biodiversity**
+
+We used modeled estimates of biodiversity that account for imperfect detection in a regression model that included abiotic and biotic covariates (Figure 5B). We implemented a Bayesian beta-regression with a stochastic antecedent modeling structure [@ogle2015] to determine whether biodiversity exhibits a relatively instantaneous or lagged response to the potential covariates. These lagged responses can be set at a variety of timescales (e.g., days, weeks, seasons, years) depending on the biology of the organisms in a community. In the regression model, we treated the mean biodiversity index, $\bar{d}_{t,y}$, as the response variable and accounted for uncertainty via its posterior standard deviation, $\hat{\sigma}_{t,y}$; again, both of which were derived from the aforementioned MSAMs and MSOMs with imperfect detection). Given that $\bar{d}_{t,y}$ is constrained to the \[0,1\] interval, we modeled $\bar{d}_{t,y}$ as arising from a beta distribution such that for site *t* and year *y*:
+
+$$
+\bar{d}_{t,y} \sim Beta(\alpha_{t,y},\beta_{t,y})
+$$ {#eq-11}
+
+Note that for simplicity of notation, we use $\alpha$ and $\beta$ to denote the beta distribution parameters, not to be confused with the $\alpha$ and $\beta$ terms in equations (7)-(8) and (5)-(6), respectively.
+
+Following other beta-regression approaches [@ferrari2004; @irvine2016], we define the site- and year-specific beta distribution parameters as:
+
+$$
+\alpha_{t,y} = \delta_{t,y}\times\phi_{t,y} 
+$$ 
+$$
+\beta_{t,y} = (1 - \delta_{t,y})\times\phi_{t,y}
+$$ {#eq-12}
+
+Where $\delta_{t,y}$ is the mean or expected value of the stability index, $\bar{d}_{t,y}$, and $\phi_{t,y}$ is a precision-type term such that for a given value of $\delta_{t,y}$, a larger value of $\phi_{t,y}$ is associated with a smaller variance for $\bar{d}_{t,y}$, $Var(\bar{d}_{t,y})$ [@ferrari2004]. In particular, $\phi_{t,y}$ is defined as:
+
+$$
+\phi_{t,y} = \frac{\delta_{t,y}(1-\delta_{t,y})}{Var(\bar{d}_{t,y})}-1
+$$
+$$
+Var(\bar{d}_{t,y})=\hat{\sigma}^2_{t,y} + \sigma^2_P
+$$ {#eq-13}
+
+We decomposed the variance, $Var(\bar{d}_{t,y})$, into the known variance quantifying the uncertainty in each $\bar{d}_{t,y}$, $\hat{\sigma}^2_{t,y}$, plus an unknown process variance, $\sigma^2_P$, that describes additional variability in the biodiversity indices that is not explained by the environmental covariates. We specified a uniform prior for the process standard deviation, $\sigma^2_P$, with an upper limit that ensures that $\alpha_{t,y} > 0$ and $\beta_{t,y} > 0$.
+
+Finally, we modeled the mean or expected stability index, $\delta_{t,y}$, on the logit scale via a regression model of the general form:
+
+$$
+logit(\delta_{t,y}) = b_{0,t} + \sum_{j=1}^Jb_jZ_{j,t,y}
+$$ {#eq-14}
+
+Where the intercept, *b*~0~, is allowed to vary by a spatial factor (e.g., site *t*) to include a spatial random effect [@ogle2020] which we gave a prior varying around an overall community-level intercept. The coefficients *b*~1~, *b*~2~, ..., *b~J~* denote the effect of each antecedent covariate, *Z~j,t,y~*, for *j* = 1, 2, ..., *J* covariates (*J* is typically 1-3) that are linked to diversity index value $\bar{d}_{t,y}$. Following Ogle et al. (2015), we modeled each time-varying antecedent covariate, *Z~j,t,y~*, as the weighted average of the current value (at the time concurrent with *y*) and past values preceding time *y*. The importance of each time lag *m* to this overall *Z~j,t,y~* is defined by an importance weight, *w~j,m~*. We assigned the vector of importance weights for a given covariate, *w~j,~* a relatively non-informative Dirichlet prior so that these weights sum to 1 across all lags. Thus, when a covariate effect (*b*) is significant, the weights for each time lag, *m*, for that covariate lend insight into the timescale(s) over which that covariate influences biodiversity.
+
+**1.5 \| Case studies representing a variety of taxa**
+
+Detailed information for all case studies can be found in Table 1. We removed any taxa that were not identified to species from community analyses. We summarized environmental variables for each case study at either a seasonal or yearly level, depending on data resolution. For seasonal covariates, we determined seasons based on which months fell above or below standardized yearly mean values for that covariate. Below we summarize the three case studies representing bird, plant, and grasshopper communities.
+
+1.5.1 \| Konza Prairie LTER bird communities
+
+Data on bird community composition at the Konza Prairie Long-Term Ecological Research site in Kansas, USA spanned from 1981-2009 [@boyle]. We used data from a total of 11 transects representing 10 distinct watersheds that were part of a tallgrass prairie grazing and burning experiment with observations twice a year (January and June; though sometimes in February, April, October, and December). Given differences in detection ability and life histories across bird families, we selected only passerine species. This dataset included abundances of 78 species, so we used an MSAM that included species-level body size and survey length as detection covariates. We used data from the AVONET trait database [@tobias2022] to generate body size values for each bird species. Bird size ranged from 5.8 - 444.8 grams (mean = 38.9 grams). Transect surveys ranged from 4 - 95 minutes (mean = 32.3).
+
+We calculated two metrics of functional richness (functional richness and Rao's quadratic entropy) using a set of traits from the AVONET trait database [@tobias2022; @cannon2019]. In the beta-regression, we considered the covariates of mean monthly temperature and total monthly precipitation, using daily weather station data collected at the KNZ LTER headquarters [@bruckerhoff2020; @nippert]. We compiled these data at a seasonal scale ("cold, dry": October-March and "warm, wet": April-September). We considered the effect of the concurrent season (always the "cold, dry") and the preceding five seasons. This model included the random effect of transect.
+
+1.5.2 \| Petrified Forest National Park plant communities
+
+Data for plant communities in the Petrified Forest National Park in Arizona, USA spanned from 2007-2022 [@swan]. These data were collected from 15 10 m^2^ quadrats arranged along three 50 m transects in a mixed grassland community (5 quadrats per transect). For this dataset, we selected only the subset of transects occurring in plots where at least one of the quadrats was re-surveyed by different observers in the same sampling year (*n* = 70 quadrats; a total of one transect per plot for 14 plots). Data were collected according to a panel revisit design, with every quadrat being surveyed 3-7 times throughout the 16-year study period. The plant dataset included occurrence records for 84 species, so we used an MSOM that included average species-level cover class (converted to a continuous covariate based on the median of each cover class) and a categorical combination of life form and longevity (e.g. "annual forb" and "perennial grass") as detection covariates. Average cover for individual plant species ranged from 1.3x10^-4^ - 5.9 percent (mean = 0.20). Most plants were annual forbs, with a total of eight categories (in order of prevalence: annual forb, perennial forb, perennial grass, perennial shrub, annual grass, biennial forb, perennial cacti, perennial succulent).
+
+We calculated and analyzed both species gains and species losses in beta-regressions [@hallett2016]. In the beta-regressions, we considered the effects of precipitation and vapor pressure deficit (VPD) [@cowles2016]. We compiled monthly climate data from PRISM [@prismclimategroup2014] for each plot and divided these data seasonally per year, with a focus on winter (November - February), spring (March-April), early summer (May-June), and monsoon (July-September). We considered the concurrent season as well as the previous seven seasons (2 years). This model included the random effect of survey transect. We imputed missing precipitation and vapor pressure deficit data (6.4%).
+
+1.5.3 \| Sevilleta LTER grasshopper communities
+
+Data for grasshopper community composition at Sevilleta Long-Term Ecological Research site in New Mexico, USA spanned from 1992-2019 [@lightfoot]. We selected data from two sites with long-term environmental covariates ("Black Grama" and "Creosote" sites). Our final dataset included data from five subsites ("webs") at each of the two sites, with six transects at each subsite (*n* = 60 unique survey units) and observations twice a year (April or May and September or October). The grasshopper dataset included abundances of 46 grasshopper species, so we used an MSAM to account for imperfect detection. No detection covariates (e.g., survey or species traits variables) were provided with this dataset or available via literature review, so this model did not include any covariates in the detection probability model. 
+
+In the community stability beta-regression, we considered the variables of mean monthly temperature, total monthly precipitation, and mean live plant biomass [@jonas2015]. Climate data were collected at a weather station near both sites at an hourly timescale [@moore]. We summarized climate data at a seasonal timescale (temperature: "warm" \[April-October\] and "cool" \[November-January\]; precipitation: "wet" \[July-October\] and "dry" \[November-June\]). We considered the effect of the concurrent season temperature and precipitation as well as the previous five seasons. We averaged seasonal (spring and fall) plant biomass data for each year for the understory plants collected at each site ("web", n = 16-20 quadrats per web) [@baur]. We considered the biomass effects of the concurrent season as well as the previous 10 seasons (five and a half years). This model included the random effect of survey "web". We imputed missing temperature, precipitation, and plant biomass data (7%, 5%, and 12% missing, respectively).
+
+**1.6 \| How imperfect detection influences biodiversity estimates**
+
+To assess how accounting for imperfect detection influences estimates of biodiversity and the effects of environmental drivers across case studies, we 1) compared empirical and modeled estimates of biodiversity and 2) compared estimates of environmental covariate effects based on fitting the beta-regression model to empirical and modeled estimates of biodiversity metrics. The empirical estimates of biodiversity were derived directly from observed data and thus do not account for imperfect detection. We summarized the empirical abundance or presence data into stability indices in two ways that relate to how ecologists survey communities. First, we generated an empirical observed dataset based on a surveyor visiting the field multiple times in the year and calculating abundance based on the maximum number of individuals observed across surveys at that site in that year ("empirical: maximum"). Second, we generated an empirical observed dataset based on a surveyor visiting the field only one time during the year ("empirical: single visit"). Using these datasets, we computed biodiversity metrics. Because the two empirical approaches were similar, visuals only include the "maximum" values.
+
+To examine the difference in the effect estimates of environmental covariates on biodiversity with and without accounting for imperfect detection, we ran the beta-regression described above separately for the modeled indices (estimated means and standard deviations) and then for the empirical dataset derived using the maximum number of individuals. Since the empirical estimates do not have estimates of error, we removed the known variance, $\hat{\sigma}_{t,y}$, from the pooled variance variance equation (13); all other parts of the model remained the same. We qualitatively compared the effects (*b* terms, equation (14)) and importance weights (*w* terms) estimated for each covariate, but assume, based on previous work on both simulated and real data, that the results from the modeled data are closer to the "true" covariate effects since the modeled biodiversity metrics account for imperfect detection of species abundance or presence [@broms2015; @tingley2020].
+
+**1.7 \| Model implementation and data preparation**
+
+For all models, we standardized continuous covariates based on the full dataset mean and standard deviation. For categorical covariates, we used cell-referencing, defining the baseline level as the level with the most observations and setting its effect (associated *α*) to 0, and assigning relatively non-informative priors to the effects for the remaining levels. Where appropriate, when there was a small amount of missing data in a covariate (\<15%), we imputed missing values in the model by modeling the covariates as coming from a normal distribution with some mean and standard deviation that are assigned relatively non-informative priors [@ogle2013]. When covariate data are reported, the reported values are used in the associated regression models; when missing, posterior samples of the imputed values are used. All data and code can be found on Zenodo (https://doi.org/10.5281/zenodo.13737499).
+
+We ran all models via the Bayesian software JAGS (version 4.3.1, [@plummer2003]) using the jagsUI package (version 1.5.2, [@kellner2021] in R (version 4.2.0, [@rcoreteam2020]). We simulated three parallel Markov chain Monte Carlo (MCMC) sequences for each model. We ran all models initially for a small number of iterations (\~4000 per sequence) to evaluate MCMC behavior and used the raftery.diag function [@raftery1992] in the coda package (version 0.19.4, [@plummer] to determine the burn-in length and the number of samples needed to sufficiently explore the posterior parameter space [@raftery1995]. For final model runs, we confirmed that the MCMC sequences converged by visual inspection of history plots, posterior distributions, and autocorrelation plots of sampled model parameters using the aforementioned coda package and the mcmcplots package (version 0.4.3, [@curtis]. We quantitatively assessed convergence using the Gelman Rubin statistic ($\hat{R}$; [@gelman1992], setting $\hat{R}$\<1.2 as our criteria for convergence for the MSAM and MSOM models and $\hat{R}$\<1.1 for the beta-regression models. Because there were many parameters in the MSAM and MSOM models due to the large number of species, our results are based on a model for which \>95% of all root nodes and \>95% of all other parameters converged at $\hat{R}$\<1.2.
+
+We organized and prepped all data using the following packages: here (version 1.0.1, [@muller2020], tidyverse (version 1.3.1, [@wickham2019], data.table (version 1.14.2, [@dowle2021], and readxl (version 1.4.0, [@wickham]. We created visualizations using the patchwork package (version 1.1.1; [@pedersen]. We computed functional diversity using the fundiversity package (version 1.1.1; [@grenié2025].
+
+**2 \| Results**
+
+**2.1 \| MCMC Behavior**
+
+All MSAM and MSOM models converged with \> 95% of parameters reaching an $\hat{R}$\< 1.2 (KNZ birds: 99.38 percent (n = 3187 of 3207); SEV grasshoppers: 99.79 percent (n = 1427 of 1430); PFNP plants 100 percent converged). All environmental regression models converged at $\hat{R}$\< 1.1.
+
+**2.2 \| MSAM/MSOMs that account for imperfect detection**
+
+For the KNZ bird dataset, the MSAM explained 48% of variance in detection and abundance. Longer surveys increased detection ($\hat{\beta}$= 0.83 \[0.80, 0.85\]) and larger birds were more likely to be detected ($\hat{\beta}$= 0.28 \[0.02, 0.51\]). For the SEV grasshopper dataset, the MSAM explained 45% of variance in detection and abundance. For the PFNP plant dataset, the MSOM explained 89% of variance in detection and abundance. Average percent cover of a plant species increased detection for the PFNP plants ($\hat{\beta}$= 0.93 \[0.42, 1.57\]). Compared to the baseline level of annual forbs, perennial forbs ($\hat{\beta}$= -1.91 \[-3.64, -0.44\]), perennial graminoids ($\hat{\beta}$= -2.18 \[-3.94, -0.53\]), and perennial cacti ($\hat{\beta}$= -4.77 \[-7.55, -1.74\]) all had lower detection probabilities, but no other lifeform category clearly differed from annual forbs.
+
+**2.3 \| Evaluating environmental influences on community stability**
+
+We summarize many of the main results in the main text and readers can find summaries of these model covariates in the data for the paper (CITE ZENODO). All models converged and we do not compute goodness-of-fit because models were meant to be examples of how estimates change when accounting for imperfect detection rather than being models describing the full suite of environmental drivers of biodiversity on each dataset.
+
+**Figures and Tables**
+
+**SI Table 1**. Information on case studies, including name, location, taxa, years of surveys, number of sites (N sites; transects or quadrats, depending on the dataset), number of species detected (N species), survey month, type of data, the imperfect detection model type used, and the data source.
+
+|                  |                                              |                   |            |             |               |                                 |                         |                       |
+|-----------------|-------------|-----------------|---------|---------|------------|-----------------------|---------------|-------------|
+| **Dataset name** | **Location**                                 | **Taxa**          | **Years**  | **N sites** | **N species** | **Survey months**               | **Data and model type** | **Source**            |
+| Birds            | Konza Prairie LTER, Kansas, USA              | Passerine birds   | 1981- 2009 | 11          | 78            | January and June                | Abundance (MSAM)        | Boyle (2023)          |
+| Grasshoppers     | Sevilleta LTER, New Mexico, USA              | Grasshoppers      | 1992- 2019 | 60          | 46            | April/May and September/October | Abundance (MSAM)        | Lightfoot (2021)      |
+| Plants           | Petrified Forest National Park, Arizona, USA | Understory plants | 2007-2022  | 70          | 84            | October                         | Occupancy (MSOM)        | Swan & Ploughe (2023) |
+
+**Figures needed:**
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 1: Incidence-based rarefaction of all species observed in each dataset (A: KNZ LTER birds, B: PFNP plants, C: SEV LTER grasshoppers). All meta-communities have been sampled throughout each time series to an estimate of >95% of all potential species present."
+
+
+knitr::include_graphics(here("examples",
+                       "pictures",
+                       "original_R",
+                       "SI_richness_rarefaction.jpg"))
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 2: Results for two other biodiversity metrics we calculated, including presence-based functional richness for birds (A) and plant gains (B). Both metrics showed differences when accounting for imperfect detection, with bird functional richness increasing substantially (A) and the number of plant species gained from each time period also increasing (B)."
+
+
+knitr::include_graphics(here('examples',
+                             'pictures',
+                             'exported',
+                             "SI_other_metrics_boxplots.jpg"))
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 3: Results of the regression model for presence-based functional richness for bird communities. Results shifted from a weak positive relationship with precipitation with no clear temporal signal to a stronger positive relationship with temperature with a lag and fall temperature having the strongest positive effect on bird functional richness."
+
+
+knitr::include_graphics(here('examples',
+            'pictures',
+            'original_R',
+            'SI_bird_FRic.jpg'))
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 4: Results of the regression model for species gains in the plant dataset. Similar to species losses, when accounting for imperfect detection, there was a measurable effect of both VPD and precipitation; neither had a clear effect on observed data (A). Results differed from loss model, highlighting that local extinctions are driven by different processes than local colonization. More species appeared this year with a wet monsoon in the previous year. Additionally, fewer species appeared this year when the current early summer had high VPD."
+
+
+knitr::include_graphics(here('examples',
+            'pictures',
+            'original_R',
+            'SI_plant_gains.jpg'))
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 5: Graphical model illustrating data, latent processes, and parameters associated with the (A) multi-species abundance (or occupancy) model (MSAM or MSOM) that accounts for imperfect detection associated with the observed data (e.g., observed abundance or species counts), which produces posterior estimates of community stability (change) and associated estimates of uncertainty, which are in turn treated as data in the (B) beta-regression model that evaluates the effects of environmental drivers and their timescales of influence on community stability. Models in (A) and (B) account for hierarchical or nested sampling schemes by incorporating random effects for time (e.g., year effects) and location (e.g., transect, plot, and/or site effects). Covariates used in (A) include variables that potentially affect the probability of detection (e.g., environmental conditions or species-traits affecting detection ability), and covariates used in (B) represent time-varying biotic or abiotic drivers for which antecedent terms are computed as weighted averages of concurrent and past observed covariate data."
+
+
+knitr::include_graphics(here("examples",
+                       "pictures",
+                       "exported",
+                       "DAG_v2.jpg"))
+```
+
+**References**

@@ -99,6 +99,16 @@ hopper4 <- hopper3 %>%
     mutate(LifeHistory = case_when(SPECIES == "MESP2" ~ "SU",
                                    TRUE ~ LifeHistory))
 
+hopper_id <- hopper4 %>%
+  filter(CNT > 0) %>%
+  group_by(SPECIES, LATIN.NAME) %>%
+  tally()
+
+write.csv(hopper_id, here('examples',
+               'data_output',
+               'grasshopper_stability',
+               'tidy_data',
+               'grasshopper_species_frequency.csv'))
 # Data objects for jags ---------------------------------------------------
 
 n.species <- length(unique(hopper4$SPECIES))

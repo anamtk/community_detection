@@ -19,51 +19,13 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-fish <- read.csv(here('01_sbc_fish',
-                      'data_outputs',
-                      'MSAM',
-                      'all_fish_data.csv'))
-
-yearly <- fish %>%
-  group_by(YEAR, SP_CODE) %>%
-  summarise(total = sum(COUNT, na.rm = T)) %>%
-  mutate(total = case_when(total > 0 ~ 1,
-                           TRUE ~ 0)) %>%
-  ungroup() %>%
-  pivot_wider(names_from = YEAR,
-              values_from = total) %>%
-  column_to_rownames(var = 'SP_CODE') %>%
-  rowwise() %>%
-  mutate(rowsum = sum(c_across(where(is.numeric))))
-
-yearly2 <- yearly %>%
-  dplyr::select(rowsum)
-
-yearly2 <- rbind(23, yearly2) 
-
-yearly2 <- as.vector(yearly2)
-
-t <- seq(1, 30, by=1) 
-
-out.fish <- iNEXT(yearly2, q=0, datatype="incidence_freq", size=t) 
-
-ggiNEXT(out.fish, type=1, color.var="Assemblage") +  
-  theme_bw(base_size = 18) +  
-  theme(legend.position="None")+
-  labs(x = "Number of sampling years")
-
-fish_cover <- ggiNEXT(out.fish, type=2, color.var="Assemblage") + 
-  ylim(c(0.9,1)) + 
-  theme_bw(base_size = 18) +  
-  theme(legend.position="None") +
-  labs(x = "Number of sampling years")
-
 # Birds -------------------------------------------------------------------
 
-bird <- read.csv(here('02_konza_birds',
-                       'data_outputs',
-                       'MSAM',
-                       'knz_tidy_data_for_model.csv'))
+bird <- read.csv(here('examples',
+                      'data_output',
+                      'bird_fundiv',
+                      'tidy_data',
+                       'bird_msam_tidy_data.csv'))
 
 bird_yr <- bird %>%
   group_by(RECYEAR, AOUCODE) %>%
@@ -103,10 +65,11 @@ bird_cover <- ggiNEXT(out.bird, type=2, color.var="Assemblage") +
 
 # Grasshoppers ------------------------------------------------------------
 
-hop <- read.csv(here('03_sev_grasshoppers',
-                       'data_outputs',
-                       'MSAM',
-                       'sev_tidy_data_for_model.csv'))
+hop <- read.csv(here('examples',
+                     'data_output',
+                     'grasshopper_stability',
+                     'tidy_data',
+                       'grasshopper_msam_tidy_data.csv'))
 
 hop_yr <- hop %>%
   group_by(YEAR, SPECIES) %>%
@@ -146,10 +109,11 @@ hop_cover <- ggiNEXT(out.hop, type=2, color.var="Assemblage") +
 
 # plants ------------------------------------------------------------------
 
-plant <- read.csv(here('04_nps_plants',
-                     'data_outputs',
-                     'MSAM',
-                     'pfnp_tidy_data_for_model.csv'))
+plant <- read.csv(here('examples',
+                       'data_output',
+                       'plant_turnover',
+                       'tidy_data',
+                     'plant_msom_tidy_data.csv'))
 
 plant_yr <- plant %>%
   group_by(EventYear, SpecID) %>%
@@ -180,7 +144,7 @@ ggiNEXT(out.plant, type=1, color.var="Assemblage") +
   theme(legend.position="None")
 
 plant_cover <- ggiNEXT(out.plant, type=2, color.var="Assemblage") + 
-  ylim(c(0.9,1)) + 
+  ylim(c(0.8,1)) + 
   theme_bw(base_size = 18) +  
   theme(legend.position="None") +
   labs(x = "Number of sampling years")
@@ -188,12 +152,14 @@ plant_cover <- ggiNEXT(out.plant, type=2, color.var="Assemblage") +
 
 # plot together -----------------------------------------------------------
 
-fish_cover + bird_cover + hop_cover + plant_cover +
+bird_cover /plant_cover /hop_cover +
   plot_annotation(tag_levels = "A")
 
 ggsave(plot = last_plot(),
-       filename = here("pictures",
-                       "richness_rarefaction.jpg"),
+       filename = here("examples",
+                       "pictures",
+                       "original_R",
+                       "SI_richness_rarefaction.jpg"),
        height = 8,
-       width = 14,
+       width = 4,
        units = "in")

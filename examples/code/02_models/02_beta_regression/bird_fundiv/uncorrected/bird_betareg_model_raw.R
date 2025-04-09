@@ -51,6 +51,7 @@ model{
       #missing data
       Temp[i,t] ~ dnorm(mu.temp, tau.temp)
       PPT[i,t] ~ dnorm(mu.ppt, tau.ppt)
+      
     }
     
     #Generating each lag's weight to sum above
@@ -95,6 +96,9 @@ model{
     wB[t] <- deltaB[t]/sumB
     #and follow a relatively uninformative gamma prior
     deltaB[t] ~ dgamma(1,1)
+    
+    cumm.tempwt[t] <- sum(wA[1:t])
+    cumm.pptwt[t] <- sum(wB[1:t])
   }
   
   #sum of weights for the npp lag

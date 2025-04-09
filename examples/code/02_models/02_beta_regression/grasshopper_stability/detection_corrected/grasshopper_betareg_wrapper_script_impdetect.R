@@ -78,15 +78,12 @@ Sys.time()
 
 # # Check convergence -------------------------------------------------------
 # 
-mcmcplot(mod$samples)
-# 
-gelman.diag(mod$samples, multivariate = F)
-# 
-#
 
-
-
-rhat <- mod$Rhat
+rhat <- readRDS(here('examples',
+                     'data_output',
+                     'grasshopper_stability',
+                     'computing_cluster_outputs',
+                     'sev_SAM_model_Rhat_notrans.RDS'))
 
 parms <- c('b0.web', 'b0.transect',
            'b', 'b0', 'wA', 'wB', "wC",

@@ -143,7 +143,9 @@ params <- c('b',
             'wA',
             'wB',
             #'wC',
-            'var.process')
+            'var.process',
+            'cumm.tempwt',
+            'cumm.pptwt')
 
 
 
@@ -164,8 +166,8 @@ mod <- jagsUI::jags(data = data,
                     parameters.to.save = params,
                     parallel = TRUE,
                     n.chains = 3,
-                    n.iter = 10000,
-                    n.burnin = 3000,
+                    n.iter = 15000,
+                    n.burnin = 5000,
                     n.thin = 10,
                     DIC = TRUE)
 
@@ -195,6 +197,22 @@ saveRDS(sum, here('examples',
                   'bird_fric_betareg_summary_raw.RDS'))
 
 
+#forgot to track cumulative, so just adding in here
+# parms2 <- c("cumm.tempwt",
+#             "cumm.pptwt")
+# 
+# mod_up <- update(mod, 
+#                  parameters.to.save = parms2,
+#                  n.iter = 1000)
+# 
+
+# sum_up <- summary(mod_up$samples)
+# 
+# saveRDS(sum_up, here('examples',
+#                   'data_output',
+#                   'bird_fundiv',
+#                   'model_outputs',
+#                   'bird_fric_betareg_summary_raw_cumulativewts.RDS'))
 
 # Q -----------------------------------------------------------------------
 
@@ -298,6 +316,15 @@ mod2 <- jagsUI::jags(data = data2,
 
 Sys.time()
 
+# mod2 <- autojags(data = data2,
+#                  inits = NULL,
+#                  model.file = model,
+#                  parameters.to.save = params,
+#                  parallel = TRUE,
+#                  n.chains = 3,
+#                  iter.increment = 10000,
+#                  n.burnin = 3000,
+#                  DIC = TRUE)
 # Check convergence -------------------------------------------------------
 
 mcmcplot(mod2$samples)
