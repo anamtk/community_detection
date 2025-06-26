@@ -9,7 +9,7 @@
 # Load packages, here and tidyverse for coding ease, 
 package.list <- c("here", "tidyverse", 
                   'emmeans', 'glmmTMB',
-                  'patchwork')
+                  'patchwork', 'betareg')
 
 
 ## Installing them if they aren't already on the computer
@@ -88,6 +88,15 @@ bird_rao <- bird_all %>%
   pivot_longer(modeled:observed,
                names_to = "type",
                values_to = "Q")
+
+bird_rao_wide <- bird_rao %>%
+  pivot_wider(names_from = type,
+              values_from = Q)
+
+t.test(bird_rao_wide$modeled, 
+       bird_rao_wide$observed, 
+       paired = TRUE,
+       alternative = "two.sided")
 
 (bird_plot <- ggplot(bird_rao, aes(x = type,
                                    fill = type,
